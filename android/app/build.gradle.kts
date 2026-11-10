@@ -28,7 +28,6 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
-
     flavorDimensions += "environment"
         
 

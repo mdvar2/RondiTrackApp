@@ -1,5 +1,6 @@
 // main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 
 void main() {
@@ -7,12 +8,15 @@ void main() {
 
   final config = AppConfig.fromEnvironment();
 
-  runApp(RondiTrackApp(config: config));
+  runApp(ProviderScope(child: RondiTrackApp(config: config)));
 }
 
+/// The root widget for the RondiTrack mobile application.
 class RondiTrackApp extends StatelessWidget {
-  const RondiTrackApp({required this.config, super.key});
+  /// Creates the application using the selected environment configuration.
+  const new({required this.config, super.key});
 
+  /// The validated application configuration.
   final AppConfig config;
 
   @override

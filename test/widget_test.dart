@@ -6,12 +6,12 @@ import 'package:ronditrack_app/main.dart';
 
 void main() {
   testWidgets('displays the development environment', (tester) async {
-    const config = AppConfig(
-      environment: AppEnvironment.dev,
+    final config = AppConfig.fromValues(
+      environment: 'dev',
       appName: 'RondiTrack Dev',
     );
 
-    await tester.pumpWidget(const RondiTrackApp(config: config));
+    await tester.pumpWidget(RondiTrackApp(config: config));
 
     expect(find.text('RondiTrack Dev'), findsOneWidget);
     expect(find.text('Environment: dev'), findsOneWidget);
@@ -19,12 +19,12 @@ void main() {
   });
 
   testWidgets('displays the production environment', (tester) async {
-    const config = AppConfig(
-      environment: AppEnvironment.prod,
+    final config = AppConfig.fromValues(
+      environment: 'prod',
       appName: 'RondiTrack',
     );
 
-    await tester.pumpWidget(const RondiTrackApp(config: config));
+    await tester.pumpWidget(RondiTrackApp(config: config));
 
     expect(find.text('RondiTrack'), findsOneWidget);
     expect(find.text('Environment: prod'), findsOneWidget);
