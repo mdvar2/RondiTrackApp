@@ -15,7 +15,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "za.co.gwinya.ronditrack_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -28,25 +27,26 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    // AGP 9 turns resValue off by default, so each flavour names its launcher
+    // through a manifest placeholder (AndroidManifest.xml: ${appName}).
     flavorDimensions += "environment"
-        
 
     productFlavors {
         create("dev") {
             dimension = "environment"
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "RondiTrack Dev")
+            manifestPlaceholders["appName"] = "RondiTrack Dev"
         }
 
         create("staging") {
             dimension = "environment"
             applicationIdSuffix = ".staging"
-            resValue("string", "app_name", "RondiTrack Staging")
+            manifestPlaceholders["appName"] = "RondiTrack Staging"
         }
 
         create("prod") {
             dimension = "environment"
-            resValue("string", "app_name", "RondiTrack")
+            manifestPlaceholders["appName"] = "RondiTrack"
         }
     }
 
