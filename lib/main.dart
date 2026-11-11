@@ -18,11 +18,19 @@ void main() {
   const personaKey = String.fromEnvironment('FAKE_PERSONA');
   final persona = FakeSeed.personas[personaKey];
 
+  // Dev only: --dart-define=FAKE_FAIL_EVERY=3 makes the fakes fail the first
+  // call and every third after it, to show failure and retry on a phone.
+  final failEvery = fakeFailEveryFor(
+    config.environment,
+    const int.fromEnvironment('FAKE_FAIL_EVERY'),
+  );
+
   runApp(
     ProviderScope(
       overrides: [
         if (persona != null)
           signedInUserIdProvider.overrideWithValue(persona.id),
+        if (failEvery > 0) fakeFailEveryProvider.overrideWithValue(failEvery),
       ],
       child: RondiTrackApp(config: config),
     ),
