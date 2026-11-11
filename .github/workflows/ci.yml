@@ -41,13 +41,31 @@ jobs:
       - name: Code generation
         run: dart run build_runner build
 
+      # riverpod_generator hashes each provider's source into its .g.dart, so
+      # editing a provider without regenerating fails here.
       - name: Generated code is up to date
-        run: git diff --exit-code -- '*.g.dart' '*.freezed.dart'
+        run: |
+          if ! git diff --exit-code -- '*.g.dart' '*.freezed.dart'; then
+            echo "::error title=Generated code is stale::Run 'dart run build_runner build' and commit the generated files."
+            exit 1
+          fi
 
       # dart analyze, not flutter analyze: only dart analyze runs analyser
-      # plugins, and riverpod_lint is one.
+      # plugins, and riverpod_lint is one. On failure each finding is also
+      # written as an annotation, so it shows on the pull request's diff.
       - name: Analyse
-        run: dart analyze --fatal-infos
+        run: |
+          if ! dart analyze --fatal-infos; then
+            dart analyze --format=machine 2>&1 | awk -F'|' -v root="$PWD/" '
+              NF >= 8 {
+                file = $4
+                if (index(file, root) == 1) file = substr(file, length(root) + 1)
+                message = $8
+                for (i = 9; i <= NF; i++) message = message "|" $i
+                printf "::error file=%s,line=%s,col=%s,title=%s::%s\n", file, $5, $6, tolower($3), message
+              }'
+            exit 1
+          fi
 
       - name: Test
         run: flutter test
