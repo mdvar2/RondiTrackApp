@@ -1,4 +1,5 @@
 {
   "APP_ENV": "prod",
-  "APP_NAME": "RondiTrack"
+  "APP_NAME": "RondiTrack",
+  "API_BASE_URL": "https://api.ronditrack.example"
 }

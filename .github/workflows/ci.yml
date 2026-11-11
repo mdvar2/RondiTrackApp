@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Format, generate, analyse, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Install the locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      # Hand-written code only: build_runner owns the generated files' layout.
+      - name: Format check
+        run: |
+          git ls-files '*.dart' \
+            | grep -v -E '\.(g|freezed)\.dart$' \
+            | xargs dart format --output=none --set-exit-if-changed
+
+      # Generated files are committed (README "Generated code"). Regenerate
+      # them and fail if the committed copies are stale.
+      - name: Code generation
+        run: dart run build_runner build
+
+      - name: Generated code is up to date
+        run: git diff --exit-code -- '*.g.dart' '*.freezed.dart'
+
+      # dart analyze, not flutter analyze: only dart analyze runs analyser
+      # plugins, and riverpod_lint is one.
+      - name: Analyse
+        run: dart analyze --fatal-infos
+
+      - name: Test
+        run: flutter test

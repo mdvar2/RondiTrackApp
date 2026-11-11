@@ -1,17 +1,326 @@
-# ronditrack_app
+# RondiTrack Mobile
 
-A new Flutter project.
+The RondiTrack phone app (Flutter, Android and iOS). It shows each person their stokvels, what they've paid and owe, and what they can do in each stokvel, given their role there.
 
-## Getting Started
+This is Week 10 (Assignment 10.1): foundations and state. **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
 
-This project is a starting point for a Flutter application.
+- API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
+- API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`3d04a52`](https://github.com/mdvar2/RondiTrack/commit/3d04a5238c72b0b3e1742a1067170a20ae13e97a) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `7292b744…4a0dc3`)
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Contract notes
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Read from the API's `README.md`, `openapi/v1.json` and, where the document types a field only as `string`, the C# source. All of it is at API commit **`3d04a5238c72b0b3e1742a1067170a20ae13e97a`**.
+
+### 1. How the API spells statuses and roles
+
+The OpenAPI document types all three as plain `string`. The spellings come from the domain code:
+
+| Kind | Exact strings (case matters) | Source |
+|---|---|---|
+| Cycle status | `Open`, `Closed`, `PaidOut` | `Domain/Entities/ContributionCycle.cs` |
+| Contribution status | `Pending`, `Paid`, `Confirmed` | `Domain/Entities/Contribution.cs` (`UpdateStatus` allows exactly these) |
+| Stokvel role | `Member`, `Treasurer`, `Chairperson` | `Domain/Entities/Roles.cs` |
+
+`Roles.cs` also has the platform roles `User` and `PlatformAdmin`. They are never a stokvel role, so the app maps them to `unknown`. Any other string, or a wrong case, also becomes `unknown`: see [`statuses.dart`](lib/features/stokvels/domain/statuses.dart).
+
+### 2. Which endpoints return the caller's role, and where
+
+The role comes from the stokvel membership, checked live on every request (`StokvelAccessHandler`). `GET /api/v1/me` deliberately has no role. The controller's comment says: *"No role: roles belong to each stokvel, not to the person."*
+
+| Endpoint | Where |
+|---|---|
+| `GET /api/v1/me/home` | `stokvels[].role` (`HomeStokvelResponse.role`), one per stokvel |
+| `GET /api/v1/stokvels/{id}` | `role` at the top level (`StokvelDetailResponse.role`) |
+| `GET /api/v1/stokvels/{stokvelId}/members` | `items[].role` for every member, the caller included |
+| `GET …/cycles/{cycleId}/contributions` | `items[].memberRole`: each *contributor's* role, not the caller's |
+
+`GET /api/v1/stokvels` (the list) has no role. The fakes return the role in the same places: on each Home entry and on the stokvel detail, both as a [`Membership`](lib/features/stokvels/domain/membership.dart).
+
+### 3. What `/me/home` returns per stokvel
+
+`HomeResponse { stokvels: HomeStokvelResponse[] }`, ordered by stokvel name. An empty array means the person is in no stokvel.
+
+| Field | Type | Can be null? | Notes |
+|---|---|---|---|
+| `stokvelId`, `stokvelName`, `role` | uuid, string, string | No | |
+| `currentCycle` | `HomeCycleResponse` | **Yes**, when the stokvel has no cycle for the current Johannesburg month | `{ period, status, dueDate }`; `dueDate` is nullable |
+| `amountPaid` | int64 **cents** | No | Mine, in the current cycle. It is cents despite having no `Cents` suffix |
+| `amountOwed` | int64 **cents** | No | `max(0, contribution − paid)`; `0` with no cycle |
+| `arrearsCents` | int64 cents | Not nullable, but **not in `required`** (`default: 0`) | My recorded shortfalls in this stokvel. The app treats a missing value as 0 |
+| `nextPayoutDate` | date-time | **Yes, and always `null` today** | No payout schedule exists (API README "Known Limitations"). The app shows "No payout scheduled" |
+
+The app shows these numbers and never computes them.
+
+### 4. Due dates: date-only or instants?
+
+**Date-only.** `dueDate` (and `endDate`) are `format: date` (`2026-10-31`), from a C# `DateOnly` on Johannesburg calendar days. The app models them as [`CalendarDate`](lib/core/time/calendar_date.dart), never `DateTime`. Converting one to `DateTime` would attach a time zone, and the date could shift to the day before. The **instants** are `nextPayoutDate`, `recordedAtUtc`, `joinedAtUtc` and `paidAtUtc` (`date-time`); those are `DateTime`.
+
+### 5. The three seed personas
+
+**The API has none.** Its README says: *"There's no seed data. Create an account with `POST /api/v1/auth/register`…"*. So the personas are defined here, in [`fake_seed.dart`](lib/features/stokvels/data/fake_seed.dart). To keep Week 11's switch invisible on screen, the same people have to exist in the API (see the gaps below).
+
+| Persona | Mabena Family (R 500,00 a month) | Soweto Teachers (R 1 500,00 a month) | What Home shows |
+|---|---|---|---|
+| **Lerato Mokoena**, Treasurer-in-one | **Treasurer**; paid R 500,00 (`Paid`) | **Member**; paid R 750,00 of R 1 500,00 (`Paid`) | Two cards: Treasurer and Member |
+| **Sipho Dlamini** | **Member**; paid nothing; **R 250,00 arrears** | **Chairperson**; paid nothing | Two cards, one with arrears |
+| **Thabo Nkosi** | not a member | not a member | The empty state |
+
+Also present, as other members only: Nomsa Mabena (Chairperson of Mabena Family, `Confirmed`) and Kagiso Molefe (Treasurer of Soweto Teachers, `Confirmed`). Both cycles are `2026-11`, `Open`, due 30 Nov and 25 Nov.
+
+### Gaps found, and backend pull requests
+
+The assignment asks for each gap to be fixed in the API repo, as its own pull request with tests. **None has been opened yet.** They are listed here so they can be made and linked:
+
+| # | Gap | Why it matters to the app | Suggested backend fix |
+|---|---|---|---|
+| 1 | No seed data | The fakes' personas can't exist in the real API, so Week 11 would change what's on screen | A development-only seed (the three personas above), with a test |
+| 2 | No endpoint confirms a contribution | `Confirm contributions` has no API to call; `Contribution.UpdateStatus` exists only in the domain | `PATCH …/contributions/{id}` (Treasurer/Chairperson), with tests |
+| 3 | `StokvelDetailResponse.currentCycle` has no cycle id | Contributions need `cycleId`, so detail costs a second call (`GET …/cycles`) | Add `id` to `StokvelCycleSummaryResponse` |
+| 4 | Statuses and roles are untyped `string` in OpenAPI | Week 11's generated client can't produce enums | Declare `enum` values in the schema |
+| 5 | `arrearsCents` isn't in `required` | A generated client makes it optional | Mark it required |
+| 6 | Some money is `double` (`contributionAmount`, `targetAmount`, `PayoutResponse.amount`, `minAmount`/`maxAmount`) | Doubles near money | Already paired with `…Cents` fields where the app reads them; the app reads only the cents |
+
+---
+
+## Running it
+
+| | |
+|---|---|
+| Flutter | **3.47.7** (Dart 3.13.5), on PATH and in Android Studio |
+| API the dev flavour expects | [RondiTrack](https://github.com/mdvar2/RondiTrack), `dotnet run --project API --launch-profile http`, which listens on `http://localhost:5101` (setup: its README, "Getting Started") |
+
+```powershell
+flutter pub get
+dart run build_runner build      # only after changing a @freezed or @riverpod file
+
+flutter run --flavor dev     --dart-define-from-file=config/dev.json
+flutter run --flavor staging --dart-define-from-file=config/staging.json
+flutter run --flavor prod    --dart-define-from-file=config/prod.json
+
+# Until Week 11's sign-in, pick a persona (default: lerato):
+flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=FAKE_PERSONA=thabo
+```
+
+### Flavours and config files
+
+| Flavour | Android application id | Launcher name | Config file | `API_BASE_URL` |
+|---|---|---|---|---|
+| dev | `za.co.gwinya.ronditrack_app.dev` | RondiTrack Dev | [`config/dev.json`](config/dev.json) | `http://10.0.2.2:5101`: the emulator's address for the host's `localhost:5101` |
+| staging | `za.co.gwinya.ronditrack_app.staging` | RondiTrack Staging | [`config/staging.json`](config/staging.json) | `https://staging.api.ronditrack.example`, a placeholder: no staging API is deployed |
+| prod | `za.co.gwinya.ronditrack_app` | RondiTrack | [`config/prod.json`](config/prod.json) | `https://api.ronditrack.example`, a placeholder: no production API is deployed (API repo: "plan only; nothing provisioned") |
+
+Each file holds exactly `APP_ENV`, `APP_NAME` and `API_BASE_URL`. **Nothing secret.** The app refuses to start (`AppConfigException`) when:
+
+- there is no config (`APP_ENV`, `APP_NAME` or `API_BASE_URL` is missing);
+- the native flavour (`appFlavor`, from `--flavor`) doesn't match `APP_ENV`, such as a prod build given `config/dev.json`;
+- the name doesn't match the flavour, the address isn't absolute http(s), or staging/prod isn't https.
+
+[`app_config_test.dart`](test/core/config/app_config_test.dart) proves each refusal.
+
+The project uses **AGP 9.1.0**, where `resValue` is off by default. So each flavour sets its launcher name with `manifestPlaceholders["appName"]`, and `AndroidManifest.xml` uses `${appName}`.
+
+**Not yet done:** iOS flavours need Xcode schemes, which this Windows machine can't create; iOS currently has one scheme. Android cleartext `http` to `10.0.2.2` will need a dev-only network security config in Week 11, when the app first calls the API.
+
+### Dependencies
+
+Every version is exact (no `^`) and was at least two weeks old when checked on 2026‑11‑11 (cutoff 2026‑10‑28), transitive ones included. `pubspec.lock` is committed.
+
+| Package | Version | Published | Note |
+|---|---|---|---|
+| flutter_riverpod / riverpod_annotation | 3.4.3 / 4.0.7 | 2026‑09‑03 | 3.5.0 / 4.0.8 (2026‑11‑06) were too new |
+| riverpod_generator / riverpod_lint | 4.0.9 / 3.1.9 | 2026‑09‑03 | 4.0.10 / 3.2.0 (2026‑11‑06) were too new |
+| freezed / freezed_annotation | 4.0.3 / 3.1.0 | 2026‑10‑17 / 2025‑07‑02 | |
+| build_runner | 2.16.2 | 2026‑10‑07 | 2.17.0 is retracted |
+| very_good_analysis | 11.0.0 | 2026‑09‑03 | |
+| analyzer | 14.6.0 | 2026‑10‑20 | Pinned as a dev dependency only to hold the analyser stack back: 14.7.0 (and `_fe_analyzer_shared` 111, `analyzer_plugin` 0.14.20, `analysis_server_plugin` 0.3.26) were published 2026‑10‑29 |
+| cupertino_icons | 1.0.9 | 2026‑03‑25 | |
+
+`flutter_lints` was removed, because very_good_analysis replaces it.
+
+---
+
+## Architecture
+
+```
+lib/
+  app/          composition root: app.dart (MaterialApp), providers.dart (names every implementation)
+  core/         config/, money/, time/, state/ (sealed ViewState), logging/
+  features/
+    home/       domain/ (HomeEntry, HomeRepository)  data/ (FakeHomeRepository)  presentation/
+    stokvels/   domain/ (enums, Membership, StokvelDetail, actions, StokvelRepository)
+                data/ (fake_seed, FakeStokvelRepository)  presentation/
+contract/openapi/v1.json   the API contract copy
+```
+
+- Repository **interfaces** live in each feature's `domain/`. **Fakes** live in `data/`. **One provider per repository** in [`lib/app/providers.dart`](lib/app/providers.dart) names the implementation; that file is the only one Week 11 changes.
+- No widget imports a fake, a `data/` folder, Dio or Drift. [`architecture_test.dart`](test/architecture_test.dart) enforces it, and checks that only `providers.dart` names a fake.
+- Every screen renders the sealed [`ViewState`](lib/core/state/view_state.dart) (`ViewLoading`, `ViewEmpty`, `ViewData`, `ViewFailure`) with an exhaustive `switch`.
+
+## Generated code
+
+**Committed.** `*.g.dart` and `*.freezed.dart` are in Git. Reasons:
+
+- A fresh clone analyses and runs without first waiting about 100 seconds for build_runner's first compile.
+- A reviewer sees in the pull request what the generators produced.
+- CI still regenerates every file and fails on any difference (`git diff --exit-code`), so a committed file can't go stale silently.
+
+The CI order works with this choice: format check (hand-written files only) → `build_runner build` → generated-code diff → `dart analyze --fatal-infos` → `flutter test`.
+
+## Lints, and why `flutter analyze` isn't enough
+
+[`analysis_options.yaml`](analysis_options.yaml) includes `very_good_analysis` 11 and enables `riverpod_lint` 3.1.9 as an **analyser plugin** (`plugins:`). No lint is switched off.
+
+`flutter analyze` doesn't run analyser plugins. Only `dart analyze` does. Verified locally by adding a public field to `HomeController` (`int refreshCount = 0;`):
+
+```
+$ dart analyze --fatal-infos
+   info - lib\features\home\presentation\home_controller.dart:13:3 - Notifiers should not have public
+          properties/getters. Instead, all their public API should be exposed through the `state`
+          property. - avoid_public_notifier_properties
+1 issue found.            (exit code 1)
+
+$ flutter analyze
+No issues found! (ran in 41.6s)
+```
+
+A CI step running `flutter analyze` would have passed that mistake. This CI runs `dart analyze --fatal-infos`. *(The red CI run on a pull request is still to be produced; see "Verification".)*
+
+## Money
+
+Amounts are whole cents end to end: [`Cents`](lib/core/money/cents.dart) is an extension type over `int`. The API's cents fields map straight in, and its `double` fields are never read. There is no `double` in any money code.
+
+**Formatter** ([`rand_format.dart`](lib/core/money/rand_format.dart)). It uses integer arithmetic only (`~/`, `%`). Examples: `R 0,10`, `R 150,50`, `R 1 500,00`, `R 1 000 000,00`, and a negative `-R 150,50`. Every space is a no-break space (U+00A0). The API sends no negative amounts today (`amountOwed` is clamped at 0), but the formatter handles them.
+
+**Parser** ([`rand_parser.dart`](lib/core/money/rand_parser.dart)) for typed rands. It returns `RandParsed(cents)` or `RandRefused(reason)`, with integer arithmetic only. The rules:
+
+1. Surrounding spaces are ignored. An optional leading `R`, with or without a space after it, is allowed.
+2. Rands are digits, optionally grouped in threes by **single** spaces, either ordinary or no-break (`1 500`, `1 000 000`). A space anywhere else is refused (`1 50`).
+3. After the rands there may be **one** decimal separator and **one or two** digits (`150,5` is R 150,50).
+4. **Full-stop decision: a full stop is accepted as the decimal separator.** Many Android numeric keyboards show only `.`, and a person whose keyboard has no comma must still be able to pay R 150,50. This is safe because three digits after any separator are always refused. So `1.500` (a European thousands mark) and `1,500.50` (an English thousands mark plus a decimal) are refused rather than misread as R 1,50 or R 1 500,50.
+5. Refused: empty input or a bare `R`; a separator with no digits (`150.`, `150,`); three or more decimals (`150,505`); two separators; letters, signs and currency codes; more than 10 rand digits.
+
+R 0 parses; whether zero is a valid payment is the pay form's rule (11.4), not the parser's. Tests: [`rand_format_test.dart`](test/core/money/rand_format_test.dart) and [`rand_parser_test.dart`](test/core/money/rand_parser_test.dart). Every no-break space in the tests is written as ` `.
+
+## What can I do here?
+
+[`allowedActions`](lib/features/stokvels/domain/stokvel_actions.dart) takes the record `(role, cycle, mine)` and returns a `Set<StokvelAction>`. It is **one exhaustive switch with no wildcard and no catch-all variable**, so every role and status is listed in every row. The rules follow the API at `3d04a52`:
+
+| Cycle | Role | My contribution | Allowed |
+|---|---|---|---|
+| `Closed`, `PaidOut`, unknown | any | any | nothing (the API refuses contributions, proof, close and payout unless `Open`) |
+| `Open` | unknown | any | nothing |
+| `Open` | Member | none yet | Pay |
+| `Open` | Member | `Pending`, `Paid` | Pay, Upload proof (the API adds partial payments together) |
+| `Open` | Member | `Confirmed`, unknown | nothing |
+| `Open` | Treasurer, Chairperson | none yet | Pay, Confirm, Close, Record payout |
+| `Open` | Treasurer, Chairperson | `Pending`, `Paid` | Pay, Upload proof, Confirm, Close, Record payout |
+| `Open` | Treasurer, Chairperson | `Confirmed`, unknown | Confirm, Close, Record payout |
+
+Treasurer and Chairperson are equal, because both pass the API's `StokvelManage` check. Each row has a test in [`stokvel_actions_test.dart`](test/features/stokvels/domain/stokvel_actions_test.dart), plus a sweep over every combination. Every status also has a label in words (one exhaustive switch each, in [`status_labels.dart`](lib/features/stokvels/domain/status_labels.dart)), and colour never stands alone.
+
+## When the API adds a status
+
+Verified by adding `suspended('Suspended')` to `CycleStatus` and running `dart analyze`. The change was reverted afterwards:
+
+```
+$ dart analyze
+  error - lib\features\stokvels\domain\status_labels.dart:8:48 - The type 'CycleStatus' isn't
+          exhaustively matched by the switch cases since it doesn't match the pattern
+          'CycleStatus.suspended'. Try adding a wildcard pattern or cases that match
+          'CycleStatus.suspended'. - non_exhaustive_switch_expression
+  error - lib\features\stokvels\domain\stokvel_actions.dart:53:61 - The type 'ActionContext' isn't
+          exhaustively matched by the switch cases since it doesn't match the pattern
+          '(cycle: CycleStatus.suspended, mine: _, role: _)'. Try adding a wildcard pattern or cases
+          that match '(cycle: CycleStatus.suspended, mine: _, role: _)'. - non_exhaustive_switch_expression
+2 issues found.
+```
+
+So nothing builds until someone writes the new status's words and decides what it allows.
+
+**At run time, on a phone with an old install**, when the API starts sending `"Suspended"`:
+
+- `CycleStatus.fromApi` returns `CycleStatus.unknown`. It never throws, so the screen still loads.
+- The card reads **"Status not recognised"**.
+- `allowedActions` gives **no actions** for an unknown cycle status, so nobody can pay into, close or pay out a cycle the app doesn't understand.
+
+The same holds for an unknown contribution status or role. An unknown role grants nothing.
+
+## State with Riverpod
+
+- **Home** is an `AsyncNotifier` ([`HomeController`](lib/features/home/presentation/home_controller.dart)). Pull to refresh calls `refresh()`, which invalidates the notifier. Riverpod keeps the old value while it reloads, so the old cards stay on screen under a thin progress bar.
+- **Stokvel detail** is a `family` provider keyed by stokvel id ([`stokvelDetailProvider`](lib/features/stokvels/presentation/stokvel_detail_provider.dart)). Its actions come from *this* stokvel's membership, so treasurer actions appear only where the persona is Treasurer or Chairperson.
+- **Not yours = not found.** The fake throws the same `StokvelNotFoundException` for a stokvel you aren't in as for one that doesn't exist, matching the API's `404`. The screen says "We couldn't find that stokvel." in both cases.
+- **Never the wrong stokvel, not for a frame.** Each id is its own family member, so switching ids starts from a fresh loading state, never the previous stokvel's value. As a second guard, `stokvelDetailViewState` treats a value whose id isn't the requested one as loading. [`stokvel_switch_test.dart`](test/features/stokvels/presentation/stokvel_switch_test.dart) loads Mabena Family, switches to a 5‑second‑slow Soweto Teachers, pumps **one** frame, and expects Soweto Teachers' loading state and none of Mabena Family's contributions.
+
+## Provider lifetimes
+
+| Provider | Holds | Lifetime | Cost of keeping it on an entry-level phone | Cost of disposing it |
+|---|---|---|---|---|
+| `signedInUserIdProvider` | The signed-in person's id | **keepAlive** | One string | Everything that depends on it rebuilds. It must live for the whole session |
+| `homeRepositoryProvider`, `stokvelRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
+| `lifecycleLogProvider` | A logging function | **keepAlive** | Nothing | Nothing gained |
+| `homeControllerProvider` | My stokvels, roles and amounts | **autoDispose** | Home is the root screen, so it is watched for the whole session anyway | Only when Home leaves the stack (sign-out), which is exactly when it should go |
+| `stokvelDetailProvider(id)` | One stokvel's cycle and **other members'** names and contributions | **autoDispose** | Memory per stokvel opened; other people's data kept after you leave; it goes stale (a contribution recorded meanwhile wouldn't show) | A refetch and a spinner when the stokvel is reopened, which on a data bundle is a small, honest cost |
+
+**Disposal is proven** in [`stokvel_detail_provider_test.dart`](test/features/stokvels/presentation/stokvel_detail_provider_test.dart). When the last listener closes, `container.exists(stokvelDetailProvider(id))` becomes false, and the log is exactly:
+
+```
+stokvelDetail created id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
+stokvelDetail disposed id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
+```
+
+The log carries the id only, never a name or an amount (the test checks this). Reopening the stokvel refetches. The same `[lifecycle]` lines appear in the Run console in debug builds.
+
+**Signing out (Week 11), on a phone a family shares.** Sign-out will invalidate `signedInUserIdProvider`. Every kept-alive provider watches it, directly or through the repositories, so they rebuild empty for the next person. Sign-out also replaces the navigation stack with the sign-in screen, so Home and every stokvel detail lose their last listener and their autoDispose state is dropped. As a backstop, the root `ProviderScope` gets a new key at sign-out, which disposes the whole container, so nothing from one person's session can reach the next.
+
+---
+
+## Tests and CI
+
+```powershell
+dart format --output=none --set-exit-if-changed lib test
+dart run build_runner build
+dart analyze --fatal-infos
+flutter test
+```
+
+| Area | File |
+|---|---|
+| Config refusals | `test/core/config/app_config_test.dart` |
+| Money (formatter, parser, `Cents`) | `test/core/money/` |
+| Date-only values | `test/core/time/calendar_date_test.dart` |
+| Status mapping and labels | `test/features/stokvels/domain/statuses_test.dart` |
+| `Membership` (Lerato: Treasurer and Member, one login) and not-yours = 404 | `test/features/stokvels/domain/membership_test.dart` |
+| The actions match, one test per row | `test/features/stokvels/domain/stokvel_actions_test.dart` |
+| Notifier state → sealed view state (no stokvels = empty) | `test/core/state/view_state_test.dart` |
+| Home's four states and pull-to-refresh | `test/features/home/presentation/home_screen_test.dart` |
+| Detail's states, Treasurer vs Member actions, not found | `test/features/stokvels/presentation/stokvel_detail_screen_test.dart` |
+| Family: separate state per id, one shared fetch, disposal | `test/features/stokvels/presentation/stokvel_detail_provider_test.dart` |
+| Part 5 frame test | `test/features/stokvels/presentation/stokvel_switch_test.dart` |
+| Architecture boundary | `test/architecture_test.dart` |
+
+Widget tests swap repositories with `overrideWithValue`, never by editing a provider. Each test puts its `ProviderScope` directly inside `tester.pumpWidget(…)`. Failure tests pass `retry: (retryCount, error) => null`.
+
+[CI](.github/workflows/ci.yml) runs on every pull request and on pushes to `main`, using Flutter 3.47.7.
+
+## Verification
+
+Run locally on 2026‑11‑11 (Windows, Flutter 3.47.7, Dart 3.13.5):
+
+| Check | Result |
+|---|---|
+| `flutter pub get` | Resolved; every package at least two weeks old |
+| `dart format --output=none --set-exit-if-changed lib test` | 0 changed |
+| `dart run build_runner build` | Built |
+| `dart analyze --fatal-infos` | No issues found |
+| `flutter test` | **130 passed**, 0 failed |
+
+**Still to do by hand** (they need GitHub Actions, an emulator or the API repo):
+
+- [ ] The red CI run (the riverpod_lint mistake on a pull request) and the green run, linked in the PR
+- [ ] Emulator screenshots: launcher with all three flavours; Home as Lerato; Home as Thabo (empty); Mabena Family (Treasurer); Soweto Teachers (Member); a failure state
+- [ ] A screen recording of the Part 5 stokvel switch
+- [ ] The backend pull request(s) for the gaps in "Contract notes"
+- [ ] A first `flutter build apk --flavor dev` to confirm the AGP 9 manifest-placeholder flavours

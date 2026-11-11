@@ -1,0 +1,5 @@
+# Dart and generated code are LF everywhere, so format and codegen
+# checks agree between Windows and CI.
+* text=auto eol=lf
+*.png binary
+*.jar binary

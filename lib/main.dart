@@ -1,37 +1,30 @@
-// main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ronditrack_app/app/app.dart';
+import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
+import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final config = AppConfig.fromEnvironment();
+  // Refuses to start without a config, or with one that doesn't match the
+  // native flavour (`appFlavor`, set by `--flavor`).
+  final config = AppConfig.fromEnvironment(nativeFlavor: appFlavor);
 
-  runApp(ProviderScope(child: RondiTrackApp(config: config)));
-}
+  // Until Week 11's sign-in, choose a seed persona with
+  // --dart-define=FAKE_PERSONA=lerato|sipho|thabo (Lerato by default).
+  const personaKey = String.fromEnvironment('FAKE_PERSONA');
+  final persona = FakeSeed.personas[personaKey];
 
-/// The root widget for the RondiTrack mobile application.
-class RondiTrackApp extends StatelessWidget {
-  /// Creates the application using the selected environment configuration.
-  const new({required this.config, super.key});
-
-  /// The validated application configuration.
-  final AppConfig config;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: config.appName,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
-        useMaterial3: true,
-      ),
-      home: Scaffold(
-        appBar: AppBar(title: Text(config.appName)),
-        body: Center(child: Text('Environment: ${config.environment.name}')),
-      ),
-    );
-  }
+  runApp(
+    ProviderScope(
+      overrides: [
+        if (persona != null)
+          signedInUserIdProvider.overrideWithValue(persona.id),
+      ],
+      child: RondiTrackApp(config: config),
+    ),
+  );
 }
