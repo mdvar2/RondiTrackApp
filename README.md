@@ -185,7 +185,26 @@ $ flutter analyze
 No issues found! (ran in 41.6s)
 ```
 
-A CI step running `flutter analyze` would have passed that mistake. This CI runs `dart analyze --fatal-infos`. *(The red CI run on a pull request is still to be produced; see "Verification".)*
+A CI step running `flutter analyze` would have passed that mistake. This CI runs `dart analyze --fatal-infos`.
+
+**Proved in CI** on pull request [#2](https://github.com/mdvar2/RondiTrackApp/pull/2) (branch `ci/riverpod-lint-red`, never to be merged):
+
+| Run | Commit | Result |
+|---|---|---|
+| [42964435528](https://github.com/mdvar2/RondiTrackApp/actions/runs/42964435528) | `baf27d0`: adds `int refreshCount = 0;` | ❌ at **Generated code is up to date**. Not the lint: riverpod_generator hashes each provider's source into its `.g.dart`, and the commit hadn't regenerated. Doesn't count as the red run |
+| [42966299705](https://github.com/mdvar2/RondiTrackApp/actions/runs/42966299705) | `2adb2b0`: regenerates the hash | ❌ at **Analyse** (generated code now up to date) |
+| [**42966980275**](https://github.com/mdvar2/RondiTrackApp/actions/runs/42966980275) | `be0ebd1`: same fault, with CI writing findings as annotations | ❌ **the red run**: format ✅, code generation ✅, generated code up to date ✅, **Analyse ❌**, Test skipped |
+| [**42967452524**](https://github.com/mdvar2/RondiTrackApp/actions/runs/42967452524) | `a0e0ddd`: reverts the field | ✅ **the green run**: every step passes, Analyse and Test included |
+
+The red run's annotation (public on the run's summary page):
+
+```
+lib/features/home/presentation/home_controller.dart line 13 · avoid_public_notifier_properties
+Notifiers should not have public properties/getters. Instead, all their public API should be
+exposed through the `state` property.
+```
+
+The Analyse step writes each finding as a GitHub annotation, so it shows on the pull request's diff without opening the log.
 
 ## Money
 
