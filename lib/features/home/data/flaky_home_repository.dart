@@ -4,8 +4,8 @@ import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 
 /// Wraps a [HomeRepository] so that some calls fail with
 /// [FakeNetworkException], after the usual wait. The dev flavour uses it
-/// behind `--dart-define=FAKE_FAIL_EVERY=3`, to show the failure and retry
-/// states on a phone.
+/// behind `--dart-define=FAKE_FAIL_EVERY=`: `1` shows the failure state on a
+/// phone; `3` shows Riverpod's automatic retry recovering by itself.
 class FlakyHomeRepository implements HomeRepository {
   /// Creates the wrapper; see [FailEvery] for which calls fail.
   new(this._inner, {required int failEvery}) : _failures = FailEvery(failEvery);

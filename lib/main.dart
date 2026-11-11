@@ -18,8 +18,9 @@ void main() {
   const personaKey = String.fromEnvironment('FAKE_PERSONA');
   final persona = FakeSeed.personas[personaKey];
 
-  // Dev only: --dart-define=FAKE_FAIL_EVERY=3 makes the fakes fail the first
-  // call and every third after it, to show failure and retry on a phone.
+  // Dev only: --dart-define=FAKE_FAIL_EVERY=1 makes every fake call fail, so
+  // Riverpod's automatic retries fail too and the failure state stays; 3 fails
+  // the first call and every third after it, and the automatic retry recovers.
   final failEvery = fakeFailEveryFor(
     config.environment,
     const int.fromEnvironment('FAKE_FAIL_EVERY'),

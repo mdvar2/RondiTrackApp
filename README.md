@@ -71,16 +71,24 @@ Also present, as other members only: Nomsa Mabena (Chairperson of Mabena Family,
 
 ### Gaps found, and backend pull requests
 
-The assignment asks for each gap to be fixed in the API repo, as its own pull request with tests. **None has been opened yet.** They are listed here so they can be made and linked:
+**Backend branch:** [`fix/mobile-contract-gaps`](https://github.com/mdvar2/RondiTrack/compare/assignment-9.3...fix/mobile-contract-gaps) in the API repo, commit `0bb7f92`, based on the contract commit `3d04a52` (branch `assignment-9.3`). **Pull request:** not yet opened; open it at <https://github.com/mdvar2/RondiTrack/pull/new/fix/mobile-contract-gaps> with base `assignment-9.3`, and put its link here.
 
-| # | Gap | Why it matters to the app | Suggested backend fix |
+| # | Gap | Why it matters to the app | Status |
 |---|---|---|---|
-| 1 | No seed data | The fakes' personas can't exist in the real API, so Week 11 would change what's on screen | A development-only seed (the three personas above), with a test |
-| 2 | No endpoint confirms a contribution | `Confirm contributions` has no API to call; `Contribution.UpdateStatus` exists only in the domain | `PATCH …/contributions/{id}` (Treasurer/Chairperson), with tests |
-| 3 | `StokvelDetailResponse.currentCycle` has no cycle id | Contributions need `cycleId`, so detail costs a second call (`GET …/cycles`) | Add `id` to `StokvelCycleSummaryResponse` |
-| 4 | Statuses and roles are untyped `string` in OpenAPI | Week 11's generated client can't produce enums | Declare `enum` values in the schema |
-| 5 | `arrearsCents` isn't in `required` | A generated client makes it optional | Mark it required |
-| 6 | Some money is `double` (`contributionAmount`, `targetAmount`, `PayoutResponse.amount`, `minAmount`/`maxAmount`) | Doubles near money | Already paired with `…Cents` fields where the app reads them; the app reads only the cents |
+| 3 | `StokvelDetailResponse.currentCycle` had no cycle id | Contributions need `cycleId`, so detail cost a second call (`GET …/cycles`) | **Fixed on the backend branch**: `StokvelCycleSummaryResponse.id` (uuid, required) |
+| 5 | `arrearsCents` wasn't in `required` (it had `default: 0`) | A generated client makes it optional | **Fixed on the backend branch**: required, no default |
+| 1 | No seed data | The fakes' personas don't exist in the real API | Not fixed in 10.1. The app doesn't call the API until Week 11; a dev-only seed of the three personas belongs with that switch. Open |
+| 2 | No endpoint confirms a contribution | `Confirm contributions` has nothing to call | Not fixed in 10.1: the button only shows "coming soon". A new endpoint with its own rules is a feature, not a contract fix. Open |
+| 4 | Statuses and roles are untyped `string` in OpenAPI | Week 11's generated client can't produce enums | Not fixed in 10.1. The app already maps strings to enums with `unknown`, so nothing breaks; declaring enums changes the web client's types too. Open |
+| 6 | Some money is `double` (`contributionAmount`, `targetAmount`, …) | Doubles near money | No change needed: every amount the app reads has a `…Cents` integer twin, and the app reads only those |
+
+What the backend branch changes, with its tests:
+
+- `API/DTOs/Stokvels/StokvelDetailResponse.cs` and `API/Services/StokvelDetailService.cs`: the cycle summary carries the cycle's `Id`.
+- `API/DTOs/Home/HomeResponse.cs`: `ArrearsCents` has no default, so it is required.
+- `openapi/v1.json` regenerated; `web-next/src/lib/schema.d.ts` regenerated, and one web test fixture given the new `id`.
+- Tests: `StokvelDetailTests` asserts the id; a new `OpenApiContractTests.ServedDocument_MarksFieldRequired` theory checks both fields are required in the served document.
+- Run locally (Docker running): `dotnet test` **167 passed, 0 failed**; web `tsc --noEmit` clean, `eslint` clean, Vitest **228 passed**. The API repo's CI runs on pull requests only, so it will run when the PR is opened.
 
 ---
 
@@ -101,6 +109,10 @@ flutter run --flavor prod    --dart-define-from-file=config/prod.json
 
 # Until Week 11's sign-in, pick a persona (default: lerato):
 flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=FAKE_PERSONA=thabo
+
+# Dev only: make the fakes fail. 1 = every call (the failure state stays on screen);
+# 3 = the first call and every third after it (Riverpod's automatic retry recovers).
+flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=FAKE_FAIL_EVERY=1
 ```
 
 ### Flavours and config files
@@ -280,6 +292,7 @@ The same holds for an unknown contribution status or role. An unknown role grant
 | `signedInUserIdProvider` | The signed-in person's id | **keepAlive** | One string | Everything that depends on it rebuilds. It must live for the whole session |
 | `homeRepositoryProvider`, `stokvelRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
 | `lifecycleLogProvider` | A logging function | **keepAlive** | Nothing | Nothing gained |
+| `fakeFailEveryProvider` | One number from `FAKE_FAIL_EVERY` (dev only; Week 11 deletes it) | **keepAlive** | One int | The repositories watch it; rebuilding them would reset the flaky fakes' call count |
 | `homeControllerProvider` | My stokvels, roles and amounts | **autoDispose** | Home is the root screen, so it is watched for the whole session anyway | Only when Home leaves the stack (sign-out), which is exactly when it should go |
 | `stokvelDetailProvider(id)` | One stokvel's cycle and **other members'** names and contributions | **autoDispose** | Memory per stokvel opened; other people's data kept after you leave; it goes stale (a contribution recorded meanwhile wouldn't show) | A refetch and a spinner when the stokvel is reopened, which on a data bundle is a small, honest cost |
 
@@ -319,6 +332,7 @@ flutter test
 | Family: separate state per id, one shared fetch, disposal | `test/features/stokvels/presentation/stokvel_detail_provider_test.dart` |
 | Part 5 frame test | `test/features/stokvels/presentation/stokvel_switch_test.dart` |
 | Architecture boundary | `test/architecture_test.dart` |
+| Flaky fakes: which calls fail, dev-only switch, wrapping in the composition root | `test/core/fakes/fail_every_test.dart`, `test/app/flaky_fakes_test.dart` |
 
 Widget tests swap repositories with `overrideWithValue`, never by editing a provider. Each test puts its `ProviderScope` directly inside `tester.pumpWidget(…)`. Failure tests pass `retry: (retryCount, error) => null`.
 
@@ -330,16 +344,44 @@ Run locally on 2026‑11‑11 (Windows, Flutter 3.47.7, Dart 3.13.5):
 
 | Check | Result |
 |---|---|
-| `flutter pub get` | Resolved; every package at least two weeks old |
+| `flutter pub get --enforce-lockfile` | Resolved; every package pinned exactly and at least two weeks old |
 | `dart format --output=none --set-exit-if-changed lib test` | 0 changed |
-| `dart run build_runner build` | Built |
+| `dart run build_runner build` | Built; `git diff` on generated files empty |
 | `dart analyze --fatal-infos` | No issues found |
-| `flutter test` | **130 passed**, 0 failed |
+| `flutter test` | **139 passed**, 0 failed |
+| `flutter build apk --debug --flavor dev / staging / prod` | All three built and installed side by side (AGP 9 manifest-placeholder flavours work) |
 
-**Still to do by hand** (they need GitHub Actions, an emulator or the API repo):
+**CI on GitHub:** the red run and the green run are in "Lints" above. The app itself (commit `ed72cbf`, pushed to `main`) passed on its own: run [42972190662](https://github.com/mdvar2/RondiTrackApp/actions/runs/42972190662), every step green.
 
-- [ ] The red CI run (the riverpod_lint mistake on a pull request) and the green run, linked in the PR
-- [ ] Emulator screenshots: launcher with all three flavours; Home as Lerato; Home as Thabo (empty); Mabena Family (Treasurer); Soweto Teachers (Member); a failure state
-- [ ] A screen recording of the Part 5 stokvel switch
-- [ ] The backend pull request(s) for the gaps in "Contract notes"
-- [ ] A first `flutter build apk --flavor dev` to confirm the AGP 9 manifest-placeholder flavours
+### Emulator evidence
+
+Android emulator (Pixel 7 profile, Android 37.1, debug builds), in [`docs/evidence/`](docs/evidence/):
+
+| What | File |
+|---|---|
+| Launcher with all three flavours installed (RondiTrack, RondiTrack Dev, RondiTrack Staging; the launcher shortens long labels) | [`01-launcher-flavours.png`](docs/evidence/01-launcher-flavours.png), plus [`01-installed-packages.txt`](docs/evidence/01-installed-packages.txt) |
+| Home as Lerato (Treasurer of one stokvel, Member of the other) | [`02-home-lerato.png`](docs/evidence/02-home-lerato.png) |
+| Home as Thabo (no stokvels): the empty state | [`03-home-thabo-empty.png`](docs/evidence/03-home-thabo-empty.png) |
+| Mabena Family, where Lerato is Treasurer: treasurer actions shown | [`04-stokvel-treasurer.png`](docs/evidence/04-stokvel-treasurer.png) |
+| Soweto Teachers, where Lerato is Member: no treasurer actions | [`05-stokvel-member.png`](docs/evidence/05-stokvel-member.png) |
+| A failure state, with Try again (`FAKE_FAIL_EVERY=1`) | [`06-failure-home.png`](docs/evidence/06-failure-home.png) |
+| Mid-switch: "Loading Soweto Teachers…", none of Mabena's data under Soweto's name | [`06a-switch-loading-soweto.png`](docs/evidence/06a-switch-loading-soweto.png) |
+| Screen recording of the Part 5 switch (Mabena Family → slow Soweto Teachers) | [`07-stokvel-switch.mp4`](docs/evidence/07-stokvel-switch.mp4) |
+| Disposal on the device: Mabena's provider is disposed when the switch leaves it | [`08-disposal-logcat.txt`](docs/evidence/08-disposal-logcat.txt) |
+
+The device log of that switch (ids only, no names or amounts):
+
+```
+I flutter : [lifecycle] stokvelDetail created id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
+I flutter : [lifecycle] stokvelDetail created id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102
+I flutter : [lifecycle] stokvelDetail disposed id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
+```
+
+What the phone showed that the tests don't: with `FAKE_FAIL_EVERY=3`, Home never showed its failure state. The first call failed, and Riverpod 3's automatic retry (call 2) succeeded within a moment. The failure screenshot therefore uses `1`.
+
+### Still open
+
+- [ ] Open the backend pull request (link above) and link it here and in the app PR.
+- [ ] Open the "Assignment 10.1: Foundations and State" pull request with the screenshots, the recording and the CI links in its description, and wait for its green run.
+- [ ] Gaps 1, 2 and 4 in "Contract notes" are open, with reasons.
+- [ ] iOS flavours (needs Xcode on a Mac).

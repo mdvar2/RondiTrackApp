@@ -8,8 +8,7 @@ class FakeNetworkException implements Exception {
 }
 
 /// Decides which calls a flaky fake fails: the first, then every [every]th
-/// one after it. With 3, calls 1, 4, 7… fail, so a screen opens on its
-/// failure state and its retry works.
+/// one after it. With 3, calls 1, 4, 7… fail; with 1, every call fails.
 class FailEvery {
   /// Creates the counter. [every] must be at least 1; 1 fails every call.
   new(this.every) : assert(every >= 1, 'every must be at least 1');
