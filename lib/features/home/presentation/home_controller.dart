@@ -10,6 +10,9 @@ part 'home_controller.g.dart';
 /// Lifetime: autoDispose. See README "Provider lifetimes".
 @riverpod
 class HomeController extends _$HomeController {
+  /// How many times Home was refreshed.
+  int refreshCount = 0;
+
   @override
   Future<List<HomeEntry>> build() =>
       ref.watch(homeRepositoryProvider).fetchHome();
