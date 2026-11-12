@@ -2,10 +2,34 @@
 
 The RondiTrack phone app (Flutter, Android and iOS). It shows each person their stokvels, what they've paid and owe, and what they can do in each stokvel, given their role there.
 
-This is Week 10 (Assignment 10.1): foundations and state. **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
+This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (every screen has an address). **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
 
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
 - API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`3d04a52`](https://github.com/mdvar2/RondiTrack/commit/3d04a5238c72b0b3e1742a1067170a20ae13e97a) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `7292b744…4a0dc3`)
+
+---
+
+## Routes
+
+Every screen has an address. Four tabs (**Home**, **Stokvels**, **Activity**, **Profile**) each keep their own stack. `:id` and `:cycleId` are API ids (UUIDs); `:code` is an invite code such as `MABENA26`.
+
+| Address | Screen and tab | Signed out | Not a member | Back goes to |
+|---|---|---|---|---|
+| `/` | Home: one card per stokvel I'm in. **Home** tab | Sign-in, then Home | Not applicable: Home lists only my stokvels | Leaves the app |
+| `/stokvels` | My stokvels, a list (840 dp or wider: the list beside an empty detail pane). **Stokvels** tab | Sign-in, then `/stokvels` | Not applicable: lists only my stokvels | Home tab (`/`) |
+| `/stokvels/:id` | One stokvel: current cycle, what I can do there (from my role in *this* stokvel), contributions. 840 dp or wider: list and detail side by side. **Stokvels** tab | Sign-in, then this stokvel | **"We couldn't find that stokvel."**, word for word what an id that doesn't exist shows | `/stokvels`, also after a cold start |
+| `/stokvels/:id/cycles/:cycleId` | One cycle: progress and its contributions. **Stokvels** tab | Sign-in, then this cycle | **"We couldn't find that cycle."**, the same for a cycle that doesn't exist, a cycle of another stokvel, and a cycle of a stokvel I'm not in | `/stokvels/:id`, then `/stokvels`, also after a cold start |
+| `/activity` | Activity across my stokvels, newest first. **Activity** tab | Sign-in, then Activity | Not applicable: only my stokvels' activity | Home tab (`/`) |
+| `/profile` | Who is signed in, and **Sign out**. **Profile** tab | Sign-in, then Profile | Not applicable | Home tab (`/`) |
+| `/join/:code` | An invite's preview, then **Join**. **Home** tab | Sign-in, then **this invite's preview** (remembered across sign-in) | Not applicable: an invite is how a non-member joins. An unknown code shows "We couldn't find that invite." | Home (`/`), also after a cold start |
+| `/sign-in` | Fake sign-in by email. No tabs | Shown | Not applicable | Leaves the app. Signing out empties the history, so back can't reach a signed-in screen |
+
+- **Signed in, opening `/sign-in`:** goes to the remembered address if there is one, otherwise Home.
+- **Any other address** (one this table doesn't list): Home when signed in; sign-in, then Home, when signed out. It is never remembered.
+- **Tapping the tab you're on** takes that tab back to its first screen (`/stokvels` from a cycle, say). On the first screen it does nothing. A tab tap is "take me to the top of this section", as Android's own apps do; doing nothing would leave a deep stack hard to escape.
+- **Leaving a tab and coming back** returns to the same screen, scrolled where you left it.
+- **Home's cards** open `/stokvels/:id` on the Stokvels tab, so a stokvel has one address and back from it is the list. **Activity's items** open `/stokvels/:id/cycles/:cycleId`.
+- **Switching stokvel** (the picker on a phone, the list on a tablet) changes the address to `/stokvels/:otherId`.
 
 ---
 
