@@ -161,7 +161,7 @@ The project uses **AGP 9.1.0**, where `resValue` is off by default. So each flav
 
 ### Dependencies
 
-Every version is exact (no `^`) and was at least two weeks old when checked on 2026‑11‑11 (cutoff 2026‑10‑28), transitive ones included. `pubspec.lock` is committed.
+Every version is exact (no `^`) and was at least two weeks old when checked, transitive ones included: on 2026‑11‑11 for 10.1 (cutoff 2026‑10‑28), and on 2026‑11‑12 for the packages 10.2 added (cutoff 2026‑10‑29). Dates are from `https://pub.dev/api/packages/<name>`. `pubspec.lock` is committed, and CI installs with `flutter pub get --enforce-lockfile`.
 
 | Package | Version | Published | Note |
 |---|---|---|---|
@@ -172,6 +172,10 @@ Every version is exact (no `^`) and was at least two weeks old when checked on 2
 | very_good_analysis | 11.0.0 | 2026‑09‑03 | |
 | analyzer | 14.6.0 | 2026‑10‑20 | Pinned as a dev dependency only to hold the analyser stack back: 14.7.0 (and `_fe_analyzer_shared` 111, `analyzer_plugin` 0.14.20, `analysis_server_plugin` 0.3.26) were published 2026‑10‑29 |
 | cupertino_icons | 1.0.9 | 2026‑03‑25 | |
+| go_router | 18.1.1 | 2026‑10‑20 | Added in 10.2. 18.1.4 (2026‑11‑09) is too new |
+| go_router_builder | 4.5.2 | 2026‑10‑19 | Added in 10.2, a dev dependency. 4.5.3 (2026‑10‑30) is too new. Accepts the held-back analyzer 14.6.0 (`>=8.2.0 <15.0.0`) |
+| material_ui / cupertino_ui | 1.8.0 / 1.1.4 | 2026‑10‑20 | Added in 10.2, not imported: go_router 18.1.1 depends on `^1.0.0` of each, and the newest (1.11.0 of 2026‑11‑09, 1.1.6 of 2026‑11‑03) are too new, so both are pinned |
+| source_helper, intl (transitive) | 1.4.0, 0.20.3 | 2026‑10‑19, 2026‑06‑25 | Brought in by go_router_builder and material_ui |
 
 `flutter_lints` was removed, because very_good_analysis replaces it.
 

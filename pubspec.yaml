@@ -10,12 +10,18 @@ environment:
   sdk: ">=3.13.5 <4.0.0"
   flutter: 3.47.7
 
+# cupertino_ui and material_ui are not imported. go_router 18.1.1 accepts any
+# 1.x of them, and the newest (1.1.6 and 1.11.0) are under two weeks old, so
+# they are pinned to the releases from go_router 18.1.1's week (2026-10-20).
 dependencies:
   cupertino_icons: 1.0.9
+  cupertino_ui: 1.1.4
   flutter:
     sdk: flutter
   flutter_riverpod: 3.4.3
   freezed_annotation: 3.1.0
+  go_router: 18.1.1
+  material_ui: 1.8.0
   riverpod_annotation: 4.0.7
 
 dev_dependencies:
@@ -28,6 +34,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   freezed: 4.0.3
+  go_router_builder: 4.5.2
   riverpod_generator: 4.0.9
   riverpod_lint: 3.1.9
   very_good_analysis: 11.0.0
