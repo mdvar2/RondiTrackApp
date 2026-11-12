@@ -56,9 +56,9 @@ This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (ev
 
 | | What it delivered | Where to read about it |
 |---|---|---|
-| **Assignment 10.1**: foundations and state | Three flavours with validated config; the domain (money in cents, date-only due dates, statuses with an `unknown` fallback, roles per stokvel); three seed personas on fake repositories; Riverpod state with deliberate lifetimes; strict lints and CI | [Part 2](#part-2-getting-started), [Part 3](#part-3-how-the-code-is-organised), [Part 4](#part-4-state-and-provider-lifetimes), [Part 6](#part-6-domain-rules), [Part 7](#part-7-the-api-contract) |
-| **Assignment 10.2**: every screen has an address | Four tabs that keep their place; typed routes for every screen; a fake sign-in and one testable gate; deep links per flavour; a Material 3 light and dark design system with measured contrast; phone and tablet layouts | [Part 1](#part-1-navigation-every-screen-has-an-address), [Part 5](#part-5-look-and-layout) |
-| **Checks** | 268 tests passing (139 of them from 10.1); `dart analyze --fatal-infos` clean; CI green on `main` | [Part 8](#part-8-tests-ci-and-evidence) |
+| **Assignment 10.1**: foundations and state | Three flavours with validated config;<br>the domain (money in cents, date-only due dates, statuses with an `unknown` fallback, roles per stokvel);<br>three seed personas on fake repositories;<br>Riverpod state with deliberate lifetimes;<br>strict lints and CI | [Part 2](#part-2-getting-started),<br>[Part 3](#part-3-how-the-code-is-organised),<br>[Part 4](#part-4-state-and-provider-lifetimes),<br>[Part 6](#part-6-domain-rules),<br>[Part 7](#part-7-the-api-contract) |
+| **Assignment 10.2**: every screen has an address | Four tabs that keep their place;<br>typed routes for every screen;<br>a fake sign-in and one testable gate;<br>deep links per flavour;<br>a Material 3 light and dark design system with measured contrast;<br>phone and tablet layouts | [Part 1](#part-1-navigation-every-screen-has-an-address),<br>[Part 5](#part-5-look-and-layout) |
+| **Checks** | 268 tests passing (139 of them from 10.1);<br>`dart analyze --fatal-infos` clean;<br>CI green on `main` | [Part 8](#part-8-tests-ci-and-evidence) |
 
 ---
 
@@ -309,7 +309,7 @@ Every version is exact (no `^`) and was at least two weeks old when checked, tra
 >
 > **Why.** Screens only know the interfaces, and exactly one file, [`providers.dart`](lib/app/providers.dart) (the *composition root*), decides which implementation is used. So Week 11 can swap every fake for the real API by editing that one file, without touching a screen.
 
-```
+```text
 lib/
   app/          composition root: app.dart (MaterialApp.router), providers.dart (names every implementation)
     router/     routes.dart (typed routes), redirect.dart (the gate), router.dart, app_shell.dart (bar or rail)
@@ -350,7 +350,7 @@ The CI order works with this choice: format check (hand-written files only) → 
 
 `flutter analyze` doesn't run analyser plugins. Only `dart analyze` does. Verified locally by adding a public field to `HomeController` (`int refreshCount = 0;`):
 
-```
+```text
 $ dart analyze --fatal-infos
    info - lib\features\home\presentation\home_controller.dart:13:3 - Notifiers should not have public
           properties/getters. Instead, all their public API should be exposed through the `state`
@@ -374,7 +374,7 @@ A CI step running `flutter analyze` would have passed that mistake. This CI runs
 
 The red run's annotation (public on the run's summary page):
 
-```
+```text
 lib/features/home/presentation/home_controller.dart line 13 · avoid_public_notifier_properties
 Notifiers should not have public properties/getters. Instead, all their public API should be
 exposed through the `state` property.
@@ -406,8 +406,8 @@ The Analyse step writes each finding as a GitHub annotation, so it shows on the 
 | `authControllerProvider` | Who is signed in (`SignedOut` or `SignedIn`) | **keepAlive** | One small object | It *is* the session: disposing it would sign the person out |
 | `signedInUserIdProvider` | The signed-in person's id, `null` when signed out (follows `authControllerProvider`) | **keepAlive** | One string | Everything that depends on it rebuilds. It must live for the whole session |
 | `routerProvider` | The `GoRouter`, which owns every tab's stack | **keepAlive**, built once | One router | Every tab would lose its place. It *listens* to the auth state rather than watching it, so it is never rebuilt |
-| `authRepositoryProvider`, `homeRepositoryProvider`, `stokvelRepositoryProvider`, `activityRepositoryProvider`, `inviteRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
-| `fakeStokvelsProvider`, `fakeDelayProvider`, `demoAccountsProvider` | The fakes' changeable seed copy (a join lands here), their delay, the sign-in page's test accounts. Week 11 deletes them | **keepAlive** | Kilobytes | A join would be forgotten: the fake "server" must outlive screens |
+| `authRepositoryProvider`,<br>`homeRepositoryProvider`,<br>`stokvelRepositoryProvider`,<br>`activityRepositoryProvider`,<br>`inviteRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
+| `fakeStokvelsProvider`,<br>`fakeDelayProvider`,<br>`demoAccountsProvider` | The fakes' changeable seed copy (a join lands here), their delay, the sign-in page's test accounts. Week 11 deletes them | **keepAlive** | Kilobytes | A join would be forgotten: the fake "server" must outlive screens |
 | `lifecycleLogProvider` | A logging function | **keepAlive** | Nothing | Nothing gained |
 | `fakeFailEveryProvider` | One number from `FAKE_FAIL_EVERY` (dev only; Week 11 deletes it) | **keepAlive** | One int | The repositories watch it; rebuilding them would reset the flaky fakes' call count |
 | `homeControllerProvider` | My stokvels, roles and amounts | **autoDispose** | Home is the root screen, so it is watched for the whole session anyway | Only when Home leaves the stack (sign-out), which is exactly when it should go |
@@ -420,7 +420,7 @@ The Analyse step writes each finding as a GitHub annotation, so it shows on the 
 
 **Disposal is proven** in [`stokvel_detail_provider_test.dart`](test/features/stokvels/presentation/stokvel_detail_provider_test.dart). When the last listener closes, `container.exists(stokvelDetailProvider(id))` becomes false, and the log is exactly:
 
-```
+```text
 stokvelDetail created id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
 stokvelDetail disposed id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
 ```
@@ -536,7 +536,7 @@ Treasurer and Chairperson are equal, because both pass the API's `StokvelManage`
 
 Verified by adding `suspended('Suspended')` to `CycleStatus` and running `dart analyze`. The change was reverted afterwards:
 
-```
+```text
 $ dart analyze
   error - lib\features\stokvels\domain\status_labels.dart:8:48 - The type 'CycleStatus' isn't
           exhaustively matched by the switch cases since it doesn't match the pattern
@@ -733,7 +733,7 @@ Android emulator (Pixel 7 profile, Android 37.1, debug builds), in [`docs/eviden
 
 The device log of that switch (ids only, no names or amounts):
 
-```
+```text
 I flutter : [lifecycle] stokvelDetail created id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
 I flutter : [lifecycle] stokvelDetail created id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102
 I flutter : [lifecycle] stokvelDetail disposed id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
@@ -764,8 +764,8 @@ Same emulator, debug builds, in [`docs/evidence/10.2/`](docs/evidence/10.2/). Th
 | A stokvel (Mabena Family, Lerato as Treasurer), light and dark | [`02-stokvel-light.png`](docs/evidence/10.2/02-stokvel-light.png), [`04-stokvel-dark.png`](docs/evidence/10.2/04-stokvel-dark.png) |
 | The non-member's "not found": Thabo opens a link to Mabena Family | [`05-non-member-not-found.png`](docs/evidence/10.2/05-non-member-not-found.png) |
 | Recording: cold-start link to a cycle, through sign-in, then back to the stokvel, the list and Home, with the app still open | [`06-cold-start-cycle-link-then-back.mp4`](docs/evidence/10.2/06-cold-start-cycle-link-then-back.mp4) |
-| Recording: `/join/MABENA26` opened signed out, through sign-in, to the invite, then Join | [`07-join-link-signed-out-to-invite.mp4`](docs/evidence/10.2/07-join-link-signed-out-to-invite.mp4), with the result in [`07a-joined-mabena-as-member.png`](docs/evidence/10.2/07a-joined-mabena-as-member.png) (Thabo, Member: Pay only) |
-| 360 dp, text at 200%: Home, the stokvel list, a stokvel (top and scrolled to its actions) | [`08-home-360dp-200pct.png`](docs/evidence/10.2/08-home-360dp-200pct.png), [`09-stokvel-list-360dp-200pct.png`](docs/evidence/10.2/09-stokvel-list-360dp-200pct.png), [`10-stokvel-360dp-200pct.png`](docs/evidence/10.2/10-stokvel-360dp-200pct.png), [`10b-stokvel-360dp-200pct-scrolled.png`](docs/evidence/10.2/10b-stokvel-360dp-200pct-scrolled.png) |
+| Recording: `/join/MABENA26` opened signed out, through sign-in, to the invite, then Join | [`07-join-link-signed-out-to-invite.mp4`](docs/evidence/10.2/07-join-link-signed-out-to-invite.mp4),<br>with the result in [`07a-joined-mabena-as-member.png`](docs/evidence/10.2/07a-joined-mabena-as-member.png) (Thabo,<br>Member: Pay only) |
+| 360 dp, text at 200%: Home, the stokvel list, a stokvel (top and scrolled to its actions) | [`08-home-360dp-200pct.png`](docs/evidence/10.2/08-home-360dp-200pct.png),<br>[`09-stokvel-list-360dp-200pct.png`](docs/evidence/10.2/09-stokvel-list-360dp-200pct.png),<br>[`10-stokvel-360dp-200pct.png`](docs/evidence/10.2/10-stokvel-360dp-200pct.png),<br>[`10b-stokvel-360dp-200pct-scrolled.png`](docs/evidence/10.2/10b-stokvel-360dp-200pct-scrolled.png) |
 | Tablet on its side: list and detail side by side | [`11-tablet-landscape-list-detail.png`](docs/evidence/10.2/11-tablet-landscape-list-detail.png) |
 | Tablet upright: the same stokvel, one pane | [`12-tablet-portrait-same-stokvel.png`](docs/evidence/10.2/12-tablet-portrait-same-stokvel.png) |
 
