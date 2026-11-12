@@ -66,7 +66,12 @@ class StokvelListScreen extends ConsumerWidget {
     void retry() => ref.invalidate(homeControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My stokvels')),
+      // No back arrow: on a phone the list is the tab's first screen, and on
+      // a tablet the detail pane beside it has the one back arrow.
+      appBar: AppBar(
+        title: const Text('My stokvels'),
+        automaticallyImplyLeading: false,
+      ),
       body: switch (view) {
         ViewLoading() => const Center(
           key: Key('stokvels-loading'),

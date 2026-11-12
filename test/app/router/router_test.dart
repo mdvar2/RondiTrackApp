@@ -306,6 +306,20 @@ void main() {
       expect(find.byType(HomeStokvelCard), findsNWidgets(2));
     });
 
+    for (final tab in ['/stokvels', '/activity', '/profile']) {
+      testWidgets('the first screen of $tab: back to Home', (tester) async {
+        final app = await pumpApp(
+          tester,
+          as: FakeSeed.lerato,
+          size: phone,
+          coldStart: tab,
+        );
+
+        await pressBack(tester);
+        expect(locationOf(app), '/');
+      });
+    }
+
     testWidgets('an invite link: back to Home', (tester) async {
       final app = await pumpApp(
         tester,
