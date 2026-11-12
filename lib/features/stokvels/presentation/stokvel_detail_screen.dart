@@ -1,38 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/app/router/routes.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
+import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_actions.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/contribution_row.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
 
 /// One stokvel: its current cycle, contributions and what I can do here.
 ///
-/// The app bar's picker switches stokvels. Each id is its own family
-/// member, so the moment the picker changes, the screen shows the new
-/// stokvel loading, never the old one's contributions.
-class StokvelDetailScreen extends ConsumerStatefulWidget {
-  /// Opens the screen on [initialStokvelId].
-  const new({required this.initialStokvelId, super.key});
+/// The stokvel comes from the address (`/stokvels/:id`). On a phone the app
+/// bar's picker switches stokvels by going to the other stokvel's address.
+/// Each id is its own family member, so the moment the address changes,
+/// the screen shows the new stokvel loading, never the old one's
+/// contributions.
+class StokvelDetailScreen extends ConsumerWidget {
+  /// Shows stokvel [stokvelId]. [showPicker] is false beside the tablet's
+  /// list, which does the picking there.
+  const new({required this.stokvelId, this.showPicker = true, super.key});
 
-  /// The stokvel to show first.
-  final String initialStokvelId;
+  /// The stokvel, from the address.
+  final String stokvelId;
 
-  @override
-  ConsumerState<StokvelDetailScreen> createState() =>
-      _StokvelDetailScreenState();
-}
-
-class _StokvelDetailScreenState extends ConsumerState<StokvelDetailScreen> {
-  late String _stokvelId = widget.initialStokvelId;
+  /// Whether the app bar offers the other stokvels.
+  final bool showPicker;
 
   @override
-  Widget build(BuildContext context) {
-    final stokvelId = _stokvelId;
+  Widget build(BuildContext context, WidgetRef ref) {
     final myStokvels = ref.watch(homeControllerProvider).value ?? const [];
     final pickerEntry = myStokvels
         .where((entry) => entry.stokvelId == stokvelId)
@@ -46,8 +47,8 @@ class _StokvelDetailScreenState extends ConsumerState<StokvelDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: pickerEntry == null
-            ? const Text('Stokvel')
+        title: !showPicker || pickerEntry == null
+            ? Text(pickerEntry?.stokvelName ?? 'Stokvel')
             : DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   key: const Key('stokvel-picker'),
@@ -64,7 +65,9 @@ class _StokvelDetailScreenState extends ConsumerState<StokvelDetailScreen> {
                       ),
                   ],
                   onChanged: (id) {
-                    if (id != null) setState(() => _stokvelId = id);
+                    if (id != null && id != stokvelId) {
+                      StokvelRoute(id: id).go(context);
+                    }
                   },
                 ),
               ),
@@ -81,7 +84,7 @@ class _StokvelDetailScreenState extends ConsumerState<StokvelDetailScreen> {
             ],
           ),
         ),
-        ViewEmpty() => _Message(
+        ViewEmpty() => MessagePanel(
           key: const Key('stokvel-empty'),
           title: 'No open cycle',
           body:
@@ -92,16 +95,17 @@ class _StokvelDetailScreenState extends ConsumerState<StokvelDetailScreen> {
             child: const Text('Refresh'),
           ),
         ),
-        ViewFailure(:final message) => _Message(
+        ViewFailure(:final message) => MessagePanel(
           key: const Key('stokvel-failure'),
           title: message,
           action: Wrap(
             spacing: 8,
+            runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
               FilledButton(onPressed: retry, child: const Text('Try again')),
               OutlinedButton(
-                onPressed: () => Navigator.of(context).maybePop(),
+                onPressed: () => const StokvelsRoute().go(context),
                 child: const Text('Back to my stokvels'),
               ),
             ],
@@ -139,6 +143,7 @@ class _StokvelBody extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
+        key: PageStorageKey('stokvel-list-${detail.stokvel.id}'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
@@ -149,26 +154,48 @@ class _StokvelBody extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cycle ${cycle.period}: ${cycleStatusLabel(cycle.status)}',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  if (dueDate != null)
-                    Text('Due ${formatCalendarDate(dueDate)}'),
-                  Text(
-                    '${cycle.membersPaid} of ${detail.stokvel.memberCount} '
-                    'members paid',
-                  ),
-                  Text(
-                    'Collected ${formatRand(cycle.collected)} of '
-                    '${formatRand(cycle.target)}',
-                  ),
-                ],
+            child: InkWell(
+              key: Key('open-cycle-${cycle.id}'),
+              onTap: () => CycleRoute(
+                id: detail.stokvel.id,
+                cycleId: cycle.id,
+              ).go(context),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Cycle ${cycle.period}',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        CycleStatusChip(cycle.status),
+                      ],
+                    ),
+                    if (dueDate != null)
+                      Text('Due ${formatCalendarDate(dueDate)}'),
+                    Text(
+                      '${cycle.membersPaid} of ${detail.stokvel.memberCount} '
+                      'members paid',
+                    ),
+                    Text(
+                      'Collected ${formatRand(cycle.collected)} of '
+                      '${formatRand(cycle.target)}',
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'View this cycle',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -206,55 +233,8 @@ class _StokvelBody extends StatelessWidget {
               child: Text('Nobody has paid in this cycle yet.'),
             ),
           for (final contribution in detail.contributions)
-            ListTile(
-              key: Key('contribution-${contribution.id}'),
-              contentPadding: EdgeInsets.zero,
-              title: Text(contribution.memberName),
-              subtitle: Text(stokvelRoleLabel(contribution.memberRole)),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(formatRand(contribution.amount)),
-                  Text(contributionStatusLabel(contribution.status)),
-                ],
-              ),
-            ),
+            ContributionRow(contribution: contribution),
         ],
-      ),
-    );
-  }
-}
-
-class _Message extends StatelessWidget {
-  const new({required this.title, required this.action, this.body, super.key});
-
-  final String title;
-  final String? body;
-  final Widget action;
-
-  @override
-  Widget build(BuildContext context) {
-    final body = this.body;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            if (body != null) ...[
-              const SizedBox(height: 8),
-              Text(body, textAlign: TextAlign.center),
-            ],
-            const SizedBox(height: 16),
-            action,
-          ],
-        ),
       ),
     );
   }

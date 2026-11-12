@@ -53,6 +53,10 @@ class CountingStokvelRepository implements StokvelRepository {
     }
     return await inner.fetchStokvel(stokvelId);
   }
+
+  @override
+  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) =>
+      inner.fetchCycle(stokvelId, cycleId);
 }
 
 /// A stokvel repository that never answers, for the loading state.
@@ -60,4 +64,8 @@ class PendingStokvelRepository implements StokvelRepository {
   @override
   Future<StokvelDetail> fetchStokvel(String stokvelId) =>
       Completer<StokvelDetail>().future;
+
+  @override
+  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) =>
+      Completer<CycleDetail>().future;
 }

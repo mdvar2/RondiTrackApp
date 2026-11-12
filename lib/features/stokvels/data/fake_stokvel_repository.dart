@@ -21,8 +21,9 @@ class FakeStokvelRepository implements StokvelRepository {
     List<FakeStokvel>? stokvels,
   }) : _stokvels = stokvels ?? FakeSeed.stokvels;
 
-  /// The signed-in person.
-  final String userId;
+  /// The signed-in person, `null` when nobody is: every stokvel is then
+  /// not found.
+  final String? userId;
 
   /// The pretend network delay for every call.
   final Duration delay;
@@ -49,5 +50,25 @@ class FakeStokvelRepository implements StokvelRepository {
       );
     }
     throw const StokvelNotFoundException();
+  }
+
+  @override
+  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) async {
+    await Future<void>.delayed(delay + (slowStokvels[stokvelId] ?? .zero));
+
+    for (final entry in _stokvels) {
+      if (entry.stokvel.id != stokvelId) continue;
+      final cycle = entry.cycle;
+      // Not a member, or a cycle of another stokvel: the same answer as a
+      // cycle that doesn't exist.
+      if (entry.roles[userId] == null || cycle == null) break;
+      if (cycle.id != cycleId) break;
+      return CycleDetail(
+        stokvel: entry.stokvel,
+        cycle: cycle,
+        contributions: List.unmodifiable(entry.contributions),
+      );
+    }
+    throw const CycleNotFoundException();
   }
 }

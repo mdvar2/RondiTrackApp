@@ -18,8 +18,8 @@ class FakeHomeRepository implements HomeRepository {
     List<FakeStokvel>? stokvels,
   }) : _stokvels = stokvels ?? FakeSeed.stokvels;
 
-  /// The signed-in person.
-  final String userId;
+  /// The signed-in person, `null` when nobody is: Home is then empty.
+  final String? userId;
 
   /// The pretend network delay.
   final Duration delay;

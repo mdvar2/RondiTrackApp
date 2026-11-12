@@ -20,4 +20,12 @@ class FlakyStokvelRepository implements StokvelRepository {
     if (fails) throw const FakeNetworkException();
     return detail;
   }
+
+  @override
+  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) async {
+    final fails = _failures.next();
+    final detail = await _inner.fetchCycle(stokvelId, cycleId);
+    if (fails) throw const FakeNetworkException();
+    return detail;
+  }
 }

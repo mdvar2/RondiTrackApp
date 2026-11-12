@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/app.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
-import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
+import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
+
+import 'helpers/app_harness.dart';
 
 void main() {
   for (final (environment, appName, apiBaseUrl) in [
@@ -23,14 +25,13 @@ void main() {
         nativeFlavor: environment,
       );
 
+      // Since 10.2 the app opens behind the gate, so Lerato is signed in.
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            homeRepositoryProvider.overrideWithValue(
-              FakeHomeRepository(
-                userId: FakeSeed.lerato.id,
-                delay: Duration.zero,
-              ),
+            fakeDelayProvider.overrideWithValue(Duration.zero),
+            authControllerProvider.overrideWith(
+              () => StartingAuthController(signedInAs(FakeSeed.lerato)),
             ),
           ],
           child: RondiTrackApp(config: config),
@@ -43,4 +44,11 @@ void main() {
       expect(find.byType(HomeStokvelCard), findsNWidgets(2));
     });
   }
+
+  testWidgets('signed out, the app opens on sign-in', (tester) async {
+    await pumpApp(tester);
+
+    expect(find.widgetWithText(AppBar, 'Sign in'), findsOneWidget);
+    expect(find.byType(HomeStokvelCard), findsNothing);
+  });
 }

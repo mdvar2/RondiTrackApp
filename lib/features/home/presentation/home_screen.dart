@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/core/money/cents.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
+import 'package:ronditrack_app/core/theme/status_chip.dart';
+import 'package:ronditrack_app/core/theme/status_colors.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
-import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
 
 /// Home: one card per stokvel the signed-in person belongs to.
 class HomeScreen extends ConsumerWidget {
@@ -68,6 +72,7 @@ class _HomeList extends StatelessWidget {
           child: RefreshIndicator(
             onRefresh: onRefresh,
             child: ListView.builder(
+              key: const PageStorageKey('home-list'),
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(12),
               itemCount: entries.length,
@@ -82,7 +87,8 @@ class _HomeList extends StatelessWidget {
 }
 
 /// One stokvel on Home: its name, my role there, paid, owed, arrears and
-/// the next payout, all as the API sent them.
+/// the next payout, all as the API sent them. Tapping it opens the stokvel
+/// at its address, `/stokvels/:id`, on the Stokvels tab.
 class HomeStokvelCard extends StatelessWidget {
   /// Creates the card.
   const new({required this.entry, super.key});
@@ -100,41 +106,50 @@ class HomeStokvelCard extends StatelessWidget {
     return Card(
       key: Key('home-card-${entry.stokvelId}'),
       child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                StokvelDetailScreen(initialStokvelId: entry.stokvelId),
-          ),
-        ),
+        onTap: () => StokvelRoute(id: entry.stokvelId).go(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              // A Wrap, so with large text the role drops under the name
+              // instead of pushing past the card's edge.
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Expanded(
-                    child: Text(
-                      entry.stokvelName,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
+                  Text(entry.stokvelName, style: theme.textTheme.titleMedium),
                   Chip(label: Text(stokvelRoleLabel(entry.membership.role))),
                 ],
               ),
-              Text(
-                cycle == null
-                    ? 'No cycle this month'
-                    : [
-                        '${cycle.period}: ${cycleStatusLabel(cycle.status)}',
-                        if (dueDate != null)
-                          'due ${formatCalendarDate(dueDate)}',
-                      ].join(', '),
-              ),
+              const SizedBox(height: 4),
+              if (cycle == null)
+                const Text('No cycle this month')
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('Cycle ${cycle.period}'),
+                    CycleStatusChip(cycle.status),
+                    if (dueDate != null)
+                      Text('due ${formatCalendarDate(dueDate)}'),
+                  ],
+                ),
               const SizedBox(height: 8),
               _Figure(label: 'Paid', value: formatRand(entry.amountPaid)),
               _Figure(label: 'Owed', value: formatRand(entry.amountOwed)),
               _Figure(label: 'Arrears', value: formatRand(entry.arrears)),
+              if (entry.arrears > Cents.zero)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: StatusChip(
+                    label: 'In arrears',
+                    token: StatusToken.arrears,
+                  ),
+                ),
               _Figure(
                 label: 'Next payout',
                 value: nextPayout == null
@@ -159,10 +174,14 @@ class _Figure extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
+      // With large text, the label and figure share the row, each wrapping
+      // in its own half rather than overflowing.
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(child: Text(label)),
-          Text(value),
+          const SizedBox(width: 8),
+          Flexible(child: Text(value, textAlign: TextAlign.end)),
         ],
       ),
     );

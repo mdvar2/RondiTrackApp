@@ -2,10 +2,142 @@
 
 The RondiTrack phone app (Flutter, Android and iOS). It shows each person their stokvels, what they've paid and owe, and what they can do in each stokvel, given their role there.
 
-This is Week 10 (Assignment 10.1): foundations and state. **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
+This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (every screen has an address). **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
 
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
 - API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`3d04a52`](https://github.com/mdvar2/RondiTrack/commit/3d04a5238c72b0b3e1742a1067170a20ae13e97a) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `7292b744…4a0dc3`)
+
+---
+
+## Routes
+
+Every screen has an address. Four tabs (**Home**, **Stokvels**, **Activity**, **Profile**) each keep their own stack. `:id` and `:cycleId` are API ids (UUIDs); `:code` is an invite code such as `MABENA26`.
+
+| Address | Screen and tab | Signed out | Not a member | Back goes to |
+|---|---|---|---|---|
+| `/` | Home: one card per stokvel I'm in. **Home** tab | Sign-in, then Home | Not applicable: Home lists only my stokvels | Leaves the app |
+| `/stokvels` | My stokvels, a list (840 dp or wider: the list beside an empty detail pane). **Stokvels** tab | Sign-in, then `/stokvels` | Not applicable: lists only my stokvels | Home tab (`/`) |
+| `/stokvels/:id` | One stokvel: current cycle, what I can do there (from my role in *this* stokvel), contributions. 840 dp or wider: list and detail side by side. **Stokvels** tab | Sign-in, then this stokvel | **"We couldn't find that stokvel."**, word for word what an id that doesn't exist shows | `/stokvels`, also after a cold start |
+| `/stokvels/:id/cycles/:cycleId` | One cycle: progress and its contributions. **Stokvels** tab | Sign-in, then this cycle | **"We couldn't find that cycle."**, the same for a cycle that doesn't exist, a cycle of another stokvel, and a cycle of a stokvel I'm not in | `/stokvels/:id`, then `/stokvels`, also after a cold start |
+| `/activity` | Activity across my stokvels, newest first. **Activity** tab | Sign-in, then Activity | Not applicable: only my stokvels' activity | Home tab (`/`) |
+| `/profile` | Who is signed in, and **Sign out**. **Profile** tab | Sign-in, then Profile | Not applicable | Home tab (`/`) |
+| `/join/:code` | An invite's preview, then **Join**. **Home** tab | Sign-in, then **this invite's preview** (remembered across sign-in) | Not applicable: an invite is how a non-member joins. An unknown code shows "We couldn't find that invite." | Home (`/`), also after a cold start |
+| `/sign-in` | Fake sign-in by email. No tabs | Shown | Not applicable | Leaves the app. Signing out empties the history, so back can't reach a signed-in screen |
+
+- **Signed in, opening `/sign-in`:** goes to the remembered address if there is one, otherwise Home.
+- **Any other address** (one this table doesn't list): Home when signed in; sign-in, then Home, when signed out. It is never remembered.
+- **Tapping the tab you're on** takes that tab back to its first screen (`/stokvels` from a cycle, say). On the first screen it does nothing. A tab tap is "take me to the top of this section", as Android's own apps do; doing nothing would leave a deep stack hard to escape.
+- **Leaving a tab and coming back** returns to the same screen, scrolled where you left it.
+- **Home's cards** open `/stokvels/:id` on the Stokvels tab, so a stokvel has one address and back from it is the list. **Activity's items** open `/stokvels/:id/cycles/:cycleId`.
+- **Switching stokvel** (the picker on a phone, the list on a tablet) changes the address to `/stokvels/:otherId`.
+
+---
+
+## The gate
+
+One function decides every navigation: [`redirectFor(auth, location)`](lib/app/router/redirect.dart), pure Dart, with no widget or `BuildContext`. The router calls it on every navigation. It also runs again whenever the auth state changes, without anyone tapping: [`routerProvider`](lib/app/router/router.dart) copies each [`AuthController`](lib/features/auth/presentation/auth_controller.dart) change into a `ValueNotifier` (via `ref.listen`, not `ref.watch`), and that notifier is the router's `refreshListenable`. The router itself is built once, so signing in never throws away the tabs' stacks.
+
+The rules, in order:
+
+| Who | Address | Goes to |
+|---|---|---|
+| Signed out | `/sign-in` | Stays. A `from` that isn't one of the app's own addresses is dropped |
+| Signed out | any address in the Routes table | `/sign-in?from=<that address>`, except Home, which needs no remembering |
+| Signed out | anything else | `/sign-in`, remembering nothing |
+| Signed in | `/sign-in` | The remembered address, or Home |
+| Signed in | an address the Routes table doesn't have | Home |
+| Signed in | anything else | Stays |
+
+**What is remembered across sign-in:** only a path that matches a row of the Routes table (`/join/MABENA26`, `/stokvels/<id>/cycles/<id>`, …): no scheme, no host, no query. `https://evil.example/…`, `//evil.example`, `ronditrack-dev://…`, `javascript:…`, `/admin` and `/sign-in` itself all land on Home. So `/join/:code` opened signed out survives sign-in and lands on the invite's preview, and a remembered address can never point outside the app. [`redirect_test.dart`](test/app/router/redirect_test.dart) tests every rule, plus a no-loop check: every redirect lands where the gate then lets it stay.
+
+**Signing out** (Profile → Sign out) sets the state to signed out. The gate sends the current address to sign-in, and because sign-in is outside the tab shell, the shell and every tab's stack are disposed: back from sign-in leaves the app. Signing out from Profile remembers `/profile`, so the next person to sign in lands on *their* profile, never someone else's data.
+
+**Week 11** replaces [`FakeAuthRepository`](lib/features/auth/data/fake_auth_repository.dart) with `POST /auth/login` behind the same [`AuthRepository`](lib/features/auth/domain/auth_repository.dart). The gate only reads `SignedIn` or `SignedOut`, so it doesn't change.
+
+## Deep links
+
+**Scheme: a custom scheme, one per flavour**, set in [`build.gradle.kts`](android/app/build.gradle.kts) as the `deepLinkScheme` manifest placeholder and used by the VIEW intent filter in [`AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml). The host is always `app`; go_router reads the path. A dev link can only open the dev build, because no other build declares `ronditrack-dev`.
+
+| Flavour | Application id | Link |
+|---|---|---|
+| dev | `za.co.gwinya.ronditrack_app.dev` | `ronditrack-dev://app/<address>` |
+| staging | `za.co.gwinya.ronditrack_app.staging` | `ronditrack-staging://app/<address>` |
+| prod | `za.co.gwinya.ronditrack_app` | `ronditrack://app/<address>` |
+
+Every command starts with `force-stop`, so it tests a **cold start**. Leave out the first line to test a link reaching a running app.
+
+```powershell
+# dev
+adb shell am force-stop za.co.gwinya.ronditrack_app.dev
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack-dev://app/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101" za.co.gwinya.ronditrack_app.dev
+adb shell am force-stop za.co.gwinya.ronditrack_app.dev
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack-dev://app/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201" za.co.gwinya.ronditrack_app.dev
+adb shell am force-stop za.co.gwinya.ronditrack_app.dev
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack-dev://app/join/MABENA26" za.co.gwinya.ronditrack_app.dev
+
+# staging
+adb shell am force-stop za.co.gwinya.ronditrack_app.staging
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack-staging://app/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101" za.co.gwinya.ronditrack_app.staging
+adb shell am force-stop za.co.gwinya.ronditrack_app.staging
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack-staging://app/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201" za.co.gwinya.ronditrack_app.staging
+adb shell am force-stop za.co.gwinya.ronditrack_app.staging
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack-staging://app/join/MABENA26" za.co.gwinya.ronditrack_app.staging
+
+# prod
+adb shell am force-stop za.co.gwinya.ronditrack_app
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack://app/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101" za.co.gwinya.ronditrack_app
+adb shell am force-stop za.co.gwinya.ronditrack_app
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack://app/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201" za.co.gwinya.ronditrack_app
+adb shell am force-stop za.co.gwinya.ronditrack_app
+adb shell am start -W -a android.intent.action.VIEW -d "ronditrack://app/join/MABENA26" za.co.gwinya.ronditrack_app
+```
+
+The ids are Mabena Family and its current cycle. Soweto Teachers is `5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102` (cycle `9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0202`), and the other invite code is `SOWETO26`. The app starts signed out after a cold start, so each link goes through sign-in first, then lands on the linked screen.
+
+**Checked on the emulator (2026-11-12), all three flavours installed side by side:**
+
+- `pm query-activities -a android.intent.action.VIEW -d <scheme>://app/join/MABENA26` resolves `ronditrack-dev` only to `…ronditrack_app.dev`, `ronditrack-staging` only to `…ronditrack_app.staging`, and `ronditrack` only to `za.co.gwinya.ronditrack_app`.
+- Cold start (`LaunchState: COLD`) in each flavour. Dev: a cycle link went through sign-in to the cycle, and back went to the stokvel, the list, then Home, with the app still open (recording 06 below). Dev: `/join/MABENA26` went through sign-in to the invite, then Join (recording 07). Staging and prod: `/join/MABENA26` opened sign-in, and in prod, signing in landed on the invite.
+
+**What an App Link would add.** A verified Android App Link (`https://ronditrack.example/stokvels/…`) needs a domain I control serving `/.well-known/assetlinks.json`, listing each flavour's application id and its signing certificate's SHA-256 fingerprint, plus `android:autoVerify="true"` on an `https` intent filter. Android then opens those links straight in the app, with no chooser. No other app can claim them, as any app could declare `ronditrack://`. And on a phone without the app, the same link opens the website. The free-tools rule gives me no domain, so I haven't added one.
+
+**What the adb test proves, and what it doesn't.** `adb shell am start -d …` proves that the intent filter matches, that each flavour receives only its own scheme, and that the app routes the link, from cold (`LaunchState: COLD`) and while running. It doesn't prove that a link tapped in a messaging app or browser reaches the app: those apps decide what is tappable, and many don't linkify custom schemes. It also proves nothing about App Link verification, which needs the hosted file.
+
+## Theme
+
+**Seed: `#0B6E4F`**, a deep savings green ([`app_theme.dart`](lib/core/theme/app_theme.dart)). Material 3 derives both themes from it with `ColorScheme.fromSeed`, so the dark theme is Material's dark tonal palette, not the light one inverted. The app follows the phone's light or dark setting (`ThemeMode.system`, the default).
+
+**Tokens Material doesn't have** live in [`StatusColors`](lib/core/theme/status_colors.dart), a `ThemeExtension` with a light and a dark tone per token. Widgets ask for a token ("arrears"), never for a colour. [`StatusChip`](lib/core/theme/status_chip.dart) always shows the status in **words**; the colour only helps. [`architecture_test.dart`](test/architecture_test.dart) fails if a `Color(0x…)`, `Colors.…` or `Color.fromARGB/RGBO` appears in any presentation folder or in `lib/app/`.
+
+**Measured, not eyeballed.** Contrast is the WCAG 2.2 ratio, computed by [`contrast_test.dart`](test/core/theme/contrast_test.dart) with Flutter's `Color.computeLuminance` (WCAG relative luminance). The test fails CI if a pair drops below its threshold, and prints this table (`flutter test test/core/theme/contrast_test.dart --plain-name "token table"`). I cross-checked six pairs with an independent Python implementation of the WCAG formula, and they matched to two decimals. Status chips are text on a fill, so they need 4.5:1. The control outline needs 3:1.
+
+| Token | Needs | Light: text / fill | Light ratio | Dark: text / fill | Dark ratio |
+|---|---|---|---|---|---|
+| `cycleOpen` | 4.5:1 | `#001C38` / `#D3E4FF` | 13.33:1 | `#D3E4FF` / `#1F4876` | 7.26:1 |
+| `cycleClosed` | 4.5:1 | `#2E3130` / `#E1E3E1` | 10.18:1 | `#E1E3E1` / `#444746` | 7.28:1 |
+| `cyclePaidOut` | 4.5:1 | `#21005D` / `#EADDFF` | 13.32:1 | `#EADDFF` / `#4F378B` | 7.23:1 |
+| `contributionPending` | 4.5:1 | `#271900` / `#FFDEA8` | 13.27:1 | `#FFDEA8` / `#5B4300` | 7.24:1 |
+| `contributionPaid` | 4.5:1 | `#001E2C` / `#C2E8FF` | 13.32:1 | `#C2E8FF` / `#004C69` | 7.28:1 |
+| `contributionConfirmed` | 4.5:1 | `#00210D` / `#B4F1C0` | 13.31:1 | `#B4F1C0` / `#155234` | 7.12:1 |
+| `arrears` | 4.5:1 | `#410002` / `#FFDAD6` | 13.26:1 | `#FFDAD6` / `#93000A` | 7.24:1 |
+| `unknown` | 4.5:1 | `#1D1A22` / `#E7E0EB` | 13.29:1 | `#E7E0EB` / `#4A4550` | 7.20:1 |
+| `text (onSurface on surface)` | 4.5:1 | `#171D1A` / `#F5FBF5` | 16.30:1 | `#DEE4DE` / `#0F1512` | 14.31:1 |
+| `secondary text (onSurfaceVariant on card)` | 4.5:1 | `#404944` / `#EFF5EF` | 8.42:1 | `#BFC9C2` / `#171D1A` | 10.06:1 |
+| `link text (primary on card)` | 4.5:1 | `#1E6A4F` / `#EFF5EF` | 5.88:1 | `#8CD5B3` / `#171D1A` | 10.01:1 |
+| `selected list row (onSecondaryContainer)` | 4.5:1 | `#354B40` / `#CFE9D9` | 7.31:1 | `#CFE9D9` / `#354B40` | 7.31:1 |
+| `control outline (outline on surface)` | 3.0:1 | `#707973` / `#F5FBF5` | 4.28:1 | `#8A938D` / `#0F1512` | 5.84:1 |
+
+## Layouts
+
+Breakpoints come from the **window's** width, never the device. They are written once, in [`core/layout/window_size.dart`](lib/core/layout/window_size.dart), and nothing asks "is this a tablet?".
+
+| Window width | Class | Navigation | Stokvels tab |
+|---|---|---|---|
+| under 600 dp | compact | Bottom bar, four labelled tabs | One pane: the list at `/stokvels`, the stokvel at `/stokvels/:id` |
+| 600 to 839 dp | medium | Side rail, four labelled tabs (it scrolls if the window is short, as a phone on its side with large text is) | One pane, as compact |
+| 840 dp or wider | expanded | Side rail | **List and detail side by side**, on the same address `/stokvels/:id`; at `/stokvels` the detail pane says "Choose a stokvel" |
+
+The selected stokvel is the one in the address. So turning a tablet upright (expanded to medium) keeps it, and back from it returns to the list. At 360 dp with text at 200%, figures and labels wrap instead of overflowing: the role chip drops under the stokvel's name, an amount and its status chip stack, and every action stays reachable by scrolling. [`layout_test.dart`](test/app/layout_test.dart) fails on any overflow.
 
 ---
 
@@ -81,6 +213,8 @@ Also present, as other members only: Nomsa Mabena (Chairperson of Mabena Family,
 | 2 | No endpoint confirms a contribution | `Confirm contributions` has nothing to call | Not fixed in 10.1: the button only shows "coming soon". A new endpoint with its own rules is a feature, not a contract fix. Open |
 | 4 | Statuses and roles are untyped `string` in OpenAPI | Week 11's generated client can't produce enums | Not fixed in 10.1. The app already maps strings to enums with `unknown`, so nothing breaks; declaring enums changes the web client's types too. Open |
 | 6 | Some money is `double` (`contributionAmount`, `targetAmount`, …) | Doubles near money | No change needed: every amount the app reads has a `…Cents` integer twin, and the app reads only those |
+| 7 | No activity feed endpoint (10.2) | The Activity tab has nothing to call | Open. The fake builds the feed from my stokvels' current-cycle contributions; Week 11 needs `GET /me/activity`, or the app calls each stokvel's contributions |
+| 8 | `InvitePreviewResponse` doesn't say whether I'm already a member (10.2) | The preview must not offer "Join" to a member | Open. The app checks the stokvel against Home's list instead, and the fake's join is idempotent |
 
 What the backend branch changes, with its tests:
 
@@ -107,13 +241,20 @@ flutter run --flavor dev     --dart-define-from-file=config/dev.json
 flutter run --flavor staging --dart-define-from-file=config/staging.json
 flutter run --flavor prod    --dart-define-from-file=config/prod.json
 
-# Until Week 11's sign-in, pick a persona (default: lerato):
-flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=FAKE_PERSONA=thabo
-
 # Dev only: make the fakes fail. 1 = every call (the failure state stays on screen);
 # 3 = the first call and every third after it (Riverpod's automatic retry recovers).
 flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=FAKE_FAIL_EVERY=1
 ```
+
+The app opens on a fake sign-in. Sign in with a seed persona's email, or tap one under "Test accounts":
+
+| Persona | Email | Stokvels |
+|---|---|---|
+| Lerato Mokoena | `lerato@ronditrack.example` | Treasurer of Mabena Family, Member of Soweto Teachers |
+| Sipho Dlamini | `sipho@ronditrack.example` | Member of Mabena Family (in arrears), Chairperson of Soweto Teachers |
+| Thabo Nkosi | `thabo@ronditrack.example` | None: Home's empty state, and the one who joins by invite |
+
+10.1's `--dart-define=FAKE_PERSONA` is gone. A way to start signed in without the gate would be a bypass in every flavour, prod included.
 
 ### Flavours and config files
 
@@ -137,7 +278,7 @@ The project uses **AGP 9.1.0**, where `resValue` is off by default. So each flav
 
 ### Dependencies
 
-Every version is exact (no `^`) and was at least two weeks old when checked on 2026‑11‑11 (cutoff 2026‑10‑28), transitive ones included. `pubspec.lock` is committed.
+Every version is exact (no `^`) and was at least two weeks old when checked, transitive ones included: on 2026‑11‑11 for 10.1 (cutoff 2026‑10‑28), and on 2026‑11‑12 for the packages 10.2 added (cutoff 2026‑10‑29). Dates are from `https://pub.dev/api/packages/<name>`. `pubspec.lock` is committed, and CI installs with `flutter pub get --enforce-lockfile`.
 
 | Package | Version | Published | Note |
 |---|---|---|---|
@@ -148,6 +289,10 @@ Every version is exact (no `^`) and was at least two weeks old when checked on 2
 | very_good_analysis | 11.0.0 | 2026‑09‑03 | |
 | analyzer | 14.6.0 | 2026‑10‑20 | Pinned as a dev dependency only to hold the analyser stack back: 14.7.0 (and `_fe_analyzer_shared` 111, `analyzer_plugin` 0.14.20, `analysis_server_plugin` 0.3.26) were published 2026‑10‑29 |
 | cupertino_icons | 1.0.9 | 2026‑03‑25 | |
+| go_router | 18.1.1 | 2026‑10‑20 | Added in 10.2. 18.1.4 (2026‑11‑09) is too new |
+| go_router_builder | 4.5.2 | 2026‑10‑19 | Added in 10.2, a dev dependency. 4.5.3 (2026‑10‑30) is too new. Accepts the held-back analyzer 14.6.0 (`>=8.2.0 <15.0.0`) |
+| material_ui / cupertino_ui | 1.8.0 / 1.1.4 | 2026‑10‑20 | Added in 10.2, not imported: go_router 18.1.1 depends on `^1.0.0` of each, and the newest (1.11.0 of 2026‑11‑09, 1.1.6 of 2026‑11‑03) are too new, so both are pinned |
+| source_helper, intl (transitive) | 1.4.0, 0.20.3 | 2026‑10‑19, 2026‑06‑25 | Brought in by go_router_builder and material_ui |
 
 `flutter_lints` was removed, because very_good_analysis replaces it.
 
@@ -157,17 +302,23 @@ Every version is exact (no `^`) and was at least two weeks old when checked on 2
 
 ```
 lib/
-  app/          composition root: app.dart (MaterialApp), providers.dart (names every implementation)
-  core/         config/, money/, time/, state/ (sealed ViewState), logging/
+  app/          composition root: app.dart (MaterialApp.router), providers.dart (names every implementation)
+    router/     routes.dart (typed routes), redirect.dart (the gate), router.dart, app_shell.dart (bar or rail)
+  core/         config/, money/, time/, state/ (sealed ViewState), logging/,
+                theme/ (seed, StatusColors, StatusChip), layout/ (WindowSize), widgets/
   features/
+    auth/       domain/ (AuthState, AuthRepository)  data/ (FakeAuthRepository)  presentation/ (sign-in, profile)
     home/       domain/ (HomeEntry, HomeRepository)  data/ (FakeHomeRepository)  presentation/
-    stokvels/   domain/ (enums, Membership, StokvelDetail, actions, StokvelRepository)
-                data/ (fake_seed, FakeStokvelRepository)  presentation/
+    stokvels/   domain/ (enums, Membership, StokvelDetail, CycleDetail, actions, StokvelRepository)
+                data/ (fake_seed, FakeStokvelRepository)  presentation/ (list, detail, cycle)
+    activity/   domain/  data/  presentation/
+    invites/    domain/  data/  presentation/ (the /join/:code preview)
 contract/openapi/v1.json   the API contract copy
 ```
 
 - Repository **interfaces** live in each feature's `domain/`. **Fakes** live in `data/`. **One provider per repository** in [`lib/app/providers.dart`](lib/app/providers.dart) names the implementation; that file is the only one Week 11 changes.
 - No widget imports a fake, a `data/` folder, Dio or Drift. [`architecture_test.dart`](test/architecture_test.dart) enforces it, and checks that only `providers.dart` names a fake.
+- Widgets navigate only with the typed routes in [`routes.dart`](lib/app/router/routes.dart) (`StokvelRoute(id: id).go(context)`). The architecture test fails on a `Navigator.push`, a `MaterialPageRoute`, or a string path in a widget.
 - Every screen renders the sealed [`ViewState`](lib/core/state/view_state.dart) (`ViewLoading`, `ViewEmpty`, `ViewData`, `ViewFailure`) with an exhaustive `switch`.
 
 ## Generated code
@@ -289,12 +440,20 @@ The same holds for an unknown contribution status or role. An unknown role grant
 
 | Provider | Holds | Lifetime | Cost of keeping it on an entry-level phone | Cost of disposing it |
 |---|---|---|---|---|
-| `signedInUserIdProvider` | The signed-in person's id | **keepAlive** | One string | Everything that depends on it rebuilds. It must live for the whole session |
-| `homeRepositoryProvider`, `stokvelRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
+| `authControllerProvider` | Who is signed in (`SignedOut` or `SignedIn`) | **keepAlive** | One small object | It *is* the session: disposing it would sign the person out |
+| `signedInUserIdProvider` | The signed-in person's id, `null` when signed out (follows `authControllerProvider`) | **keepAlive** | One string | Everything that depends on it rebuilds. It must live for the whole session |
+| `routerProvider` | The `GoRouter`, which owns every tab's stack | **keepAlive**, built once | One router | Every tab would lose its place. It *listens* to the auth state rather than watching it, so it is never rebuilt |
+| `authRepositoryProvider`, `homeRepositoryProvider`, `stokvelRepositoryProvider`, `activityRepositoryProvider`, `inviteRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
+| `fakeStokvelsProvider`, `fakeDelayProvider`, `demoAccountsProvider` | The fakes' changeable seed copy (a join lands here), their delay, the sign-in page's test accounts. Week 11 deletes them | **keepAlive** | Kilobytes | A join would be forgotten: the fake "server" must outlive screens |
 | `lifecycleLogProvider` | A logging function | **keepAlive** | Nothing | Nothing gained |
 | `fakeFailEveryProvider` | One number from `FAKE_FAIL_EVERY` (dev only; Week 11 deletes it) | **keepAlive** | One int | The repositories watch it; rebuilding them would reset the flaky fakes' call count |
 | `homeControllerProvider` | My stokvels, roles and amounts | **autoDispose** | Home is the root screen, so it is watched for the whole session anyway | Only when Home leaves the stack (sign-out), which is exactly when it should go |
 | `stokvelDetailProvider(id)` | One stokvel's cycle and **other members'** names and contributions | **autoDispose** | Memory per stokvel opened; other people's data kept after you leave; it goes stale (a contribution recorded meanwhile wouldn't show) | A refetch and a spinner when the stokvel is reopened, which on a data bundle is a small, honest cost |
+| `cycleDetailProvider(id, cycleId)` | One cycle and its contributions | **autoDispose** | As stokvel detail | As stokvel detail |
+| `activityControllerProvider` | My activity feed | **autoDispose** | Watched while the Activity tab is in the shell's stack | Dropped at sign-out with the shell |
+| `invitePreviewProvider(code)`, `inviteJoinerProvider(code)` | One invite's preview, and the join in progress | **autoDispose** | Tiny | Nothing worth keeping once the invite screen closes |
+
+**Tabs and autoDispose.** The shell keeps each tab's navigator alive (an indexed stack), so a screen on a tab you've left is still mounted and still watching its provider. That is what keeps a cycle open, and scrolled where it was, when you come back. The data is disposed when the screen is popped, or when sign-out disposes the shell.
 
 **Disposal is proven** in [`stokvel_detail_provider_test.dart`](test/features/stokvels/presentation/stokvel_detail_provider_test.dart). When the last listener closes, `container.exists(stokvelDetailProvider(id))` becomes false, and the log is exactly:
 
@@ -305,7 +464,7 @@ stokvelDetail disposed id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101
 
 The log carries the id only, never a name or an amount (the test checks this). Reopening the stokvel refetches. The same `[lifecycle]` lines appear in the Run console in debug builds.
 
-**Signing out (Week 11), on a phone a family shares.** Sign-out will invalidate `signedInUserIdProvider`. Every kept-alive provider watches it, directly or through the repositories, so they rebuild empty for the next person. Sign-out also replaces the navigation stack with the sign-in screen, so Home and every stokvel detail lose their last listener and their autoDispose state is dropped. As a backstop, the root `ProviderScope` gets a new key at sign-out, which disposes the whole container, so nothing from one person's session can reach the next.
+**Signing out, on a phone a family shares** (built in 10.2). Sign-out sets `authControllerProvider` to `SignedOut`, so `signedInUserIdProvider` becomes `null`, and every repository, which watches it, is rebuilt for nobody. The gate moves to `/sign-in`, which is outside the tab shell, so the shell and every screen in it are disposed, and with them every autoDispose provider holding the last person's data. [`router_test.dart`](test/app/router/router_test.dart) signs Lerato out and Thabo in, and checks that Home shows Thabo's empty state with none of Lerato's cards. 10.1 planned a backstop of re-keying the root `ProviderScope` at sign-out; it isn't built, because the test above shows nothing survives without it.
 
 ---
 
@@ -333,6 +492,17 @@ flutter test
 | Part 5 frame test | `test/features/stokvels/presentation/stokvel_switch_test.dart` |
 | Architecture boundary | `test/architecture_test.dart` |
 | Flaky fakes: which calls fail, dev-only switch, wrapping in the composition root | `test/core/fakes/fail_every_test.dart`, `test/app/flaky_fakes_test.dart` |
+| **10.2** The gate as a pure function: signed out, signed in, the remembered `/join/:code`, addresses from outside the app, sign-in while signed in, no loops | `test/app/router/redirect_test.dart` |
+| **10.2** Router-level: each twist (non-member "not found" for a stokvel and a cycle; Lerato's treasurer actions by address; `/join/:code` through sign-in), a tab keeping its stack and scroll position, tapping the current tab, back after a cold start, sign-out, the redirect re-running on an auth change | `test/app/router/router_test.dart` |
+| **10.2** Layouts: every screen at 360 by 640 dp with text at 200%, list and detail side by side at 1280 by 800, rotation, rail or bar at each breakpoint edge, dark mode | `test/app/layout_test.dart` |
+| **10.2** Every token's contrast in both themes, and the README table | `test/core/theme/contrast_test.dart` |
+| **10.2** Breakpoints | `test/core/layout/window_size_test.dart` |
+| **10.2** Fake sign-in, invites (join is isolated per session), activity, cycle by id | `test/features/fakes_10_2_test.dart` |
+| **10.2** No `Navigator.push`, string path or typed colour in a widget | `test/architecture_test.dart` |
+
+Router-level tests pump the real app ([`app_harness.dart`](test/helpers/app_harness.dart)): router, gate, theme and shell, on fakes with no delay. A cold start is simulated with the platform's initial route, which is where a deep link arrives when it starts the app.
+
+The **10.1 one-frame test** now runs through the router. The picker changes the address, and one frame later Soweto Teachers is loading, with none of Mabena Family's contributions. The 10.1 widget tests that pumped a screen on its own still do. The app smoke test signs Lerato in first, because the app now opens behind the gate.
 
 Widget tests swap repositories with `overrideWithValue`, never by editing a provider. Each test puts its `ProviderScope` directly inside `tester.pumpWidget(…)`. Failure tests pass `retry: (retryCount, error) => null`.
 
@@ -379,9 +549,40 @@ I flutter : [lifecycle] stokvelDetail disposed id=5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f
 
 What the phone showed that the tests don't: with `FAKE_FAIL_EVERY=3`, Home never showed its failure state. The first call failed, and Riverpod 3's automatic retry (call 2) succeeded within a moment. The failure screenshot therefore uses `1`.
 
+### Assignment 10.2: verification
+
+Run locally on 2026‑11‑12 (Windows, Flutter 3.47.7, Dart 3.13.5):
+
+| Check | Result |
+|---|---|
+| `flutter pub get --enforce-lockfile` | Resolved; go_router 18.1.1, go_router_builder 4.5.2 and every new transitive package at least two weeks old |
+| `dart format --output=none --set-exit-if-changed .` | 0 changed |
+| `dart run build_runner build` | Built; `git diff` on generated files empty |
+| `dart analyze --fatal-infos` | No issues found |
+| `flutter test` | **268 passed**, 0 failed (139 from 10.1 still green) |
+| `flutter build apk --debug --flavor dev / staging / prod` | All three built and installed side by side; each opens only its own scheme |
+
+### Assignment 10.2: emulator evidence
+
+Same emulator, debug builds, in [`docs/evidence/10.2/`](docs/evidence/10.2/). The 360 dp screenshots set the display density to 480 (1080 px / 3 = 360 dp) and the font scale to 2.0. The tablet ones set the display to 2560×1600 px at density 320, which is 1280×800 dp (`adb shell wm size` and `wm density`): a window size, which is exactly what the breakpoints read.
+
+| What | File |
+|---|---|
+| Home, light and dark | [`01-home-light.png`](docs/evidence/10.2/01-home-light.png), [`03-home-dark.png`](docs/evidence/10.2/03-home-dark.png) |
+| A stokvel (Mabena Family, Lerato as Treasurer), light and dark | [`02-stokvel-light.png`](docs/evidence/10.2/02-stokvel-light.png), [`04-stokvel-dark.png`](docs/evidence/10.2/04-stokvel-dark.png) |
+| The non-member's "not found": Thabo opens a link to Mabena Family | [`05-non-member-not-found.png`](docs/evidence/10.2/05-non-member-not-found.png) |
+| Recording: cold-start link to a cycle, through sign-in, then back to the stokvel, the list and Home, with the app still open | [`06-cold-start-cycle-link-then-back.mp4`](docs/evidence/10.2/06-cold-start-cycle-link-then-back.mp4) |
+| Recording: `/join/MABENA26` opened signed out, through sign-in, to the invite, then Join | [`07-join-link-signed-out-to-invite.mp4`](docs/evidence/10.2/07-join-link-signed-out-to-invite.mp4), with the result in [`07a-joined-mabena-as-member.png`](docs/evidence/10.2/07a-joined-mabena-as-member.png) (Thabo, Member: Pay only) |
+| 360 dp, text at 200%: Home, the stokvel list, a stokvel (top and scrolled to its actions) | [`08-home-360dp-200pct.png`](docs/evidence/10.2/08-home-360dp-200pct.png), [`09-stokvel-list-360dp-200pct.png`](docs/evidence/10.2/09-stokvel-list-360dp-200pct.png), [`10-stokvel-360dp-200pct.png`](docs/evidence/10.2/10-stokvel-360dp-200pct.png), [`10b-stokvel-360dp-200pct-scrolled.png`](docs/evidence/10.2/10b-stokvel-360dp-200pct-scrolled.png) |
+| Tablet on its side: list and detail side by side | [`11-tablet-landscape-list-detail.png`](docs/evidence/10.2/11-tablet-landscape-list-detail.png) |
+| Tablet upright: the same stokvel, one pane | [`12-tablet-portrait-same-stokvel.png`](docs/evidence/10.2/12-tablet-portrait-same-stokvel.png) |
+
+What the phone showed that the tests don't: go_router receives the whole link (`ronditrack-dev://app/stokvels/…`) as the cold-start route and matches on its path, so the custom scheme and `app` host need no handling in the app. The gate reads only the path, too (`redirect_test.dart` covers a full link). The bottom bar's labels stay smaller than the rest at 200% because Flutter's `NavigationBar` caps their text scaling itself; all four labels stay visible.
+
 ### Still open
 
 - [ ] Open the backend pull request (link above) and link it here and in the app PR.
-- [ ] Open the "Assignment 10.1: Foundations and State" pull request with the screenshots, the recording and the CI links in its description, and wait for its green run.
-- [ ] Gaps 1, 2 and 4 in "Contract notes" are open, with reasons.
-- [ ] iOS flavours (needs Xcode on a Mac).
+- [x] Open the "Assignment 10.1: Foundations and State" pull request and wait for its green run: [#3](https://github.com/mdvar2/RondiTrackApp/pull/3), merged into `main`.
+- [ ] Gaps 1, 2, 4, 7 and 8 in "Contract notes" are open, with reasons.
+- [ ] iOS flavours and iOS deep links (need Xcode on a Mac).
+- [ ] Stretch goals not attempted: every route as every persona in one test, a dev-only theme gallery, predictive back, a real App Link.

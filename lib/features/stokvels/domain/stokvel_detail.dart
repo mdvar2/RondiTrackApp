@@ -25,6 +25,23 @@ abstract class StokvelDetail with _$StokvelDetail {
   }) = _StokvelDetail;
 }
 
+/// One cycle of one stokvel, for the cycle screen
+/// (`GET /stokvels/{stokvelId}/cycles/{cycleId}` and its contributions).
+@freezed
+abstract class CycleDetail with _$CycleDetail {
+  /// Creates a cycle detail.
+  const factory({
+    /// The stokvel the cycle belongs to.
+    required Stokvel stokvel,
+
+    /// The cycle.
+    required StokvelCycle cycle,
+
+    /// The cycle's contributions, newest first.
+    required List<Contribution> contributions,
+  }) = _CycleDetail;
+}
+
 /// A stokvel (`StokvelDetailResponse`).
 @freezed
 abstract class Stokvel with _$Stokvel {

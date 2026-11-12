@@ -48,9 +48,34 @@ ViewState<StokvelDetail> stokvelDetailViewState(
   );
 }
 
+/// One cycle of one stokvel, keyed by both ids, so a cycle id under the
+/// wrong stokvel is its own request, and is not found.
+///
+/// Lifetime: autoDispose, like [stokvelDetailProvider].
+@riverpod
+Future<CycleDetail> cycleDetail(Ref ref, String stokvelId, String cycleId) =>
+    ref.watch(stokvelRepositoryProvider).fetchCycle(stokvelId, cycleId);
+
+/// The message for a cycle that can't be shown. The same words whether it
+/// doesn't exist, belongs to another stokvel, or is in a stokvel the person
+/// isn't in.
+const cycleNotFoundMessage = "We couldn't find that cycle.";
+
+/// The cycle screen's view state. A cycle with no contributions is still
+/// data: the screen says nobody has paid yet.
+ViewState<CycleDetail> cycleDetailViewState(AsyncValue<CycleDetail> value) =>
+    viewStateFrom(
+      value,
+      isEmpty: (_) => false,
+      describeError: (error) =>
+          error is CycleNotFoundException || error is StokvelNotFoundException
+          ? cycleNotFoundMessage
+          : genericFailureMessage,
+    );
+
 /// What [myUserId] may do in this stokvel's current cycle, from their role
-/// in *this* stokvel.
-Set<StokvelAction> actionsFor(StokvelDetail detail, String myUserId) {
+/// in *this* stokvel. Nobody signed in may do nothing.
+Set<StokvelAction> actionsFor(StokvelDetail detail, String? myUserId) {
   final cycle = detail.currentCycle;
   if (cycle == null) return const {};
   final mine = detail.contributions

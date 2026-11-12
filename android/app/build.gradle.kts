@@ -29,6 +29,8 @@ android {
     }
     // AGP 9 turns resValue off by default, so each flavour names its launcher
     // through a manifest placeholder (AndroidManifest.xml: ${appName}).
+    // Each flavour also has its own deep-link scheme (${deepLinkScheme}), so a
+    // link aimed at the dev build opens the dev build: README "Deep links".
     flavorDimensions += "environment"
 
     productFlavors {
@@ -36,17 +38,20 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             manifestPlaceholders["appName"] = "RondiTrack Dev"
+            manifestPlaceholders["deepLinkScheme"] = "ronditrack-dev"
         }
 
         create("staging") {
             dimension = "environment"
             applicationIdSuffix = ".staging"
             manifestPlaceholders["appName"] = "RondiTrack Staging"
+            manifestPlaceholders["deepLinkScheme"] = "ronditrack-staging"
         }
 
         create("prod") {
             dimension = "environment"
             manifestPlaceholders["appName"] = "RondiTrack"
+            manifestPlaceholders["deepLinkScheme"] = "ronditrack"
         }
     }
 

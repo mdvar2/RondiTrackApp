@@ -361,6 +361,325 @@ $StokvelCycleCopyWith<$Res>? get currentCycle {
 }
 
 /// @nodoc
+mixin _$CycleDetail {
+
+/// The stokvel the cycle belongs to.
+ Stokvel get stokvel;/// The cycle.
+ StokvelCycle get cycle;/// The cycle's contributions, newest first.
+ List<Contribution> get contributions;
+/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CycleDetailCopyWith<CycleDetail> get copyWith => _$CycleDetailCopyWithImpl<CycleDetail>(this as CycleDetail, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as CycleDetail;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CycleDetail&&(identical(other.stokvel, _this.stokvel) || other.stokvel == _this.stokvel)&&(identical(other.cycle, _this.cycle) || other.cycle == _this.cycle)&&const DeepCollectionEquality().equals(other.contributions, _this.contributions));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as CycleDetail;
+  return Object.hash(runtimeType,_this.stokvel,_this.cycle,const DeepCollectionEquality().hash(_this.contributions));
+}
+
+@override
+String toString() {
+  final _this = this as CycleDetail;
+  return 'CycleDetail(stokvel: ${_this.stokvel}, cycle: ${_this.cycle}, contributions: ${_this.contributions})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CycleDetailCopyWith<$Res>  {
+  factory $CycleDetailCopyWith(CycleDetail value, $Res Function(CycleDetail) _then) = _$CycleDetailCopyWithImpl;
+@useResult
+$Res call({
+ Stokvel stokvel, StokvelCycle cycle, List<Contribution> contributions
+});
+
+
+$StokvelCopyWith<$Res> get stokvel;$StokvelCycleCopyWith<$Res> get cycle;
+
+}
+/// @nodoc
+class _$CycleDetailCopyWithImpl<$Res>
+    implements $CycleDetailCopyWith<$Res> {
+  _$CycleDetailCopyWithImpl(this._self, this._then);
+
+  final CycleDetail _self;
+  final $Res Function(CycleDetail) _then;
+
+/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? stokvel = null,Object? cycle = null,Object? contributions = null,}) {
+  return _then(CycleDetail(
+stokvel: null == stokvel ? _self.stokvel : stokvel // ignore: cast_nullable_to_non_nullable
+as Stokvel,cycle: null == cycle ? _self.cycle : cycle // ignore: cast_nullable_to_non_nullable
+as StokvelCycle,contributions: null == contributions ? _self.contributions : contributions // ignore: cast_nullable_to_non_nullable
+as List<Contribution>,
+  ));
+}
+/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StokvelCopyWith<$Res> get stokvel {
+  
+  return $StokvelCopyWith<$Res>(_self.stokvel, (value) {
+    return _then(_self.copyWith(stokvel: value));
+  });
+}/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StokvelCycleCopyWith<$Res> get cycle {
+  
+  return $StokvelCycleCopyWith<$Res>(_self.cycle, (value) {
+    return _then(_self.copyWith(cycle: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [CycleDetail].
+extension CycleDetailPatterns on CycleDetail {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CycleDetail value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CycleDetail() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CycleDetail value)  $default,){
+final _that = this;
+switch (_that) {
+case _CycleDetail():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CycleDetail value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CycleDetail() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Stokvel stokvel,  StokvelCycle cycle,  List<Contribution> contributions)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CycleDetail() when $default != null:
+return $default(_that.stokvel,_that.cycle,_that.contributions);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Stokvel stokvel,  StokvelCycle cycle,  List<Contribution> contributions)  $default,) {final _that = this;
+switch (_that) {
+case _CycleDetail():
+return $default(_that.stokvel,_that.cycle,_that.contributions);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Stokvel stokvel,  StokvelCycle cycle,  List<Contribution> contributions)?  $default,) {final _that = this;
+switch (_that) {
+case _CycleDetail() when $default != null:
+return $default(_that.stokvel,_that.cycle,_that.contributions);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _CycleDetail implements CycleDetail {
+  const _CycleDetail({required this.stokvel, required this.cycle, required  List<Contribution> contributions}): _contributions = contributions;
+  
+
+/// The stokvel the cycle belongs to.
+@override final  Stokvel stokvel;
+/// The cycle.
+@override final  StokvelCycle cycle;
+/// The cycle's contributions, newest first.
+ final  List<Contribution> _contributions;
+/// The cycle's contributions, newest first.
+@override List<Contribution> get contributions {
+  if (_contributions is EqualUnmodifiableListView) return _contributions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_contributions);
+}
+
+
+/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CycleDetailCopyWith<_CycleDetail> get copyWith => __$CycleDetailCopyWithImpl<_CycleDetail>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CycleDetail&&(identical(other.stokvel, stokvel) || other.stokvel == stokvel)&&(identical(other.cycle, cycle) || other.cycle == cycle)&&const DeepCollectionEquality().equals(other.contributions, _contributions));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,stokvel,cycle,const DeepCollectionEquality().hash(_contributions));
+}
+
+@override
+String toString() {
+    return 'CycleDetail(stokvel: $stokvel, cycle: $cycle, contributions: $contributions)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CycleDetailCopyWith<$Res> implements $CycleDetailCopyWith<$Res> {
+  factory _$CycleDetailCopyWith(_CycleDetail value, $Res Function(_CycleDetail) _then) = __$CycleDetailCopyWithImpl;
+@override @useResult
+$Res call({
+ Stokvel stokvel, StokvelCycle cycle, List<Contribution> contributions
+});
+
+
+@override $StokvelCopyWith<$Res> get stokvel;@override $StokvelCycleCopyWith<$Res> get cycle;
+
+}
+/// @nodoc
+class __$CycleDetailCopyWithImpl<$Res>
+    implements _$CycleDetailCopyWith<$Res> {
+  __$CycleDetailCopyWithImpl(this._self, this._then);
+
+  final _CycleDetail _self;
+  final $Res Function(_CycleDetail) _then;
+
+/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? stokvel = null,Object? cycle = null,Object? contributions = null,}) {
+  return _then(_CycleDetail(
+stokvel: null == stokvel ? _self.stokvel : stokvel // ignore: cast_nullable_to_non_nullable
+as Stokvel,cycle: null == cycle ? _self.cycle : cycle // ignore: cast_nullable_to_non_nullable
+as StokvelCycle,contributions: null == contributions ? _self._contributions : contributions // ignore: cast_nullable_to_non_nullable
+as List<Contribution>,
+  ));
+}
+
+/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StokvelCopyWith<$Res> get stokvel {
+  
+  return $StokvelCopyWith<$Res>(_self.stokvel, (value) {
+    return _then(_self.copyWith(stokvel: value));
+  });
+}/// Create a copy of CycleDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StokvelCycleCopyWith<$Res> get cycle {
+  
+  return $StokvelCycleCopyWith<$Res>(_self.cycle, (value) {
+    return _then(_self.copyWith(cycle: value));
+  });
+}
+}
+
+/// @nodoc
 mixin _$Stokvel {
 
 /// `id`.
