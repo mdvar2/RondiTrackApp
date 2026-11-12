@@ -3,8 +3,9 @@ import 'package:ronditrack_app/core/time/calendar_date.dart';
 import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 
-/// A person the fakes can be signed in as.
-typedef FakePersona = ({String id, String name});
+/// A person the fakes can be signed in as. The `email` is what they sign
+/// in with (`LoginRequest.email`).
+typedef FakePersona = ({String id, String name, String email});
 
 /// What `/me/home` returns for one member of one stokvel. These are the
 /// API's numbers, stored as data: the app never computes them.
@@ -31,6 +32,7 @@ abstract final class FakeSeed {
   static const FakePersona lerato = (
     id: '0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0001',
     name: 'Lerato Mokoena',
+    email: 'lerato@ronditrack.example',
   );
 
   /// Member of Mabena Family (with arrears) and Chairperson of Soweto
@@ -38,12 +40,14 @@ abstract final class FakeSeed {
   static const FakePersona sipho = (
     id: '0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0002',
     name: 'Sipho Dlamini',
+    email: 'sipho@ronditrack.example',
   );
 
   /// In no stokvel at all: Home's empty state.
   static const FakePersona thabo = (
     id: '0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0003',
     name: 'Thabo Nkosi',
+    email: 'thabo@ronditrack.example',
   );
 
   /// The three personas, by the short name used with `FAKE_PERSONA`.
@@ -62,6 +66,44 @@ abstract final class FakeSeed {
   /// Soweto Teachers' id.
   static const sowetoTeachersId = '5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102';
 
+  /// Mabena Family's current cycle.
+  static const mabenaCycleId = '9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201';
+
+  /// Soweto Teachers' current cycle.
+  static const sowetoCycleId = '9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0202';
+
+  /// Invite codes (`GET /invites/{code}`), and the stokvel each one joins.
+  static const Map<String, String> invites = {
+    'MABENA26': mabenaFamilyId,
+    'SOWETO26': sowetoTeachersId,
+  };
+
+  /// What each stokvel's invite preview says about how it runs
+  /// (`InvitePreviewResponse.schedule` and `.rules`).
+  static const Map<String, ({String schedule, String rules})> inviteTerms = {
+    mabenaFamilyId: (
+      schedule: 'Monthly, by the last day of the month',
+      rules: 'One payout a month, in the order agreed at the AGM.',
+    ),
+    sowetoTeachersId: (
+      schedule: 'Monthly, by the 25th',
+      rules: 'Payouts in December. Late payments carry arrears.',
+    ),
+  };
+
+  /// A copy of [stokvels] whose memberships can change (an invite joined),
+  /// so one session, or one test, never changes another's seed.
+  static List<FakeStokvel> fresh() => [
+    for (final entry in stokvels)
+      (
+        stokvel: entry.stokvel,
+        roles: {...entry.roles},
+        cycle: entry.cycle,
+        contributions: [...entry.contributions],
+        home: {...entry.home},
+      ),
+  ];
+
   /// The stokvels, ordered by name as `/me/home` orders them.
   static final List<FakeStokvel> stokvels = [
     (
@@ -77,7 +119,7 @@ abstract final class FakeSeed {
         sipho.id: StokvelRole.member,
       },
       cycle: StokvelCycle(
-        id: '9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201',
+        id: mabenaCycleId,
         period: '2026-11',
         status: CycleStatus.open,
         dueDate: CalendarDate(2026, 11, 30),
@@ -136,7 +178,7 @@ abstract final class FakeSeed {
         lerato.id: StokvelRole.member,
       },
       cycle: StokvelCycle(
-        id: '9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0202',
+        id: sowetoCycleId,
         period: '2026-11',
         status: CycleStatus.open,
         dueDate: CalendarDate(2026, 11, 25),

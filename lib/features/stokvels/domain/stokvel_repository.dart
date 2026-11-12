@@ -13,7 +13,20 @@ class StokvelNotFoundException implements Exception {
   String toString() => 'StokvelNotFoundException';
 }
 
-/// Reads one stokvel for the signed-in person.
+/// Thrown when a cycle can't be shown: it doesn't exist, it belongs to
+/// another stokvel, or the caller isn't in its stokvel.
+///
+/// All three are the same, as the API's `404` is for
+/// `GET /stokvels/{stokvelId}/cycles/{cycleId}`.
+class CycleNotFoundException implements Exception {
+  /// Creates the exception. It carries no id, so it is safe to log.
+  const new();
+
+  @override
+  String toString() => 'CycleNotFoundException';
+}
+
+/// Reads stokvels and their cycles for the signed-in person.
 abstract interface class StokvelRepository {
   /// The stokvel, the caller's membership, its current cycle and that
   /// cycle's contributions.
@@ -21,4 +34,11 @@ abstract interface class StokvelRepository {
   /// Throws [StokvelNotFoundException] for a stokvel that doesn't exist and
   /// for one the caller isn't a member of.
   Future<StokvelDetail> fetchStokvel(String stokvelId);
+
+  /// One cycle of one stokvel, with its contributions.
+  ///
+  /// Throws [CycleNotFoundException] for a cycle that doesn't exist, one
+  /// that belongs to another stokvel, and one in a stokvel the caller isn't
+  /// a member of.
+  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId);
 }
