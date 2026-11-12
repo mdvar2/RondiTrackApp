@@ -31,7 +31,7 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: StokvelDetailScreen(initialStokvelId: FakeSeed.mabenaFamilyId),
+          home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
     );
@@ -61,7 +61,7 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: StokvelDetailScreen(initialStokvelId: FakeSeed.mabenaFamilyId),
+          home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
     );
@@ -91,9 +91,7 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: StokvelDetailScreen(
-            initialStokvelId: FakeSeed.sowetoTeachersId,
-          ),
+          home: StokvelDetailScreen(stokvelId: FakeSeed.sowetoTeachersId),
         ),
       ),
     );
@@ -135,7 +133,7 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: StokvelDetailScreen(initialStokvelId: FakeSeed.mabenaFamilyId),
+          home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
     );
@@ -162,7 +160,7 @@ void main() {
         ],
         retry: (retryCount, error) => null,
         child: const MaterialApp(
-          home: StokvelDetailScreen(initialStokvelId: FakeSeed.mabenaFamilyId),
+          home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
     );
@@ -196,9 +194,7 @@ void main() {
             ),
           ],
           retry: (retryCount, error) => null,
-          child: MaterialApp(
-            home: StokvelDetailScreen(initialStokvelId: stokvelId),
-          ),
+          child: MaterialApp(home: StokvelDetailScreen(stokvelId: stokvelId)),
         ),
       );
       await tester.pumpAndSettle();
