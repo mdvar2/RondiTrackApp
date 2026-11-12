@@ -1,0 +1,4 @@
+$ adb shell pm list packages ronditrack
+package:za.co.gwinya.ronditrack_app
+package:za.co.gwinya.ronditrack_app.dev
+package:za.co.gwinya.ronditrack_app.staging
