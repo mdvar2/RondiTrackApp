@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ronditrack_app/app/dev/persona_switcher.dart';
+import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/core/layout/window_size.dart';
 
 /// The four tabs, in branch order.
@@ -33,9 +35,15 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final index = navigationShell.currentIndex;
+    // Built only in the dev flavour: in staging and prod there is no
+    // switcher widget at all, not a hidden one.
+    final switcher = AppConfigScope.of(context).hasDevTools
+        ? const PersonaSwitcherButton()
+        : null;
     final body = switch (WindowSize.of(context)) {
       WindowSize.compact => Scaffold(
         body: navigationShell,
+        floatingActionButton: switcher,
         bottomNavigationBar: NavigationBar(
           key: const Key('nav-bar'),
           selectedIndex: index,
@@ -51,6 +59,7 @@ class AppShell extends StatelessWidget {
         ),
       ),
       WindowSize.medium || WindowSize.expanded => Scaffold(
+        floatingActionButton: switcher,
         body: Row(
           children: [
             _ScrollingRail(selectedIndex: index, onSelected: _select),

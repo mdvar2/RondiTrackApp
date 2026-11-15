@@ -21,6 +21,22 @@ final devConfig = AppConfig.fromValues(
   nativeFlavor: 'dev',
 );
 
+/// The staging flavour's configuration.
+final stagingConfig = AppConfig.fromValues(
+  environment: 'staging',
+  appName: 'RondiTrack Staging',
+  apiBaseUrl: 'https://staging.api.ronditrack.example',
+  nativeFlavor: 'staging',
+);
+
+/// The prod flavour's configuration.
+final prodConfig = AppConfig.fromValues(
+  environment: 'prod',
+  appName: 'RondiTrack',
+  apiBaseUrl: 'https://api.ronditrack.example',
+  nativeFlavor: 'prod',
+);
+
 /// The auth state of [persona] signed in.
 AuthState signedInAs(FakePersona persona) => SignedIn(
   AuthUser(id: persona.id, name: persona.name, email: persona.email),

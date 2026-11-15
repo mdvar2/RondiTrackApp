@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_repository.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 
@@ -52,7 +53,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accounts = ref.watch(demoAccountsProvider);
+    // The seed personas are offered in the dev build only, like the
+    // persona switcher; staging and prod testers type an email.
+    final accounts = AppConfigScope.of(context).hasDevTools
+        ? ref.watch(demoAccountsProvider)
+        : const <({String name, String email})>[];
     final error = _error;
 
     return Scaffold(
