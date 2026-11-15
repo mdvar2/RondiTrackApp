@@ -239,6 +239,8 @@ flutter run --flavor prod    --dart-define-from-file=config/prod.json
 flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=FAKE_FAIL_EVERY=1
 ```
 
+**Packages arrive by themselves in VS Code.** Like `npm install` from a committed `package-lock.json`, `flutter pub get --enforce-lockfile` installs exactly the versions in the committed `pubspec.lock`. You don't have to type it: opening a fresh clone in VS Code runs it, from the `Get packages` task in [`.vscode/tasks.json`](.vscode/tasks.json) (`"runOn": "folderOpen"`). VS Code asks once per folder whether to allow automatic tasks; answer **Allow**. The Dart extension then fetches again whenever `pubspec.yaml` changes ([`.vscode/settings.json`](.vscode/settings.json)), and [`.vscode/launch.json`](.vscode/launch.json) runs each flavour with F5. Git itself can't run anything on `git clone` (it has no clone hook, on purpose), so outside VS Code the one command is `flutter pub get`. Packages go to pub's shared cache, not into the repository, so they are downloaded once per machine.
+
 The app opens on a fake sign-in. Sign in with a seed persona's email, or tap one under "Test accounts":
 
 | Persona | Email | Stokvels |
