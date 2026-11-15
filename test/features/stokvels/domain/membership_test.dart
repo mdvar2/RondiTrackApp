@@ -53,7 +53,7 @@ void main() {
       expect(soweto.membership.role, StokvelRole.member);
     });
 
-    test('Sipho is Member of one and Chairperson of the other', () async {
+    test('Sipho is a Member of both, and Treasurer of neither', () async {
       final home = await FakeHomeRepository(
         userId: FakeSeed.sipho.id,
         delay: Duration.zero,
@@ -61,7 +61,7 @@ void main() {
 
       expect(home.map((entry) => entry.membership.role), [
         StokvelRole.member,
-        StokvelRole.chairperson,
+        StokvelRole.member,
       ]);
     });
 

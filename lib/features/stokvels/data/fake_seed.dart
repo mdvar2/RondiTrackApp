@@ -35,8 +35,8 @@ abstract final class FakeSeed {
     email: 'lerato@ronditrack.example',
   );
 
-  /// Member of Mabena Family (with arrears) and Chairperson of Soweto
-  /// Teachers.
+  /// A Member only: of Mabena Family (with arrears) and of Soweto
+  /// Teachers. Sees no treasurer action anywhere.
   static const FakePersona sipho = (
     id: '0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0002',
     name: 'Sipho Dlamini',
@@ -174,7 +174,7 @@ abstract final class FakeSeed {
       ),
       roles: {
         _kagiso: StokvelRole.treasurer,
-        sipho.id: StokvelRole.chairperson,
+        sipho.id: StokvelRole.member,
         lerato.id: StokvelRole.member,
       },
       cycle: StokvelCycle(

@@ -244,7 +244,7 @@ The app opens on a fake sign-in. Sign in with a seed persona's email, or tap one
 | Persona | Email | Stokvels |
 |---|---|---|
 | Lerato Mokoena | `lerato@ronditrack.example` | Treasurer of Mabena Family, Member of Soweto Teachers |
-| Sipho Dlamini | `sipho@ronditrack.example` | Member of Mabena Family (in arrears), Chairperson of Soweto Teachers |
+| Sipho Dlamini | `sipho@ronditrack.example` | Member of Mabena Family (in arrears) and Member of Soweto Teachers: a Member only (until 10.3 he was Chairperson of Soweto Teachers) |
 | Thabo Nkosi | `thabo@ronditrack.example` | None: Home's empty state, and the one who joins by invite |
 
 10.1's `--dart-define=FAKE_PERSONA` is gone. A way to start signed in without the gate would be a bypass in every flavour, prod included.
@@ -622,7 +622,7 @@ The app shows these numbers and never computes them.
 | Persona | Mabena Family (R 500,00 a month) | Soweto Teachers (R 1 500,00 a month) | What Home shows |
 |---|---|---|---|
 | **Lerato Mokoena**, Treasurer-in-one | **Treasurer**; paid R 500,00 (`Paid`) | **Member**; paid R 750,00 of R 1 500,00 (`Paid`) | Two cards: Treasurer and Member |
-| **Sipho Dlamini** | **Member**; paid nothing; **R 250,00 arrears** | **Chairperson**; paid nothing | Two cards, one with arrears |
+| **Sipho Dlamini**, a Member only | **Member**; paid nothing; **R 250,00 arrears** | **Member**; paid nothing (Chairperson until 10.3) | Two cards, both Member, one with arrears |
 | **Thabo Nkosi** | not a member | not a member | The empty state |
 
 Also present, as other members only: Nomsa Mabena (Chairperson of Mabena Family, `Confirmed`) and Kagiso Molefe (Treasurer of Soweto Teachers, `Confirmed`). Both cycles are `2026-11`, `Open`, due 30 Nov and 25 Nov.
