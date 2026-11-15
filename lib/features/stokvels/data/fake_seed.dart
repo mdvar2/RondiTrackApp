@@ -1,5 +1,7 @@
 import 'package:ronditrack_app/core/money/cents.dart';
 import 'package:ronditrack_app/core/time/calendar_date.dart';
+import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
+import 'package:ronditrack_app/features/payouts/domain/payout_status.dart';
 import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 
@@ -103,6 +105,69 @@ abstract final class FakeSeed {
         home: {...entry.home},
       ),
   ];
+
+  /// What `GET …/cycles/{cycleId}/payouts` returns, by cycle id: the API's
+  /// rotation, positions, amounts and statuses, stored as data. The app
+  /// never computes any of them.
+  ///
+  /// Mabena Family paid Nomsa in October; Lerato is next. Soweto Teachers
+  /// pays out in December, so nobody is paid yet and Kagiso is next. Every
+  /// amount is the cycle's pot (`targetCents`), as the API sends it for
+  /// members still to be paid.
+  static final Map<String, List<PayoutEntry>> payoutOrders = {
+    mabenaCycleId: [
+      PayoutEntry(
+        position: 1,
+        userId: _nomsa,
+        memberName: 'Nomsa Mabena',
+        amount: const Cents(150000),
+        paidAt: DateTime.utc(2026, 10, 31, 15),
+        status: PayoutStatus.paid,
+      ),
+      PayoutEntry(
+        position: 2,
+        userId: lerato.id,
+        memberName: lerato.name,
+        amount: const Cents(150000),
+        paidAt: null,
+        status: PayoutStatus.next,
+      ),
+      PayoutEntry(
+        position: 3,
+        userId: sipho.id,
+        memberName: sipho.name,
+        amount: const Cents(150000),
+        paidAt: null,
+        status: PayoutStatus.waiting,
+      ),
+    ],
+    sowetoCycleId: [
+      const PayoutEntry(
+        position: 1,
+        userId: _kagiso,
+        memberName: 'Kagiso Molefe',
+        amount: Cents(450000),
+        paidAt: null,
+        status: PayoutStatus.next,
+      ),
+      PayoutEntry(
+        position: 2,
+        userId: sipho.id,
+        memberName: sipho.name,
+        amount: const Cents(450000),
+        paidAt: null,
+        status: PayoutStatus.waiting,
+      ),
+      PayoutEntry(
+        position: 3,
+        userId: lerato.id,
+        memberName: lerato.name,
+        amount: const Cents(450000),
+        paidAt: null,
+        status: PayoutStatus.waiting,
+      ),
+    ],
+  };
 
   /// The stokvels, ordered by name as `/me/home` orders them.
   static final List<FakeStokvel> stokvels = [
