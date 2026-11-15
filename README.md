@@ -5,7 +5,7 @@ The RondiTrack phone app (Flutter, Android and iOS). It shows each person their 
 This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (every screen has an address). **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
 
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
-- API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`3d04a52`](https://github.com/mdvar2/RondiTrack/commit/3d04a5238c72b0b3e1742a1067170a20ae13e97a) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `7292b744…4a0dc3`)
+- API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`da39b16`](https://github.com/mdvar2/RondiTrack/commit/da39b168f78d521fe0fecff751c85862cb64ce40) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `1111c20c…16321`). That commit adds the payout order endpoint ([API PR #15](https://github.com/mdvar2/RondiTrack/pull/15)) on top of the 10.1 contract fixes ([API PR #14](https://github.com/mdvar2/RondiTrack/pull/14)). 10.1 and 10.2 read the contract at `3d04a52` (SHA-256 `7292b744…4a0dc3`).
 
 ## Contents
 
@@ -627,9 +627,35 @@ The app shows these numbers and never computes them.
 
 Also present, as other members only: Nomsa Mabena (Chairperson of Mabena Family, `Confirmed`) and Kagiso Molefe (Treasurer of Soweto Teachers, `Confirmed`). Both cycles are `2026-11`, `Open`, due 30 Nov and 25 Nov.
 
+#### Payouts: the five answers (Assignment 10.3)
+
+Read before any payout type was written, from the API's `README.md`, `openapi/v1.json` and its C# source at **`3d04a52`**, then again at **`da39b16`**, the commit with the backend fix (gap 9 below). The app's contract copy is from `da39b16`.
+
+**1. Which endpoint returns a cycle's payout order, and what does each entry hold?** At `3d04a52`, **none**. The only payout endpoint was `POST /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/payouts`, which records one. Since `da39b16`: `GET /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/payouts` returns `PayoutOrderResponse { stokvelId, cycleId, items[] }`, items in rotation order (members by `JoinedAtUtc`):
+
+| Field | Type | Can be null? | App type |
+|---|---|---|---|
+| `position` | int32, 1-based | No | `int` (shown, never used to sort) |
+| `userId`, `memberName` | uuid, string | No | `String`, `String` |
+| `amountCents` | int64 cents: the payout for `Paid`, the cycle's target pot for the rest | No | `Cents` |
+| `paidAtUtc` | date-time, an instant | **Yes**: set only for `Paid` | `DateTime?` |
+| `status` | string | No | `PayoutStatus`, with `unknown` |
+
+An empty `items` means the cycle has no payout order: it isn't `Open` and had no payout. The app shows that as its own empty state, never as an empty list.
+
+**2. How does the API spell each payout status?** Exactly `Paid`, `Next`, `Waiting` (case matters; `PayoutStatuses` in `API/DTOs/Payouts/PayoutOrderResponse.cs`). OpenAPI types it as plain `string`, as with gap 4, so anything else becomes `PayoutStatus.unknown`, shown as "Status not recognised".
+
+**3. Does the API say who is next?** At `3d04a52`, **no**: `PayoutService.CreatePayoutAsync` picked "the first member by `JoinedAtUtc` with no payout yet" only at the moment of paying, so an app showing who is next would have had to copy that rule. That is the backend fix: the order marks exactly one item `Next`, and `GET` and `POST` share one rotation query (`InRotationOrder`), so `Next` is the member the next payout pays (tested in `PayoutOrderTests.Next_IsExactlyWhomTheNextPayoutPays`). The app doesn't sort the items, count who has been paid, add up the pot or pick the next member: it shows `status` as sent.
+
+**4. What does a non-member get?** **`404`**, a `ProblemDetails`, exactly as for `GET /stokvels/{id}`: `StokvelAuthorization` throws "Stokvel not found." when the caller has no membership. An unknown cycle, or a cycle of another stokvel, is also `404`. The app's fake throws `CycleNotFoundException` for all of them, and the screen says "We couldn't find that cycle." at once, with no retry spinner.
+
+**5. Which role may record a payout, and what does the API answer anyone else?** `POST …/payouts` needs `StokvelManage`: **Treasurer or Chairperson** of *that* stokvel. A Member gets **`403`**, a non-member **`404`** (the API's `AuthorizationMatrixTests` cover both). Any member may *read* the order. In the app, "Record payout" appears on the payouts view only where the 10.1 actions match ([`allowedActions`](lib/features/stokvels/domain/stokvel_actions.dart)) allows it, from that stokvel's membership and its cycle being `Open`. Recording itself arrives in Week 11; the request body is `{ amount }` as a `decimal` in rands (gap 10).
+
 #### Gaps found, and backend pull requests
 
 **Backend branch:** [`fix/mobile-contract-gaps`](https://github.com/mdvar2/RondiTrack/compare/assignment-9.3...fix/mobile-contract-gaps) in the API repo, commit `0bb7f92`, based on the contract commit `3d04a52` (branch `assignment-9.3`). **Pull request:** not yet opened; open it at <https://github.com/mdvar2/RondiTrack/pull/new/fix/mobile-contract-gaps> with base `assignment-9.3`, and put its link here.
+
+**Opened in 10.3:** the 10.1 branch is [API PR #14](https://github.com/mdvar2/RondiTrack/pull/14) (base `assignment-9.3`). The 10.3 payout order fix is [API PR #15](https://github.com/mdvar2/RondiTrack/pull/15), stacked on it (base `fix/mobile-contract-gaps`), with its tests in `PayoutOrderTests`.
 
 | # | Gap | Why it matters to the app | Status |
 |---|---|---|---|
@@ -641,6 +667,8 @@ Also present, as other members only: Nomsa Mabena (Chairperson of Mabena Family,
 | 6 | Some money is `double` (`contributionAmount`, `targetAmount`, …) | Doubles near money | No change needed: every amount the app reads has a `…Cents` integer twin, and the app reads only those |
 | 7 | No activity feed endpoint (10.2) | The Activity tab has nothing to call | Open. The fake builds the feed from my stokvels' current-cycle contributions; Week 11 needs `GET /me/activity`, or the app calls each stokvel's contributions |
 | 8 | `InvitePreviewResponse` doesn't say whether I'm already a member (10.2) | The preview must not offer "Join" to a member | Open. The app checks the stokvel against Home's list instead, and the fake's join is idempotent |
+| 9 | No endpoint returned a cycle's payout order, and nothing said who is next (10.3) | The app would have had to sort members and decide who is next: a copy of the server's money rule | **Fixed** in [API PR #15](https://github.com/mdvar2/RondiTrack/pull/15) (`da39b16`): `GET …/cycles/{cycleId}/payouts`, statuses `Paid`, `Next`, `Waiting`, `Next` from the same query `POST` pays from |
+| 10 | `CreatePayoutRequest.amount` is a `decimal` in rands, not cents (10.3) | Week 11's "Record payout" must send rands as a decimal | Open. Every amount the app *reads* is cents; changing a write body is a breaking API change, for Week 11 with the form that uses it |
 
 What the backend branch changes, with its tests:
 
@@ -781,7 +809,7 @@ What the phone showed that the tests don't: go_router receives the whole link (`
 
 > **What this section is.** The honest list of what isn't done yet, so nothing missing is hidden.
 
-- [ ] Open the backend pull request (link above) and link it here and in the app PR.
+- [x] Open the backend pull request (link above) and link it here and in the app PR: [API PR #14](https://github.com/mdvar2/RondiTrack/pull/14), and the 10.3 fix [API PR #15](https://github.com/mdvar2/RondiTrack/pull/15).
 - [x] Open the "Assignment 10.1: Foundations and State" pull request and wait for its green run: [#3](https://github.com/mdvar2/RondiTrackApp/pull/3), merged into `main`.
 - [ ] Gaps 1, 2, 4, 7 and 8 in "Contract notes" are open, with reasons.
 - [ ] iOS flavours and iOS deep links (need Xcode on a Mac).
