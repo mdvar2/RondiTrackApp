@@ -460,12 +460,17 @@ The log carries the id only, never a name or an amount (the test checks this). R
 | `contributionPaid` | 4.5:1 | `#001E2C` / `#C2E8FF` | 13.32:1 | `#C2E8FF` / `#004C69` | 7.28:1 |
 | `contributionConfirmed` | 4.5:1 | `#00210D` / `#B4F1C0` | 13.31:1 | `#B4F1C0` / `#155234` | 7.12:1 |
 | `arrears` | 4.5:1 | `#410002` / `#FFDAD6` | 13.26:1 | `#FFDAD6` / `#93000A` | 7.24:1 |
+| `payoutPaid` (10.3) | 4.5:1 | `#21005D` / `#EADDFF` | 13.32:1 | `#EADDFF` / `#4F378B` | 7.23:1 |
+| `payoutNext` (10.3) | 4.5:1 | `#002020` / `#9CF1F0` | 13.24:1 | `#9CF1F0` / `#004F4F` | 7.28:1 |
+| `payoutWaiting` (10.3) | 4.5:1 | `#1A1B23` / `#E2E2EC` | 13.33:1 | `#E2E2EC` / `#45464F` | 7.28:1 |
 | `unknown` | 4.5:1 | `#1D1A22` / `#E7E0EB` | 13.29:1 | `#E7E0EB` / `#4A4550` | 7.20:1 |
 | `text (onSurface on surface)` | 4.5:1 | `#171D1A` / `#F5FBF5` | 16.30:1 | `#DEE4DE` / `#0F1512` | 14.31:1 |
 | `secondary text (onSurfaceVariant on card)` | 4.5:1 | `#404944` / `#EFF5EF` | 8.42:1 | `#BFC9C2` / `#171D1A` | 10.06:1 |
 | `link text (primary on card)` | 4.5:1 | `#1E6A4F` / `#EFF5EF` | 5.88:1 | `#8CD5B3` / `#171D1A` | 10.01:1 |
 | `selected list row (onSecondaryContainer)` | 4.5:1 | `#354B40` / `#CFE9D9` | 7.31:1 | `#CFE9D9` / `#354B40` | 7.31:1 |
 | `control outline (outline on surface)` | 3.0:1 | `#707973` / `#F5FBF5` | 4.28:1 | `#8A938D` / `#0F1512` | 5.84:1 |
+
+**Payout statuses (10.3).** `payoutPaid` **reuses the `cyclePaidOut` pair**, because the meaning is the same: the pot was paid out. In [`status_colors.dart`](lib/core/theme/status_colors.dart) both tokens point at one `StatusTone` constant, so the pair is measured once and can't drift, and [`payout_status_chip_test.dart`](test/features/payouts/presentation/payout_status_chip_test.dart) checks they are the same object. `payoutNext` (teal, the one row to look at) and `payoutWaiting` (neutral) are new pairs, measured by the same test as the rest. A payout status the app doesn't know uses `unknown`. [`payoutStatusToken`](lib/features/payouts/presentation/payout_status_chip.dart) is an exhaustive switch with no wildcard, and the chip always says the status in words ("Paid", "Next to be paid", "Waiting").
 
 ### Layouts
 
