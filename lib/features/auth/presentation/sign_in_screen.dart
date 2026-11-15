@@ -17,10 +17,33 @@ class SignInScreen extends ConsumerStatefulWidget {
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
+/// Where a sign-in attempt is. One value instead of two flags (`busy` and
+/// `error`), so "busy with an error showing" can't be written: the rule a
+/// reviewer used to check by eye is now the compiler's.
+sealed class _Progress {
+  const new();
+}
+
+/// Waiting for the person.
+final class _Ready extends _Progress {
+  const new();
+}
+
+/// Signing in; the form is locked.
+final class _Busy extends _Progress {
+  const new();
+}
+
+/// The last attempt failed, saying why.
+final class _Failed extends _Progress {
+  const new(this.message);
+
+  final String message;
+}
+
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _email = TextEditingController();
-  bool _busy = false;
-  String? _error;
+  _Progress _progress = const _Ready();
 
   @override
   void dispose() {
@@ -29,10 +52,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   Future<void> _signIn() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
+    setState(() => _progress = const _Busy());
     try {
       await ref.read(authControllerProvider.notifier).signIn(_email.text);
     } on SignInFailedException {
@@ -44,10 +64,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   void _fail(String message) {
     if (!mounted) return;
-    setState(() {
-      _busy = false;
-      _error = message;
-    });
+    setState(() => _progress = _Failed(message));
   }
 
   @override
@@ -58,7 +75,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final accounts = AppConfigScope.of(context).hasDevTools
         ? ref.watch(demoAccountsProvider)
         : const <({String name, String email})>[];
-    final error = _error;
+    final busy = switch (_progress) {
+      _Busy() => true,
+      _Ready() || _Failed() => false,
+    };
+    final error = switch (_progress) {
+      _Failed(:final message) => message,
+      _Ready() || _Busy() => null,
+    };
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sign in')),
@@ -78,7 +102,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   TextField(
                     key: const Key('sign-in-email'),
                     controller: _email,
-                    enabled: !_busy,
+                    enabled: !busy,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     textInputAction: TextInputAction.done,
@@ -92,8 +116,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   const SizedBox(height: 16),
                   FilledButton(
                     key: const Key('sign-in-submit'),
-                    onPressed: _busy ? null : _signIn,
-                    child: Text(_busy ? 'Signing in…' : 'Sign in'),
+                    onPressed: busy ? null : _signIn,
+                    child: Text(busy ? 'Signing in…' : 'Sign in'),
                   ),
                   if (accounts.isNotEmpty) ...[
                     const SizedBox(height: 32),
@@ -106,7 +130,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         for (final account in accounts)
                           ActionChip(
                             label: Text(account.name),
-                            onPressed: _busy
+                            onPressed: busy
                                 ? null
                                 : () => _email.text = account.email,
                           ),
