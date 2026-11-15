@@ -70,7 +70,8 @@ const tabletPortrait = Size(800, 1280);
 /// [coldStart] opens it at that address the way a deep link starts a
 /// stopped app: as the platform's initial route. [size] and [textScale]
 /// set the window and the text size. [config] is the dev flavour's unless
-/// given. [settle] false returns after the first frame, for a test that
+/// given. [delay] is the fakes' pretend network time (none by default).
+/// [settle] false returns after the first frame, for a test that
 /// watches what each frame shows.
 ///
 /// Retries use the app's own [appRetry], as `main` does: a test that turned
@@ -86,6 +87,7 @@ Future<ProviderContainer> pumpApp(
   List<Override> overrides = const [],
   AppConfig? config,
   bool settle = true,
+  Duration delay = Duration.zero,
   Duration? Function(int retryCount, Object error) retry = appRetry,
 }) async {
   if (size != null) {
@@ -109,7 +111,7 @@ Future<ProviderContainer> pumpApp(
 
   final container = ProviderContainer(
     overrides: [
-      fakeDelayProvider.overrideWithValue(Duration.zero),
+      fakeDelayProvider.overrideWithValue(delay),
       if (as != null)
         authControllerProvider.overrideWith(
           () => StartingAuthController(signedInAs(as)),
