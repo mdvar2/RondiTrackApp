@@ -537,3 +537,57 @@ final class InviteRepositoryProvider
 }
 
 String _$inviteRepositoryHash() => r'4ed8aecfabb04bffaf5878a8f52d7a34d9a65e72';
+
+/// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
+/// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+
+@ProviderFor(payoutRepository)
+final payoutRepositoryProvider = PayoutRepositoryProvider._();
+
+/// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
+/// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+
+final class PayoutRepositoryProvider
+    extends
+        $FunctionalProvider<
+          PayoutRepository,
+          PayoutRepository,
+          PayoutRepository
+        >
+    with $Provider<PayoutRepository> {
+  /// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
+  /// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+  PayoutRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'payoutRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$payoutRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<PayoutRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PayoutRepository create(Ref ref) {
+    return payoutRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PayoutRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PayoutRepository>(value),
+    );
+  }
+}
+
+String _$payoutRepositoryHash() => r'fbe11b722e0f0f8072dd07378e38d86242f6495f';

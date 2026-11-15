@@ -12,6 +12,9 @@ import 'package:ronditrack_app/features/home/data/flaky_home_repository.dart';
 import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/invites/data/fake_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_repository.dart';
+import 'package:ronditrack_app/features/payouts/data/fake_payout_repository.dart';
+import 'package:ronditrack_app/features/payouts/data/flaky_payout_repository.dart';
+import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/flaky_stokvel_repository.dart';
@@ -124,3 +127,18 @@ InviteRepository inviteRepository(Ref ref) => FakeInviteRepository(
   stokvels: ref.watch(fakeStokvelsProvider),
   delay: ref.watch(fakeDelayProvider),
 );
+
+/// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
+/// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+@Riverpod(keepAlive: true)
+PayoutRepository payoutRepository(Ref ref) {
+  final fake = FakePayoutRepository(
+    userId: ref.watch(signedInUserIdProvider),
+    delay: ref.watch(fakeDelayProvider),
+    stokvels: ref.watch(fakeStokvelsProvider),
+  );
+  final failEvery = ref.watch(fakeFailEveryProvider);
+  return failEvery > 0
+      ? FlakyPayoutRepository(fake, failEvery: failEvery)
+      : fake;
+}

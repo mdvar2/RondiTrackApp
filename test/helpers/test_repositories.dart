@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/domain/home_repository.dart';
+import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
+import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
@@ -68,4 +70,29 @@ class PendingStokvelRepository implements StokvelRepository {
   @override
   Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) =>
       Completer<CycleDetail>().future;
+}
+
+/// A payout repository whose answers a test sets per cycle id, counting
+/// calls. A [Completer] answer stays pending until the test completes it;
+/// an [Exception] answer throws.
+class ScriptedPayoutRepository implements PayoutRepository {
+  /// Answers [answers] by cycle id.
+  new(this.answers);
+
+  /// The answer for each cycle id.
+  final Map<String, Object> answers;
+
+  /// Calls per cycle id.
+  final Map<String, int> calls = {};
+
+  @override
+  Future<PayoutOrder> fetchPayoutOrder(String stokvelId, String cycleId) {
+    calls.update(cycleId, (count) => count + 1, ifAbsent: () => 1);
+    return switch (answers[cycleId]) {
+      final Completer<PayoutOrder> completer => completer.future,
+      final PayoutOrder order => Future.value(order),
+      final Exception error => Future.error(error),
+      final answer => throw StateError('Unexpected answer $answer'),
+    };
+  }
 }
