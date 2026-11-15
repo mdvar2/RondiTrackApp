@@ -1,3 +1,4 @@
+import 'package:ronditrack_app/core/errors/not_found.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 
 /// Thrown when a stokvel can't be shown: it doesn't exist, *or* the caller
@@ -5,7 +6,7 @@ import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 ///
 /// The two are deliberately the same. The API answers both with `404`, so
 /// nobody can tell whether a stokvel they aren't in exists.
-class StokvelNotFoundException implements Exception {
+class StokvelNotFoundException implements NotFoundException {
   /// Creates the exception. It carries no id or name, so it is safe to log.
   const new();
 
@@ -18,7 +19,7 @@ class StokvelNotFoundException implements Exception {
 ///
 /// All three are the same, as the API's `404` is for
 /// `GET /stokvels/{stokvelId}/cycles/{cycleId}`.
-class CycleNotFoundException implements Exception {
+class CycleNotFoundException implements NotFoundException {
   /// Creates the exception. It carries no id, so it is safe to log.
   const new();
 

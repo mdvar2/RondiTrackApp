@@ -131,4 +131,14 @@ class AppConfig {
 
   /// The RondiTrack API this flavour talks to (from Week 11).
   final Uri apiBaseUri;
+
+  /// Whether this build has developer tools (the persona switcher, the
+  /// sign-in page's test accounts): the dev flavour only.
+  ///
+  /// Check it where a route or button is *built*, so that in staging and
+  /// prod the tool is never constructed: not hidden, absent.
+  bool get hasDevTools => switch (environment) {
+    AppEnvironment.dev => true,
+    AppEnvironment.staging || AppEnvironment.prod => false,
+  };
 }

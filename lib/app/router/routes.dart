@@ -7,6 +7,7 @@ import 'package:ronditrack_app/features/auth/presentation/profile_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
+import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/cycle_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvels_screen.dart';
 
@@ -37,7 +38,12 @@ part 'routes.g.dart';
             TypedGoRoute<StokvelRoute>(
               path: ':id',
               routes: <TypedRoute<RouteData>>[
-                TypedGoRoute<CycleRoute>(path: 'cycles/:cycleId'),
+                TypedGoRoute<CycleRoute>(
+                  path: 'cycles/:cycleId',
+                  routes: <TypedRoute<RouteData>>[
+                    TypedGoRoute<PayoutsRoute>(path: 'payouts'),
+                  ],
+                ),
               ],
             ),
           ],
@@ -162,6 +168,23 @@ class CycleRoute extends GoRouteData with $CycleRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       CycleScreen(stokvelId: id, cycleId: cycleId);
+}
+
+/// `/stokvels/:id/cycles/:cycleId/payouts`: the cycle's payout order, on
+/// top of its cycle, so back goes to the cycle.
+class PayoutsRoute extends GoRouteData with $PayoutsRoute {
+  /// The payout order of cycle [cycleId] of stokvel [id].
+  const new({required this.id, required this.cycleId});
+
+  /// The stokvel's id.
+  final String id;
+
+  /// The cycle's id.
+  final String cycleId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      PayoutsScreen(stokvelId: id, cycleId: cycleId);
 }
 
 /// `/activity`: activity across my stokvels.

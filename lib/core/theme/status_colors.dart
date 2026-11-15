@@ -24,6 +24,16 @@ enum StatusToken {
   /// Money owed from an earlier cycle.
   arrears,
 
+  /// A member the rotation has paid out. The same tones as [cyclePaidOut]:
+  /// the same meaning, already measured.
+  payoutPaid,
+
+  /// The member the next payout goes to.
+  payoutNext,
+
+  /// A member still waiting for their turn.
+  payoutWaiting,
+
   /// A status or role this version of the app doesn't know.
   unknown,
 }
@@ -64,6 +74,17 @@ class StatusColors extends ThemeExtension<StatusColors> {
   /// The tone for [token].
   StatusTone operator [](StatusToken token) => tones[token]!;
 
+  // "Paid out", for a cycle and for a member in the rotation: one pair,
+  // measured once (README "Theme").
+  static const _paidOutLight = StatusTone(
+    background: Color(0xFFEADDFF),
+    foreground: Color(0xFF21005D),
+  );
+  static const _paidOutDark = StatusTone(
+    background: Color(0xFF4F378B),
+    foreground: Color(0xFFEADDFF),
+  );
+
   /// The light theme's tones.
   static const light = StatusColors({
     StatusToken.cycleOpen: StatusTone(
@@ -74,10 +95,7 @@ class StatusColors extends ThemeExtension<StatusColors> {
       background: Color(0xFFE1E3E1),
       foreground: Color(0xFF2E3130),
     ),
-    StatusToken.cyclePaidOut: StatusTone(
-      background: Color(0xFFEADDFF),
-      foreground: Color(0xFF21005D),
-    ),
+    StatusToken.cyclePaidOut: _paidOutLight,
     StatusToken.contributionPending: StatusTone(
       background: Color(0xFFFFDEA8),
       foreground: Color(0xFF271900),
@@ -93,6 +111,15 @@ class StatusColors extends ThemeExtension<StatusColors> {
     StatusToken.arrears: StatusTone(
       background: Color(0xFFFFDAD6),
       foreground: Color(0xFF410002),
+    ),
+    StatusToken.payoutPaid: _paidOutLight,
+    StatusToken.payoutNext: StatusTone(
+      background: Color(0xFF9CF1F0),
+      foreground: Color(0xFF002020),
+    ),
+    StatusToken.payoutWaiting: StatusTone(
+      background: Color(0xFFE2E2EC),
+      foreground: Color(0xFF1A1B23),
     ),
     StatusToken.unknown: StatusTone(
       background: Color(0xFFE7E0EB),
@@ -110,10 +137,7 @@ class StatusColors extends ThemeExtension<StatusColors> {
       background: Color(0xFF444746),
       foreground: Color(0xFFE1E3E1),
     ),
-    StatusToken.cyclePaidOut: StatusTone(
-      background: Color(0xFF4F378B),
-      foreground: Color(0xFFEADDFF),
-    ),
+    StatusToken.cyclePaidOut: _paidOutDark,
     StatusToken.contributionPending: StatusTone(
       background: Color(0xFF5B4300),
       foreground: Color(0xFFFFDEA8),
@@ -129,6 +153,15 @@ class StatusColors extends ThemeExtension<StatusColors> {
     StatusToken.arrears: StatusTone(
       background: Color(0xFF93000A),
       foreground: Color(0xFFFFDAD6),
+    ),
+    StatusToken.payoutPaid: _paidOutDark,
+    StatusToken.payoutNext: StatusTone(
+      background: Color(0xFF004F4F),
+      foreground: Color(0xFF9CF1F0),
+    ),
+    StatusToken.payoutWaiting: StatusTone(
+      background: Color(0xFF45464F),
+      foreground: Color(0xFFE2E2EC),
     ),
     StatusToken.unknown: StatusTone(
       background: Color(0xFF4A4550),

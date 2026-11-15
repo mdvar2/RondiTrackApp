@@ -117,6 +117,19 @@ class _CycleBody extends StatelessWidget {
         Text(
           '${cycle.membersPaid} of ${detail.stokvel.memberCount} members paid',
         ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: OutlinedButton.icon(
+            key: Key('open-payouts-${cycle.id}'),
+            onPressed: () => PayoutsRoute(
+              id: detail.stokvel.id,
+              cycleId: cycle.id,
+            ).go(context),
+            icon: const Icon(Icons.format_list_numbered),
+            label: const Text('Payout order'),
+          ),
+        ),
         const SizedBox(height: 24),
         Text('Contributions', style: theme.textTheme.titleMedium),
         if (detail.contributions.isEmpty)
