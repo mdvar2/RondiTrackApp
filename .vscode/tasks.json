@@ -1,0 +1,20 @@
+{
+  // Opening this folder in VS Code runs "Get packages" by itself, so a fresh
+  // clone has its packages without anyone typing `flutter pub get`.
+  // VS Code asks once, per folder, before it runs a task automatically
+  // ("Allow automatic tasks"); answer Allow. To run it by hand:
+  // Terminal > Run Task > Get packages.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Get packages",
+      "detail": "flutter pub get --enforce-lockfile: the exact versions in pubspec.lock",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["pub", "get", "--enforce-lockfile"],
+      "runOptions": { "runOn": "folderOpen" },
+      "presentation": { "reveal": "silent", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
+    }
+  ]
+}

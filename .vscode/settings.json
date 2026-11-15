@@ -1,0 +1,6 @@
+{
+  // Re-fetch packages whenever pubspec.yaml changes (after a pull, say).
+  "dart.runPubGetOnPubspecChanges": "always",
+  // Ask to fetch packages if they are missing when a Dart file is opened.
+  "dart.promptToGetPackages": true
+}
