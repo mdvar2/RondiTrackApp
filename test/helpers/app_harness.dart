@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ronditrack_app/app/app.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/app/retry.dart';
 import 'package:ronditrack_app/app/router/router.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
@@ -52,7 +53,13 @@ const tabletPortrait = Size(800, 1280);
 /// [as] starts it signed in as that persona (signed out when `null`).
 /// [coldStart] opens it at that address the way a deep link starts a
 /// stopped app: as the platform's initial route. [size] and [textScale]
-/// set the window and the text size.
+/// set the window and the text size. [config] is the dev flavour's unless
+/// given. [settle] false returns after the first frame, for a test that
+/// watches what each frame shows.
+///
+/// Retries use the app's own [appRetry], as `main` does: a test that turned
+/// retries off couldn't see a "not found" that spins first. Only the test
+/// showing what appRetry prevents passes another [retry].
 Future<ProviderContainer> pumpApp(
   WidgetTester tester, {
   FakePersona? as,
@@ -61,6 +68,9 @@ Future<ProviderContainer> pumpApp(
   double? textScale,
   Brightness? brightness,
   List<Override> overrides = const [],
+  AppConfig? config,
+  bool settle = true,
+  Duration? Function(int retryCount, Object error) retry = appRetry,
 }) async {
   if (size != null) {
     tester.view
@@ -90,17 +100,17 @@ Future<ProviderContainer> pumpApp(
         ),
       ...overrides,
     ],
-    retry: (retryCount, error) => null,
+    retry: retry,
   );
   addTearDown(container.dispose);
 
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: RondiTrackApp(config: devConfig),
+      child: RondiTrackApp(config: config ?? devConfig),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) await tester.pumpAndSettle();
   return container;
 }
 

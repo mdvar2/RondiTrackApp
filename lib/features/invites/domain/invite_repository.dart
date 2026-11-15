@@ -1,7 +1,8 @@
+import 'package:ronditrack_app/core/errors/not_found.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_preview.dart';
 
 /// Thrown for an invite code that doesn't exist (or has expired).
-class InviteNotFoundException implements Exception {
+class InviteNotFoundException implements NotFoundException {
   /// Creates the exception. It carries no code, so it is safe to log.
   const new();
 

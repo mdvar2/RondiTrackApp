@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/app.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/app/retry.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 
 void main() {
@@ -22,6 +23,8 @@ void main() {
 
   runApp(
     ProviderScope(
+      // Never retry "not found" (README "State with Riverpod").
+      retry: appRetry,
       overrides: [
         if (failEvery > 0) fakeFailEveryProvider.overrideWithValue(failEvery),
       ],
