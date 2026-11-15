@@ -2,7 +2,7 @@
 
 The RondiTrack phone app (Flutter, Android and iOS). It shows each person their stokvels, what they've paid and owe, and what they can do in each stokvel, given their role there.
 
-This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (every screen has an address). **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
+This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every screen has an address) and Assignment 10.3 (the foundations capstone: rotation and payouts through every layer, and three people on one phone). **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
 
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
 - API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`da39b16`](https://github.com/mdvar2/RondiTrack/commit/da39b168f78d521fe0fecff751c85862cb64ce40) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `1111c20c…16321`). That commit adds the payout order endpoint ([API PR #15](https://github.com/mdvar2/RondiTrack/pull/15)) on top of the 10.1 contract fixes ([API PR #14](https://github.com/mdvar2/RondiTrack/pull/14)). 10.1 and 10.2 read the contract at `3d04a52` (SHA-256 `7292b744…4a0dc3`).
@@ -15,12 +15,14 @@ This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (ev
   - [Routes](#routes)
   - [The gate](#the-gate)
   - [Deep links](#deep-links)
+  - [Personas: three people, one phone](#personas-three-people-one-phone)
 - [Part 2: Getting started](#part-2-getting-started)
   - [Running it](#running-it)
     - [Flavours and config files](#flavours-and-config-files)
     - [Dependencies](#dependencies)
 - [Part 3: How the code is organised](#part-3-how-the-code-is-organised)
   - [Architecture](#architecture)
+  - [Architecture rules](#architecture-rules)
   - [Generated code](#generated-code)
   - [Lints, and why `flutter analyze` isn't enough](#lints-and-why-flutter-analyze-isnt-enough)
 - [Part 4: State and provider lifetimes](#part-4-state-and-provider-lifetimes)
@@ -40,6 +42,7 @@ This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (ev
     - [3. What `/me/home` returns per stokvel](#3-what-mehome-returns-per-stokvel)
     - [4. Due dates: date-only or instants?](#4-due-dates-date-only-or-instants)
     - [5. The three seed personas](#5-the-three-seed-personas)
+    - [Payouts: the five answers (Assignment 10.3)](#payouts-the-five-answers-assignment-103)
     - [Gaps found, and backend pull requests](#gaps-found-and-backend-pull-requests)
 - [Part 8: Tests, CI and evidence](#part-8-tests-ci-and-evidence)
   - [Tests and CI](#tests-and-ci)
@@ -47,6 +50,7 @@ This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (ev
     - [Emulator evidence](#emulator-evidence)
     - [Assignment 10.2: verification](#assignment-102-verification)
     - [Assignment 10.2: emulator evidence](#assignment-102-emulator-evidence)
+    - [Assignment 10.3: verification](#assignment-103-verification)
 - [Part 9: Still open](#part-9-still-open)
   - [Still open](#still-open)
 
@@ -58,6 +62,7 @@ This is Week 10: Assignment 10.1 (foundations and state) and Assignment 10.2 (ev
 |---|---|---|
 | **Assignment 10.1**: foundations and state | Three flavours with validated config;<br>the domain (money in cents, date-only due dates, statuses with an `unknown` fallback, roles per stokvel);<br>three seed personas on fake repositories;<br>Riverpod state with deliberate lifetimes;<br>strict lints and CI | [Part 2](#part-2-getting-started),<br>[Part 3](#part-3-how-the-code-is-organised),<br>[Part 4](#part-4-state-and-provider-lifetimes),<br>[Part 6](#part-6-domain-rules),<br>[Part 7](#part-7-the-api-contract) |
 | **Assignment 10.2**: every screen has an address | Four tabs that keep their place;<br>typed routes for every screen;<br>a fake sign-in and one testable gate;<br>deep links per flavour;<br>a Material 3 light and dark design system with measured contrast;<br>phone and tablet layouts | [Part 1](#part-1-navigation-every-screen-has-an-address),<br>[Part 5](#part-5-look-and-layout) |
+| **Assignment 10.3**: the foundations capstone | The rotation and payouts view, built layer by layer (domain, fake, provider, theme, route, screen), each with its tests;<br>a backend fix so the API says who is next;<br>three personas, each seeing exactly their own world;<br>a persona switcher in the dev build only;<br>"not found" never retried;<br>architecture rules and the Routes table checked by CI;<br>one Dart 3 refactor | [Personas](#personas-three-people-one-phone),<br>[Architecture rules](#architecture-rules),<br>[Payouts contract](#payouts-the-five-answers-assignment-103),<br>[10.3 verification](#assignment-103-verification) |
 | **Checks** | 268 tests passing (139 of them from 10.1);<br>`dart analyze --fatal-infos` clean;<br>CI green on `main` | [Part 8](#part-8-tests-ci-and-evidence) |
 
 ---
@@ -212,6 +217,27 @@ The ids are Mabena Family and its current cycle. Soweto Teachers is `5d0c9a4e-2b
 
 **What the adb test proves, and what it doesn't.** `adb shell am start -d …` proves that the intent filter matches, that each flavour receives only its own scheme, and that the app routes the link, from cold (`LaunchState: COLD`) and while running. It doesn't prove that a link tapped in a messaging app or browser reaches the app: those apps decide what is tappable, and many don't linkify custom schemes. It also proves nothing about App Link verification, which needs the hosted file.
 
+### Personas: three people, one phone
+
+> **In plain words.** A family shares one phone. Lerato is Treasurer of one stokvel and an ordinary Member of another; Sipho is a Member only; Thabo is in no stokvel. Whoever is signed in must see exactly their own stokvels, their own buttons and their own empty states, and when the phone changes hands, nothing of the last person may be left on screen, not even for a frame.
+
+What each persona sees (Assignment 10.3). Every cell is checked by [`personas_test.dart`](test/app/personas_test.dart), one table-driven test per screen:
+
+| Persona | Home | Mabena Family | Soweto Teachers | Payouts view: Mabena Family | Payouts view: Soweto Teachers |
+|---|---|---|---|---|---|
+| **Lerato Mokoena** | Two cards: Mabena Family (**Treasurer**), Soweto Teachers (Member) | Your role: Treasurer.<br>Pay, Upload proof, **Confirm contributions, Close cycle, Record payout** | Your role: Member.<br>Pay, Upload proof | Nomsa **Paid**, Lerato **Next to be paid** (highlighted), Sipho **Waiting**.<br>**Record payout** | Kagiso **Next to be paid**, Sipho and Lerato **Waiting**.<br>No action |
+| **Sipho Dlamini** | Two cards, both Member; Mabena Family **In arrears** (R 250,00) | Your role: Member.<br>Pay | Your role: Member.<br>Pay | The same order.<br>No action | The same order.<br>No action |
+| **Thabo Nkosi** | "You're not in a stokvel yet", how to join (ask for an invite link and open it on this phone) and **Refresh** | "We couldn't find that stokvel." | "We couldn't find that stokvel." | "We couldn't find that cycle." | "We couldn't find that cycle." |
+
+- **Treasurer actions come from that stokvel's membership**, through the 10.1 actions match, never from the person or a token. Sipho sees no treasurer action on any address (the test opens ten).
+- **The order is the stokvel's, not the viewer's.** Lerato and Sipho see the same Mabena Family order; only the buttons differ.
+
+**How to switch, in the dev build.** Tap the round **switch account** button at the bottom right of any tab, then a persona. The switcher signs out and in again through the same [`AuthController`](lib/features/auth/presentation/auth_controller.dart) a person uses, so the gate, the shell and every provider react as to a real sign-in, and you land back on the same address as the new person: Lerato with Mabena Family open becomes Sipho with Mabena Family open, as a Member. On the sign-in page, the dev build also lists the three personas under "Test accounts".
+
+**Only in the dev build: absent, not hidden.** [`AppConfig.hasDevTools`](lib/core/config/app_config.dart) is true for dev only, and the shell checks it where it builds its buttons. Staging and prod build no switcher (no `FloatingActionButton` at all) and list no test accounts. The switcher has no address in any flavour: `/dev/personas` lands on Home, like any address the Routes table doesn't have. [`persona_switcher_test.dart`](test/app/dev/persona_switcher_test.dart) builds the app with the staging and prod configs and looks for the switcher on every address.
+
+**Nothing of the last person survives a switch.** [`personas_test.dart`](test/app/personas_test.dart) switches from Lerato to Sipho with Mabena Family open, with real fake delays, and checks every 16 ms frame. From the frame after Lerato's sign-out completes, none of her treasurer actions, her Upload proof, "Your role: Treasurer" or her email (not even offstage on the Profile tab) appears, and sign-in never shows over the old shell: the shell and every screen in it are already gone. That is the 10.1 sign-out plan, now tested; no change to the app was needed. (The frame in which her sign-out completes is still hers: the state changes during that frame and the gate redirects on the next one, as a frame-by-frame trace showed.)
+
 ---
 
 ## Part 2: Getting started
@@ -247,6 +273,8 @@ The app opens on a fake sign-in. Sign in with a seed persona's email, or tap one
 | Lerato Mokoena | `lerato@ronditrack.example` | Treasurer of Mabena Family, Member of Soweto Teachers |
 | Sipho Dlamini | `sipho@ronditrack.example` | Member of Mabena Family (in arrears) and Member of Soweto Teachers: a Member only (until 10.3 he was Chairperson of Soweto Teachers) |
 | Thabo Nkosi | `thabo@ronditrack.example` | None: Home's empty state, and the one who joins by invite |
+
+Since 10.3 the "Test accounts" are listed in the **dev** build only; in staging and prod, type the email. The dev build also has the persona switcher ([Personas](#personas-three-people-one-phone)).
 
 10.1's `--dart-define=FAKE_PERSONA` is gone. A way to start signed in without the gate would be a bypass in every flavour, prod included.
 
@@ -323,6 +351,10 @@ lib/
                 data/ (fake_seed, FakeStokvelRepository)  presentation/ (list, detail, cycle)
     activity/   domain/  data/  presentation/
     invites/    domain/  data/  presentation/ (the /join/:code preview)
+    payouts/    domain/ (PayoutOrder, PayoutStatus, PayoutRepository)  data/ (FakePayoutRepository)
+                presentation/ (payoutOrderProvider, PayoutsScreen, PayoutStatusChip)   (10.3)
+  app/dev/      persona_switcher.dart: the dev-only persona switcher (10.3)
+  app/retry.dart  appRetry: never retry "not found" (10.3)
 contract/openapi/v1.json   the API contract copy
 ```
 
@@ -330,6 +362,31 @@ contract/openapi/v1.json   the API contract copy
 - No widget imports a fake, a `data/` folder, Dio or Drift. [`architecture_test.dart`](test/architecture_test.dart) enforces it, and checks that only `providers.dart` names a fake.
 - Widgets navigate only with the typed routes in [`routes.dart`](lib/app/router/routes.dart) (`StokvelRoute(id: id).go(context)`). The architecture test fails on a `Navigator.push`, a `MaterialPageRoute`, or a string path in a widget.
 - Every screen renders the sealed [`ViewState`](lib/core/state/view_state.dart) (`ViewLoading`, `ViewEmpty`, `ViewData`, `ViewFailure`) with an exhaustive `switch`.
+
+### Architecture rules
+
+> **In plain words.** Two things a reviewer used to send back, "a colour typed into a widget" and "a screen that imports a `data/` folder", are now CI checks. [`architecture_test.dart`](test/architecture_test.dart) reads every hand-written Dart file and fails on a break. A rule may have an exception, but only one written into the test with its reason and the week it ends.
+
+What the test enforces (Assignment 10.3), one test per rule:
+
+| Rule | Files it reads | Fails on |
+|---|---|---|
+| No colour typed outside the theme | Everything under `lib/features/` (every layer) and `lib/app/` | `Color(0x…)`, `Colors.…`, `Color.fromARGB`, `Color.fromRGBO`. Only `lib/core/theme/` names colours |
+| No screen imports `data/`, a fake, Dio or Drift | Every `presentation/` file | An import of a `data/` folder, a `fake_…` file, `package:dio` or `package:drift` |
+| No screen imports the composition root | Every `presentation/` file that builds widgets | An import of `app/providers.dart`, which imports every `data/` folder |
+| Only `app/providers.dart` names a repository | Everything under `lib/` outside `data/` | `Fake…Repository(` or `Flaky…Repository(` |
+| No `Navigator.push` | Everything under `lib/` | `Navigator.push`, `Navigator.of(…).push`, `MaterialPageRoute` (10.2's rule, now enforced) |
+| No string path in a widget | Screens, and `lib/app/` | `context.go(…)`, `GoRouter.of(…)`, `.go('/…')`: screens navigate with typed routes |
+
+**Exceptions**, each in the test with its reason and end:
+
+| Rule | File | Reason | Ends |
+|---|---|---|---|
+| No screen imports the composition root | [`stokvel_detail_screen.dart`](lib/features/stokvels/presentation/stokvel_detail_screen.dart) | Reads `signedInUserIdProvider` (whose contribution is mine, for the actions match). It lives in the composition root until the session has a home of its own | Week 11 |
+| No screen imports the composition root | [`payouts_screen.dart`](lib/features/payouts/presentation/payouts_screen.dart) | Reads `signedInUserIdProvider` for the actions match, as the stokvel screen does | Week 11 |
+| No screen imports the composition root | [`sign_in_screen.dart`](lib/features/auth/presentation/sign_in_screen.dart) | Reads `demoAccountsProvider`, the dev build's test accounts, which name the fakes' personas | Week 11 |
+
+The test checks the exceptions too. Each needs a reason and a week, and an exception fails once it no longer matches anything, so a fixed file can't keep its excuse. Two self-checks prove the rules really look: a known screen is recognised as one, and the patterns match the imports and colours they forbid.
 
 ### Generated code
 
@@ -398,6 +455,8 @@ The Analyse step writes each finding as a GitHub annotation, so it shows on the 
 - **Not yours = not found.** The fake throws the same `StokvelNotFoundException` for a stokvel you aren't in as for one that doesn't exist, matching the API's `404`. The screen says "We couldn't find that stokvel." in both cases.
 - **Never the wrong stokvel, not for a frame.** Each id is its own family member, so switching ids starts from a fresh loading state, never the previous stokvel's value. As a second guard, `stokvelDetailViewState` treats a value whose id isn't the requested one as loading. [`stokvel_switch_test.dart`](test/features/stokvels/presentation/stokvel_switch_test.dart) loads Mabena Family, switches to a 5‑second‑slow Soweto Teachers, pumps **one** frame, and expects Soweto Teachers' loading state and none of Mabena Family's contributions.
 
+- **"Not found" is never retried (10.3).** Riverpod 3 retries every failed provider, up to ten times with growing waits. For a 404 that is pointless: asking again can't change the answer. Every not-found error implements [`NotFoundException`](lib/core/errors/not_found.dart), and [`appRetry`](lib/app/retry.dart), the root `ProviderScope`'s `retry` in `main`, returns `null` for it and Riverpod's default otherwise. The whole-app test harness uses the same function. [`retry_test.dart`](test/app/retry_test.dart) opens Thabo's link to Mabena Family's payouts and checks "not found" with no spinner in every frame, and that the repository is asked **once**; with Riverpod's default retry, the same link was asked again and again. (What this app showed: its view state puts an error before loading, so the retries didn't show a spinner here. They were still repeated requests, which against the real API would be about ten 404s per link.)
+
 ### Provider lifetimes
 
 > **In plain words.** Every provider either lives for the whole session (**keepAlive**) or is thrown away as soon as no screen is using it (**autoDispose**). Keeping data costs memory and can keep other people's details on a shared phone; throwing it away costs a reload. The table gives the reason for each choice.
@@ -407,13 +466,14 @@ The Analyse step writes each finding as a GitHub annotation, so it shows on the 
 | `authControllerProvider` | Who is signed in (`SignedOut` or `SignedIn`) | **keepAlive** | One small object | It *is* the session: disposing it would sign the person out |
 | `signedInUserIdProvider` | The signed-in person's id, `null` when signed out (follows `authControllerProvider`) | **keepAlive** | One string | Everything that depends on it rebuilds. It must live for the whole session |
 | `routerProvider` | The `GoRouter`, which owns every tab's stack | **keepAlive**, built once | One router | Every tab would lose its place. It *listens* to the auth state rather than watching it, so it is never rebuilt |
-| `authRepositoryProvider`,<br>`homeRepositoryProvider`,<br>`stokvelRepositoryProvider`,<br>`activityRepositoryProvider`,<br>`inviteRepositoryProvider` | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
+| `authRepositoryProvider`,<br>`homeRepositoryProvider`,<br>`stokvelRepositoryProvider`,<br>`activityRepositoryProvider`,<br>`inviteRepositoryProvider`,<br>`payoutRepositoryProvider` (10.3) | The repository objects (Week 11: an API client and its connection pool) | **keepAlive** | Small, and no personal data of its own | Rebuilding the client and its connections on every screen |
 | `fakeStokvelsProvider`,<br>`fakeDelayProvider`,<br>`demoAccountsProvider` | The fakes' changeable seed copy (a join lands here), their delay, the sign-in page's test accounts. Week 11 deletes them | **keepAlive** | Kilobytes | A join would be forgotten: the fake "server" must outlive screens |
 | `lifecycleLogProvider` | A logging function | **keepAlive** | Nothing | Nothing gained |
 | `fakeFailEveryProvider` | One number from `FAKE_FAIL_EVERY` (dev only; Week 11 deletes it) | **keepAlive** | One int | The repositories watch it; rebuilding them would reset the flaky fakes' call count |
 | `homeControllerProvider` | My stokvels, roles and amounts | **autoDispose** | Home is the root screen, so it is watched for the whole session anyway | Only when Home leaves the stack (sign-out), which is exactly when it should go |
 | `stokvelDetailProvider(id)` | One stokvel's cycle and **other members'** names and contributions | **autoDispose** | Memory per stokvel opened; other people's data kept after you leave; it goes stale (a contribution recorded meanwhile wouldn't show) | A refetch and a spinner when the stokvel is reopened, which on a data bundle is a small, honest cost |
 | `cycleDetailProvider(id, cycleId)` | One cycle and its contributions | **autoDispose** | As stokvel detail | As stokvel detail |
+| `payoutOrderProvider((stokvelId:, cycleId:))` (10.3) | One cycle's payout order: **other members'** names, amounts and when they were paid | **autoDispose**, a family keyed by a record of both ids (equal by value, so a rebuild finds the same member) | Other people's money kept after you leave, and stale once a payout is recorded | A refetch when the payouts view is reopened |
 | `activityControllerProvider` | My activity feed | **autoDispose** | Watched while the Activity tab is in the shell's stack | Dropped at sign-out with the shell |
 | `invitePreviewProvider(code)`, `inviteJoinerProvider(code)` | One invite's preview, and the join in progress | **autoDispose** | Tiny | Nothing worth keeping once the invite screen closes |
 
@@ -723,12 +783,22 @@ flutter test
 | **10.2** Breakpoints | `test/core/layout/window_size_test.dart` |
 | **10.2** Fake sign-in, invites (join is isolated per session), activity, cycle by id | `test/features/fakes_10_2_test.dart` |
 | **10.2** No `Navigator.push`, string path or typed colour in a widget | `test/architecture_test.dart` |
+| **10.3 Domain** Every payout status the API sends maps; a new one is `unknown`; every status has words | `test/features/payouts/domain/payout_status_test.dart` |
+| **10.3 Fake** A non-member gets "not found"; a member gets the order as seeded | `test/features/payouts/data/fake_payout_repository_test.dart` |
+| **10.3 Provider** Empty is empty; loading, data and failure each map once; two cycles keep separate state; disposal | `test/features/payouts/presentation/payout_order_provider_test.dart` |
+| **10.3 Theme** Each status's token, the reused paid-out pair, the dark tokens in dark mode | `test/features/payouts/presentation/payout_status_chip_test.dart`, `test/core/theme/contrast_test.dart` |
+| **10.3 Route** The payouts address in the Stokvels tab, back to the cycle from a cold start, a signed-out link survives sign-in | `test/app/router/payouts_route_test.dart`, `test/app/router/redirect_test.dart` |
+| **10.3 Screen** Every state; the order as sent, not re-sorted; the next member highlighted; Treasurer actions follow the membership; 360 dp at 200% text; dark mode | `test/features/payouts/presentation/payouts_screen_test.dart` |
+| **10.3 The twist** No switcher in staging or prod; each persona's own world; no frame of the last person after a switch | `test/app/dev/persona_switcher_test.dart`, `test/app/personas_test.dart` |
+| **10.3** "Not found" never retried | `test/app/retry_test.dart` |
+| **10.3** Every address in the Routes table opens where the table says, and the table is the router's | `test/app/router/routes_table_test.dart` |
+| **10.3** Architecture rules, with each exception's reason and end | `test/architecture_test.dart` |
 
 Router-level tests pump the real app ([`app_harness.dart`](test/helpers/app_harness.dart)): router, gate, theme and shell, on fakes with no delay. A cold start is simulated with the platform's initial route, which is where a deep link arrives when it starts the app.
 
 The **10.1 one-frame test** now runs through the router. The picker changes the address, and one frame later Soweto Teachers is loading, with none of Mabena Family's contributions. The 10.1 widget tests that pumped a screen on its own still do. The app smoke test signs Lerato in first, because the app now opens behind the gate.
 
-Widget tests swap repositories with `overrideWithValue`, never by editing a provider. Each test puts its `ProviderScope` directly inside `tester.pumpWidget(…)`. Failure tests pass `retry: (retryCount, error) => null`.
+Widget tests swap repositories with `overrideWithValue`, never by editing a provider. Each test puts its `ProviderScope` directly inside `tester.pumpWidget(…)`. Failure tests pass `retry: (retryCount, error) => null`. Since 10.3 the whole-app harness retries with the app's own `appRetry`, as `main` does, so a "not found" that spins or repeats would show.
 
 [CI](.github/workflows/ci.yml) runs on every pull request and on pushes to `main`, using Flutter 3.47.7.
 
