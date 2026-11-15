@@ -63,7 +63,7 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
 | **Assignment 10.1**: foundations and state | Three flavours with validated config;<br>the domain (money in cents, date-only due dates, statuses with an `unknown` fallback, roles per stokvel);<br>three seed personas on fake repositories;<br>Riverpod state with deliberate lifetimes;<br>strict lints and CI | [Part 2](#part-2-getting-started),<br>[Part 3](#part-3-how-the-code-is-organised),<br>[Part 4](#part-4-state-and-provider-lifetimes),<br>[Part 6](#part-6-domain-rules),<br>[Part 7](#part-7-the-api-contract) |
 | **Assignment 10.2**: every screen has an address | Four tabs that keep their place;<br>typed routes for every screen;<br>a fake sign-in and one testable gate;<br>deep links per flavour;<br>a Material 3 light and dark design system with measured contrast;<br>phone and tablet layouts | [Part 1](#part-1-navigation-every-screen-has-an-address),<br>[Part 5](#part-5-look-and-layout) |
 | **Assignment 10.3**: the foundations capstone | The rotation and payouts view, built layer by layer (domain, fake, provider, theme, route, screen), each with its tests;<br>a backend fix so the API says who is next;<br>three personas, each seeing exactly their own world;<br>a persona switcher in the dev build only;<br>"not found" never retried;<br>architecture rules and the Routes table checked by CI;<br>one Dart 3 refactor | [Personas](#personas-three-people-one-phone),<br>[Architecture rules](#architecture-rules),<br>[Payouts contract](#payouts-the-five-answers-assignment-103),<br>[10.3 verification](#assignment-103-verification) |
-| **Checks** | 268 tests passing (139 of them from 10.1);<br>`dart analyze --fatal-infos` clean;<br>CI green on `main` | [Part 8](#part-8-tests-ci-and-evidence) |
+| **Checks** | 415 tests passing (268 of them from 10.1 and 10.2);<br>`dart analyze --fatal-infos` clean;<br>CI green on `main` | [Part 8](#part-8-tests-ci-and-evidence) |
 
 ---
 
@@ -875,6 +875,44 @@ Same emulator, debug builds, in [`docs/evidence/10.2/`](docs/evidence/10.2/). Th
 
 What the phone showed that the tests don't: go_router receives the whole link (`ronditrack-dev://app/stokvels/…`) as the cold-start route and matches on its path, so the custom scheme and `app` host need no handling in the app. The gate reads only the path, too (`redirect_test.dart` covers a full link). The bottom bar's labels stay smaller than the rest at 200% because Flutter's `NavigationBar` caps their text scaling itself; all four labels stay visible.
 
+#### Assignment 10.3: verification
+
+Run locally on 2026‑11‑15 (Windows, Flutter 3.47.7, Dart 3.13.5), after every commit on the branch:
+
+| Check | Result |
+|---|---|
+| `dart format --output=none --set-exit-if-changed` (hand-written files) | 0 changed |
+| `dart run build_runner build` | Built; generated files unchanged |
+| `dart analyze --fatal-infos` | No issues found |
+| `flutter test` | **415 passed**, 0 failed (268 from 10.1 and 10.2 still green) |
+| `flutter build apk --debug --flavor dev / prod` | Both built and installed side by side |
+| CI on the pull request | [run 43762651639](https://github.com/mdvar2/RondiTrackApp/actions/runs/43762651639), every step green |
+| API: `PayoutOrderTests` (7), the authorization matrix row, four required fields, the contract test | Green in the API's CI on [PR #15](https://github.com/mdvar2/RondiTrack/pull/15) (run [43756817752](https://github.com/mdvar2/RondiTrack/actions/runs/43756817752)), 179 tests |
+
+**Tests seen to fail.** For five tests, the code each one guards was broken on purpose, the test run, and the code restored:
+
+| Broke | Test | Went red with |
+|---|---|---|
+| `PayoutStatus.fromApi` compares ignoring case | `payout_status_test.dart` | "the spelling is exact": expected `unknown`, got `paid` for `"paid"` |
+| `FakePayoutRepository` without its membership check | `fake_payout_repository_test.dart` | 3 tests: Thabo and nobody got Mabena Family's and Soweto Teachers' orders instead of `CycleNotFoundException` |
+| The shell builds the switcher in every flavour (`hasDevTools \|\| true`) | `persona_switcher_test.dart` | 20 tests: "Found 1 widget with type PersonaSwitcherButton" on every staging and prod address |
+| `appRetry` retries not-found (`error is Never`) | `retry_test.dart` | 6 tests: a 200 ms retry instead of `null`; the link was asked more than once |
+| `Colors.teal` typed into the payouts screen's border | `architecture_test.dart` | "no colour typed outside the theme" listed the line |
+
+**Emulator evidence** (Pixel profile, 1080×2400 at density 420, debug builds), in [`docs/evidence/10.3/`](docs/evidence/10.3/):
+
+| What | File |
+|---|---|
+| The payouts view as Lerato in Mabena Family, where she is Treasurer: the order as sent, Nomsa paid, Lerato next (highlighted), Sipho waiting, and **Record payout**. Opened by a cold-start deep link, through sign-in | [`01-payouts-lerato-treasurer.png`](docs/evidence/10.3/01-payouts-lerato-treasurer.png) |
+| The same view as Sipho, a Member: the same order, no action | [`02-payouts-sipho-member.png`](docs/evidence/10.3/02-payouts-sipho-member.png) |
+| Home as Thabo, in no stokvel: what to do next | [`03-home-thabo-empty.png`](docs/evidence/10.3/03-home-thabo-empty.png) |
+| The persona switcher, open, in the dev build | [`04-switcher-dev.png`](docs/evidence/10.3/04-switcher-dev.png) |
+| Home as Lerato: dev with the switcher button, prod without it | [`05a-home-dev-with-switcher.png`](docs/evidence/10.3/05a-home-dev-with-switcher.png), [`05b-home-prod-no-switcher.png`](docs/evidence/10.3/05b-home-prod-no-switcher.png) |
+| Prod's sign-in, with no test accounts | [`06-signin-prod-no-test-accounts.png`](docs/evidence/10.3/06-signin-prod-no-test-accounts.png) |
+| Recording: Lerato with Mabena Family open ("Your role: Treasurer", treasurer actions) switches to Sipho, through sign-in, back to Mabena Family as a Member | [`07-switch-lerato-to-sipho-mabena-open.mp4`](docs/evidence/10.3/07-switch-lerato-to-sipho-mabena-open.mp4) |
+
+What the phone showed that the tests don't: after the switch, the dev build lands on the same address as the new person without anyone navigating, because the gate remembered it at sign-out. In prod, a person has to type an email, as there is no test-account list to tap.
+
 ---
 
 ## Part 9: Still open
@@ -889,4 +927,7 @@ What the phone showed that the tests don't: go_router receives the whole link (`
 - [x] Open the "Assignment 10.1: Foundations and State" pull request and wait for its green run: [#3](https://github.com/mdvar2/RondiTrackApp/pull/3), merged into `main`.
 - [ ] Gaps 1, 2, 4, 7 and 8 in "Contract notes" are open, with reasons.
 - [ ] iOS flavours and iOS deep links (need Xcode on a Mac).
+- [ ] 10.3: the empty payout order (a cycle that isn't open and had no payout) is tested with a scripted repository, but no seed cycle shows it: both seed cycles are open. Week 11's real API, or a closed seed cycle, would show it on a phone.
+- [ ] 10.3: Record payout says "coming soon"; the request body is rands as a `decimal` (contract gap 10).
+- [ ] 10.3 stretch goals not attempted: the switcher listing what it cleared, a contract check for the fakes, a second Dart 3 refactor.
 - [ ] Stretch goals not attempted: every route as every persona in one test, a dev-only theme gallery, predictive back, a real App Link.
