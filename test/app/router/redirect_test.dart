@@ -160,6 +160,10 @@ void main() {
         id: FakeSeed.mabenaFamilyId,
         cycleId: FakeSeed.mabenaCycleId,
       ).location,
+      const PayoutsRoute(
+        id: FakeSeed.mabenaFamilyId,
+        cycleId: FakeSeed.mabenaCycleId,
+      ).location,
       const ActivityRoute().location,
       const ProfileRoute().location,
       const JoinRoute(code: 'MABENA26').location,
@@ -168,4 +172,22 @@ void main() {
     }
     expect(isAppAddress(const SignInRoute().location), isFalse);
   });
+
+  test(
+    'a signed-out link to the payouts view is remembered across sign-in',
+    () {
+      const payouts = PayoutsRoute(
+        id: FakeSeed.mabenaFamilyId,
+        cycleId: FakeSeed.mabenaCycleId,
+      );
+      expect(returnAddress(payouts.location), payouts.location);
+      expect(
+        redirectFor(
+          auth: const SignedOut(),
+          location: Uri.parse(payouts.location),
+        ),
+        SignInRoute(from: payouts.location).location,
+      );
+    },
+  );
 }
