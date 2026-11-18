@@ -4,6 +4,7 @@ import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
+import 'package:ronditrack_app/features/auth/presentation/sign_in_notice.dart';
 
 /// The fake sign-in: an email, and Sign in.
 ///
@@ -52,6 +53,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   Future<void> _signIn() async {
+    ref.read(signInNoticeProvider.notifier).clear();
     setState(() => _progress = const _Busy());
     try {
       await ref.read(authControllerProvider.notifier).signIn(_email.text);
@@ -85,6 +87,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       _Failed(:final message) => message,
       _Ready() || _Busy() => null,
     };
+    final notice = ref.watch(signInNoticeProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sign in')),
@@ -100,6 +103,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   Text('RondiTrack', style: theme.textTheme.headlineMedium),
                   const SizedBox(height: 8),
                   const Text('Sign in with the email you registered with.'),
+                  if (notice != null) ...[
+                    const SizedBox(height: 16),
+                    Card(
+                      key: const Key('sign-in-notice'),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(notice),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   TextField(
                     key: const Key('sign-in-email'),

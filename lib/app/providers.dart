@@ -1,5 +1,9 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
+import 'package:ronditrack_app/core/data/api_client.dart';
+import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';
 import 'package:ronditrack_app/features/activity/data/fake_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/data/flaky_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/domain/activity_repository.dart';
@@ -34,6 +38,45 @@ String? signedInUserId(Ref ref) => switch (ref.watch(authControllerProvider)) {
   SignedIn(:final user) => user.id,
   SignedOut() => null,
 };
+
+/// The flavour's validated configuration. `main` overrides it with the one
+/// it built from `config/<flavour>.json`; nothing has a default address.
+@Riverpod(keepAlive: true)
+AppConfig appConfig(Ref ref) => throw StateError(
+  'appConfigProvider has no value: main overrides it with the flavour config.',
+);
+
+/// Where the API's log lines go: the Run console, in debug builds only.
+/// Tests override it to read the lines back.
+@Riverpod(keepAlive: true)
+void Function(String line) apiLog(Ref ref) => (line) {
+  if (kDebugMode) debugPrint(line);
+};
+
+/// The signed-in person's access token, in memory only.
+@Riverpod(keepAlive: true)
+AccessTokenHolder accessToken(Ref ref) => AccessTokenHolder();
+
+/// The one Dio client, for the app's whole life: its base URL from the
+/// flavour's config, never typed in code. A `401` outside sign-in ends the
+/// session (README "Failures").
+@Riverpod(keepAlive: true)
+Dio apiClient(Ref ref) {
+  final dio = createApiClient(
+    baseUri: ref.watch(appConfigProvider).apiBaseUri,
+    tokens: ref.watch(accessTokenProvider),
+    onSessionEnded: () =>
+        ref.read(authControllerProvider.notifier).sessionEnded(),
+    log: ref.watch(apiLogProvider),
+  );
+  ref.onDispose(dio.close);
+  return dio;
+}
+
+/// The client generated from `contract/openapi/v1.json`, over [apiClient].
+/// Only `data/` code reads it.
+@Riverpod(keepAlive: true)
+RondiTrackApi api(Ref ref) => RondiTrackApi(ref.watch(apiClientProvider));
 
 /// How often the fakes fail: `0` never (the default), `3` the first call and
 /// every third after it. Only the dev flavour sets it, from

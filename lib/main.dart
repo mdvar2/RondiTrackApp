@@ -26,6 +26,7 @@ void main() {
       // Never retry "not found" (README "State with Riverpod").
       retry: appRetry,
       overrides: [
+        appConfigProvider.overrideWithValue(config),
         if (failEvery > 0) fakeFailEveryProvider.overrideWithValue(failEvery),
       ],
       child: RondiTrackApp(config: config),

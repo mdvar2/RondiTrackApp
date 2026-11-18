@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The dev flavour only: plain HTTP to the developer's own API, for
+         exactly the host in config/dev.json (README "Running against the
+         API"). Staging and prod have no such file, so Android's default
+         applies to them: HTTPS only. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>

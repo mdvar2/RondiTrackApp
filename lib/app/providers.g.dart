@@ -60,6 +60,262 @@ final class SignedInUserIdProvider
 
 String _$signedInUserIdHash() => r'96c3a33ea3335b74a06427da799eba3dabb47c6b';
 
+/// The flavour's validated configuration. `main` overrides it with the one
+/// it built from `config/<flavour>.json`; nothing has a default address.
+
+@ProviderFor(appConfig)
+final appConfigProvider = AppConfigProvider._();
+
+/// The flavour's validated configuration. `main` overrides it with the one
+/// it built from `config/<flavour>.json`; nothing has a default address.
+
+final class AppConfigProvider
+    extends $FunctionalProvider<AppConfig, AppConfig, AppConfig>
+    with $Provider<AppConfig> {
+  /// The flavour's validated configuration. `main` overrides it with the one
+  /// it built from `config/<flavour>.json`; nothing has a default address.
+  AppConfigProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appConfigProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appConfigHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppConfig> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppConfig create(Ref ref) {
+    return appConfig(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppConfig value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppConfig>(value),
+    );
+  }
+}
+
+String _$appConfigHash() => r'32a0155f586772c5503259bbd2e0a9bf56ba3f41';
+
+/// Where the API's log lines go: the Run console, in debug builds only.
+/// Tests override it to read the lines back.
+
+@ProviderFor(apiLog)
+final apiLogProvider = ApiLogProvider._();
+
+/// Where the API's log lines go: the Run console, in debug builds only.
+/// Tests override it to read the lines back.
+
+final class ApiLogProvider
+    extends
+        $FunctionalProvider<
+          void Function(String line),
+          void Function(String line),
+          void Function(String line)
+        >
+    with $Provider<void Function(String line)> {
+  /// Where the API's log lines go: the Run console, in debug builds only.
+  /// Tests override it to read the lines back.
+  ApiLogProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiLogProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiLogHash();
+
+  @$internal
+  @override
+  $ProviderElement<void Function(String line)> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  void Function(String line) create(Ref ref) {
+    return apiLog(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void Function(String line) value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void Function(String line)>(value),
+    );
+  }
+}
+
+String _$apiLogHash() => r'7140338884dd23922c68037ad174ce0e8f31e295';
+
+/// The signed-in person's access token, in memory only.
+
+@ProviderFor(accessToken)
+final accessTokenProvider = AccessTokenProvider._();
+
+/// The signed-in person's access token, in memory only.
+
+final class AccessTokenProvider
+    extends
+        $FunctionalProvider<
+          AccessTokenHolder,
+          AccessTokenHolder,
+          AccessTokenHolder
+        >
+    with $Provider<AccessTokenHolder> {
+  /// The signed-in person's access token, in memory only.
+  AccessTokenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'accessTokenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$accessTokenHash();
+
+  @$internal
+  @override
+  $ProviderElement<AccessTokenHolder> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AccessTokenHolder create(Ref ref) {
+    return accessToken(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AccessTokenHolder value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AccessTokenHolder>(value),
+    );
+  }
+}
+
+String _$accessTokenHash() => r'76bbd078a7137a2dd44a03982926688eb37e3beb';
+
+/// The one Dio client, for the app's whole life: its base URL from the
+/// flavour's config, never typed in code. A `401` outside sign-in ends the
+/// session (README "Failures").
+
+@ProviderFor(apiClient)
+final apiClientProvider = ApiClientProvider._();
+
+/// The one Dio client, for the app's whole life: its base URL from the
+/// flavour's config, never typed in code. A `401` outside sign-in ends the
+/// session (README "Failures").
+
+final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
+    with $Provider<Dio> {
+  /// The one Dio client, for the app's whole life: its base URL from the
+  /// flavour's config, never typed in code. A `401` outside sign-in ends the
+  /// session (README "Failures").
+  ApiClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiClientProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<Dio> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Dio create(Ref ref) {
+    return apiClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Dio value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Dio>(value),
+    );
+  }
+}
+
+String _$apiClientHash() => r'2f6071b871da9b85260609a905bbede607919372';
+
+/// The client generated from `contract/openapi/v1.json`, over [apiClient].
+/// Only `data/` code reads it.
+
+@ProviderFor(api)
+final apiProvider = ApiProvider._();
+
+/// The client generated from `contract/openapi/v1.json`, over [apiClient].
+/// Only `data/` code reads it.
+
+final class ApiProvider
+    extends $FunctionalProvider<RondiTrackApi, RondiTrackApi, RondiTrackApi>
+    with $Provider<RondiTrackApi> {
+  /// The client generated from `contract/openapi/v1.json`, over [apiClient].
+  /// Only `data/` code reads it.
+  ApiProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiHash();
+
+  @$internal
+  @override
+  $ProviderElement<RondiTrackApi> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  RondiTrackApi create(Ref ref) {
+    return api(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RondiTrackApi value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RondiTrackApi>(value),
+    );
+  }
+}
+
+String _$apiHash() => r'aaa7bff90b788c4242871cac8aa04a456c9676ec';
+
 /// How often the fakes fail: `0` never (the default), `3` the first call and
 /// every third after it. Only the dev flavour sets it, from
 /// `--dart-define=FAKE_FAIL_EVERY=` in `main`. Week 11 deletes it.
