@@ -1113,5 +1113,18 @@ The dev flavour, a **release** build (so INTERNET in `main/` is what reaches the
 | Sipho, a Member, opening Mabena Family's Close cycle link: the 403 message, still signed in (the tabs stay) | [`03-forbidden-member-treasurer-action.png`](docs/evidence/11.1/03-forbidden-member-treasurer-action.png) |
 | A persona switch after the login limit was spent: the wait, from `Retry-After` | [`04-rate-limited-wait.png`](docs/evidence/11.1/04-rate-limited-wait.png) |
 | Thabo's Home, from the API: in no stokvel | [`06-home-thabo-empty.png`](docs/evidence/11.1/06-home-thabo-empty.png) |
+| A server failure: Lerato opens Soweto Teachers while the API's database is unreachable. The apology and the reference, copyable; the same id is in the API's log (below) | [`05-server-failure-reference.png`](docs/evidence/11.1/05-server-failure-reference.png) |
+
+**The server failure, phone and API side by side.** The API was restarted on the same port with `ronditrack_mobile`'s connection string on a closed port (5499), so its database was unreachable; Lerato's token, signed by the same key, stayed valid. The phone showed reference `18cadb3ff15682f5b3f1686316572e9b` after about 20 s. The API's log, for that id:
+
+```text
+fail: RondiTrack.Handlers.GlobalExceptionHandler[0]
+      Request failed with 500. CorrelationId: 18cadb3ff15682f5b3f1686316572e9b
+      Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+       ---> Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:5499
+       ---> System.Net.Sockets.SocketException (10061): No connection could be made because the target machine actively refused it.
+```
+
+The id appears once: the app didn't retry the `500`. The outage log has one other `500` (`0e3d8248…`), Home's `/me/home`, asked for at the same moment by the stokvel screen's picker. The API was then restarted on `ronditrack_mobile` as normal; the development database (`ronditrack`) was never used: it has none of the seed's users or stokvels, and its migrations are unchanged.
 
 What the phone showed that the tests don't: the login limit is per address, and `curl localhost` on Windows goes over IPv6 (`::1`), a different bucket from the phone's `127.0.0.1` through `adb reverse`; spending the limit for the screenshot needed `curl 127.0.0.1`.
