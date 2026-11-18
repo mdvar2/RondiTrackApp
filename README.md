@@ -1114,6 +1114,8 @@ The dev flavour, a **release** build (so INTERNET in `main/` is what reaches the
 | A persona switch after the login limit was spent: the wait, from `Retry-After` | [`04-rate-limited-wait.png`](docs/evidence/11.1/04-rate-limited-wait.png) |
 | Thabo's Home, from the API: in no stokvel | [`06-home-thabo-empty.png`](docs/evidence/11.1/06-home-thabo-empty.png) |
 | A server failure: Lerato opens Soweto Teachers while the API's database is unreachable. The apology and the reference, copyable; the same id is in the API's log (below) | [`05-server-failure-reference.png`](docs/evidence/11.1/05-server-failure-reference.png) |
+| The twist, red run 1: the cross-repo check pointed at the API branch that renamed `stokvelName` ([run 44257434382](https://github.com/mdvar2/RondiTrackApp/actions/runs/44257434382)): "The contract copy drifted from the API" | [`07-twist-red-1-contract-drift.png`](docs/evidence/11.1/07-twist-red-1-contract-drift.png) |
+| The twist, red run 2: the contract copied and the client generated ([run 44258167649](https://github.com/mdvar2/RondiTrackApp/actions/runs/44258167649)): the analyser names `lib/features/home/data/home_mapper.dart#L17` | [`08-twist-red-2-analyser-names-mapper.png`](docs/evidence/11.1/08-twist-red-2-analyser-names-mapper.png) |
 
 **The server failure, phone and API side by side.** The API was restarted on the same port with `ronditrack_mobile`'s connection string on a closed port (5499), so its database was unreachable; Lerato's token, signed by the same key, stayed valid. The phone showed reference `18cadb3ff15682f5b3f1686316572e9b` after about 20 s. The API's log, for that id:
 
