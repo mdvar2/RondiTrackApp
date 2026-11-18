@@ -17,6 +17,8 @@ const _compositionRoot = 'no screen imports the composition root';
 const _implementations = 'only app/providers.dart names a repository';
 const _navigatorPush = 'no Navigator.push or hand-built page route';
 const _stringPaths = 'no string path in a widget';
+const _noTransport =
+    'no presentation or domain file imports Dio or the generated client';
 
 const List<_Allowed> _allowed = [
   (
@@ -56,6 +58,8 @@ List<String> _dartFiles(String root) => [
 ];
 
 bool _isPresentation(String path) => path.contains('/presentation/');
+
+bool _isDomain(String path) => path.contains('/domain/');
 
 /// A screen or widget: a presentation file that builds widgets.
 bool _isScreen(String path) =>
@@ -111,6 +115,20 @@ final Map<String, (List<String> Function(), RegExp)> _rules = {
     () => _dartFiles('lib'),
     RegExp(r'Navigator\s*\.\s*(of\([^)]*\)\s*\.\s*)?push|MaterialPageRoute'),
   ),
+  // Week 11: transport stops in data/. Dio, Retrofit, the generated client
+  // and everything else in core/data (the Dio client, the failure mapper)
+  // are for repositories only; a provider or widget sees domain types and
+  // Failures.
+  _noTransport: (
+    () => [
+      for (final file in _dartFiles('lib/features'))
+        if (_isPresentation(file) || _isDomain(file)) file,
+    ],
+    RegExp(
+      r'''^import\s+['"](package:dio/|package:retrofit/|'''
+      'package:ronditrack_app/core/data/)',
+    ),
+  ),
   _stringPaths: (
     _widgetFiles,
     RegExp(
@@ -154,6 +172,31 @@ void main() {
         expect(screenImports.hasMatch(line), isTrue, reason: line);
         expect(_importOf.hasMatch(line), isTrue);
       }
+      final (_, transport) = _rules[_noTransport]!;
+      for (final line in [
+        "import 'package:dio/dio.dart';",
+        "import 'package:retrofit/retrofit.dart';",
+        "import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';",
+        "import 'package:ronditrack_app/core/data/generated/models/home_response.dart';",
+        "import 'package:ronditrack_app/core/data/to_failure.dart';",
+      ]) {
+        expect(transport.hasMatch(line), isTrue, reason: line);
+      }
+      expect(
+        transport.hasMatch(
+          "import 'package:ronditrack_app/core/errors/failure.dart';",
+        ),
+        isFalse,
+        reason: 'a Failure is what presentation is meant to see',
+      );
+      final (domainAndScreens, _) = _rules[_noTransport]!;
+      expect(
+        domainAndScreens(),
+        containsAll([
+          'lib/features/home/domain/home_repository.dart',
+          'lib/features/home/presentation/home_controller.dart',
+        ]),
+      );
       final (_, colour) = _rules[_colour]!;
       expect(colour.hasMatch('color: Colors.red,'), isTrue);
       expect(colour.hasMatch('color: Color(0xFF00FF00),'), isTrue);
