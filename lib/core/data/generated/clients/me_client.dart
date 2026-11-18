@@ -6,12 +6,16 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
 import '../models/home_response.dart';
+import '../models/user_response.dart';
 
 part 'me_client.g.dart';
 
 @RestApi()
 abstract class MeClient {
   factory MeClient(Dio dio, {String? baseUrl}) = _MeClient;
+
+  @GET('/api/v1/me')
+  Future<HttpResponse<UserResponse>> getApiV1Me();
 
   @GET('/api/v1/me/home')
   Future<HttpResponse<HomeResponse>> getApiV1MeHome();

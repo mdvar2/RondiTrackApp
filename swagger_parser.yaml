@@ -27,6 +27,7 @@ swagger_parser:
   include_paths:
     - /api/v1/auth/login
     - /api/v1/auth/logout
+    - /api/v1/me
     - /api/v1/me/home
     - /api/v1/stokvels/{id}
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}
