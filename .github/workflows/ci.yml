@@ -4,6 +4,18 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Run by hand, optionally against another API branch (README "The API
+  # client"): Actions > CI > Run workflow.
+  workflow_dispatch:
+    inputs:
+      api_ref:
+        description: API repository branch, tag or commit to compare the contract copy with
+        required: false
+        default: ""
+  # Nightly, so a contract change merged in the API turns this red within a
+  # day, not at the next app pull request.
+  schedule:
+    - cron: "17 3 * * *"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -12,6 +24,8 @@ concurrency:
 jobs:
   verify:
     name: Format, generate, analyse, test
+    # The nightly run checks the contract only.
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -34,7 +48,16 @@ jobs:
         run: |
           git ls-files '*.dart' \
             | grep -v -E '\.(g|freezed)\.dart$' \
+            | grep -v '^lib/core/data/generated/' \
             | xargs dart format --output=none --set-exit-if-changed
+
+      # The API client is generated from the committed contract copy
+      # (README "The API client"). swagger_parser never deletes a file it
+      # stopped writing, so the folder goes first.
+      - name: Generate the API client from the contract copy
+        run: |
+          rm -rf lib/core/data/generated
+          dart run swagger_parser
 
       # Generated files are committed (README "Generated code"). Regenerate
       # them and fail if the committed copies are stale.
@@ -47,6 +70,19 @@ jobs:
         run: |
           if ! git diff --exit-code -- '*.g.dart' '*.freezed.dart'; then
             echo "::error title=Generated code is stale::Run 'dart run build_runner build' and commit the generated files."
+            exit 1
+          fi
+
+      # Any changed, deleted or new file under the client means the committed
+      # client isn't what the contract copy generates. --porcelain lists
+      # untracked files too, which git diff would miss.
+      - name: The client matches the contract copy
+        run: |
+          drift="$(git status --porcelain --untracked-files=all -- lib/core/data/generated)"
+          if [ -n "$drift" ]; then
+            echo "$drift"
+            git diff --stat -- lib/core/data/generated
+            echo "::error title=The API client drifted from contract/openapi/v1.json::Delete lib/core/data/generated, run 'dart run swagger_parser' and 'dart run build_runner build', and commit the result."
             exit 1
           fi
 
@@ -69,3 +105,33 @@ jobs:
 
       - name: Test
         run: flutter test
+
+  contract:
+    name: Contract copy matches the API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # The API branch whose openapi/v1.json the app was built against
+      # (README "Contract notes"). A workflow input points it elsewhere.
+      API_REF: ${{ inputs.api_ref || 'fix/mobile-contract-gaps' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # A public repository needs no token. Only the contract is fetched.
+      - name: Check out the API's contract
+        uses: actions/checkout@v4
+        with:
+          repository: mdvar2/RondiTrack
+          ref: ${{ env.API_REF }}
+          path: api
+          sparse-checkout: openapi/v1.json
+          sparse-checkout-cone-mode: false
+
+      - name: Compare the two openapi/v1.json files
+        run: |
+          echo "API ref: $API_REF ($(git -C api rev-parse HEAD))"
+          if ! diff -u api/openapi/v1.json contract/openapi/v1.json; then
+            echo "::error title=The contract copy drifted from the API::contract/openapi/v1.json differs from openapi/v1.json at mdvar2/RondiTrack@$API_REF. Copy the API's file, regenerate the client, and fix what the analyser names."
+            exit 1
+          fi
+          echo "Identical: $(sha256sum contract/openapi/v1.json | cut -c1-16)…"
