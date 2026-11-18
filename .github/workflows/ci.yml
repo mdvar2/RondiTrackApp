@@ -43,7 +43,8 @@ jobs:
       - name: Install the locked dependencies
         run: flutter pub get --enforce-lockfile
 
-      # Hand-written code only: build_runner owns the generated files' layout.
+      # Hand-written code only: build_runner and swagger_parser own the
+      # generated files' layout.
       - name: Format check
         run: |
           git ls-files '*.dart' \
