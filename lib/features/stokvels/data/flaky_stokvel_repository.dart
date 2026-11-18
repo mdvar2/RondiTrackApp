@@ -1,6 +1,7 @@
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/core/fakes/fail_every.dart';
+import 'package:ronditrack_app/features/stokvels/domain/cycle_close_preview.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
@@ -32,5 +33,16 @@ class FlakyStokvelRepository implements StokvelRepository {
     final detail = await _inner.fetchCycle(stokvelId, cycleId);
     if (fails) return const Err(NoAnswerFailure());
     return detail;
+  }
+
+  @override
+  Future<Result<CycleClosePreview>> fetchClosePreview(
+    String stokvelId,
+    String cycleId,
+  ) async {
+    final fails = _failures.next();
+    final preview = await _inner.fetchClosePreview(stokvelId, cycleId);
+    if (fails) return const Err(NoAnswerFailure());
+    return preview;
   }
 }

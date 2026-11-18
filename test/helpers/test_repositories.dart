@@ -6,6 +6,7 @@ import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
+import 'package:ronditrack_app/features/stokvels/domain/cycle_close_preview.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
@@ -65,6 +66,12 @@ class CountingStokvelRepository implements StokvelRepository {
   @override
   Future<Result<CycleDetail>> fetchCycle(String stokvelId, String cycleId) =>
       inner.fetchCycle(stokvelId, cycleId);
+
+  @override
+  Future<Result<CycleClosePreview>> fetchClosePreview(
+    String stokvelId,
+    String cycleId,
+  ) => inner.fetchClosePreview(stokvelId, cycleId);
 }
 
 /// A stokvel repository that never answers, for the loading state.
@@ -76,6 +83,12 @@ class PendingStokvelRepository implements StokvelRepository {
   @override
   Future<Result<CycleDetail>> fetchCycle(String stokvelId, String cycleId) =>
       Completer<Result<CycleDetail>>().future;
+
+  @override
+  Future<Result<CycleClosePreview>> fetchClosePreview(
+    String stokvelId,
+    String cycleId,
+  ) => Completer<Result<CycleClosePreview>>().future;
 }
 
 /// A payout repository whose answers a test sets per cycle id, counting

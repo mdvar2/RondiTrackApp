@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:ronditrack_app/core/concurrency/concurrency_token.dart';
 import 'package:ronditrack_app/core/money/cents.dart';
 import 'package:ronditrack_app/core/time/calendar_date.dart';
 import 'package:ronditrack_app/features/stokvels/domain/membership.dart';
@@ -59,6 +60,9 @@ abstract class Stokvel with _$Stokvel {
 
     /// `memberCount`.
     required int memberCount,
+
+    /// The response's `ETag`, exactly as sent; `null` from the fakes.
+    ConcurrencyToken? concurrencyToken,
   }) = _Stokvel;
 }
 
@@ -89,6 +93,10 @@ abstract class StokvelCycle with _$StokvelCycle {
 
     /// `targetCents`.
     required Cents target,
+
+    /// `GET …/cycles/{cycleId}`'s `ETag`, exactly as sent; `null` where the
+    /// cycle came from the stokvel's summary, and from the fakes.
+    ConcurrencyToken? concurrencyToken,
   }) = _StokvelCycle;
 }
 

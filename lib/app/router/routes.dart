@@ -8,6 +8,7 @@ import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
 import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/close_cycle_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/cycle_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvels_screen.dart';
 
@@ -42,6 +43,7 @@ part 'routes.g.dart';
                   path: 'cycles/:cycleId',
                   routes: <TypedRoute<RouteData>>[
                     TypedGoRoute<PayoutsRoute>(path: 'payouts'),
+                    TypedGoRoute<CloseCycleRoute>(path: 'close'),
                   ],
                 ),
               ],
@@ -185,6 +187,24 @@ class PayoutsRoute extends GoRouteData with $PayoutsRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       PayoutsScreen(stokvelId: id, cycleId: cycleId);
+}
+
+/// `/stokvels/:id/cycles/:cycleId/close`: what closing the cycle would
+/// record, a treasurer action, on top of its cycle. A Member opening it by
+/// link is told their role doesn't allow it, and stays signed in.
+class CloseCycleRoute extends GoRouteData with $CloseCycleRoute {
+  /// The close preview of cycle [cycleId] of stokvel [id].
+  const new({required this.id, required this.cycleId});
+
+  /// The stokvel's id.
+  final String id;
+
+  /// The cycle's id.
+  final String cycleId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      CloseCycleScreen(stokvelId: id, cycleId: cycleId);
 }
 
 /// `/activity`: activity across my stokvels.

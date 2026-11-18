@@ -14,6 +14,7 @@ final List<RegExp> _appAddresses = [
   RegExp(r'^/stokvels/[\w-]+$'),
   RegExp(r'^/stokvels/[\w-]+/cycles/[\w-]+$'),
   RegExp(r'^/stokvels/[\w-]+/cycles/[\w-]+/payouts$'),
+  RegExp(r'^/stokvels/[\w-]+/cycles/[\w-]+/close$'),
   RegExp(r'^/activity$'),
   RegExp(r'^/profile$'),
   RegExp(r'^/join/[\w-]+$'),

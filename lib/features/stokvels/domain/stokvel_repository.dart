@@ -1,5 +1,6 @@
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/errors/result.dart';
+import 'package:ronditrack_app/features/stokvels/domain/cycle_close_preview.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 
 /// Thrown when a stokvel can't be shown: it doesn't exist, *or* the caller
@@ -43,4 +44,14 @@ abstract interface class StokvelRepository {
   /// that belongs to another stokvel, and one in a stokvel the caller isn't
   /// a member of.
   Future<Result<CycleDetail>> fetchCycle(String stokvelId, String cycleId);
+
+  /// What closing cycle [cycleId] would record: a treasurer action.
+  ///
+  /// Fails with a [ForbiddenFailure] for a Member (the API's `403`), and a
+  /// [NotFoundFailure] for a non-member, a cycle that doesn't exist, or one
+  /// of another stokvel (the API's `404`).
+  Future<Result<CycleClosePreview>> fetchClosePreview(
+    String stokvelId,
+    String cycleId,
+  );
 }
