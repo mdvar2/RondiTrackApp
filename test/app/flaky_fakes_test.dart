@@ -30,7 +30,9 @@ void main() {
 
   group('the composition root', () {
     test('by default the repositories are the plain fakes', () {
-      final container = ProviderContainer.test();
+      final container = ProviderContainer.test(
+        overrides: [dataSourceProvider.overrideWithValue(DataSource.fakes)],
+      );
 
       expect(container.read(homeRepositoryProvider), isA<FakeHomeRepository>());
       expect(
@@ -41,7 +43,10 @@ void main() {
 
     test('with FAKE_FAIL_EVERY set, both are wrapped as flaky', () {
       final container = ProviderContainer.test(
-        overrides: [fakeFailEveryProvider.overrideWithValue(3)],
+        overrides: [
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeFailEveryProvider.overrideWithValue(3),
+        ],
       );
 
       expect(

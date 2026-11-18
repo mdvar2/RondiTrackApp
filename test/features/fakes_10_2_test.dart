@@ -170,7 +170,10 @@ void main() {
     test('the app starts signed out; signing in and out moves the user id '
         'every repository reads', () async {
       final container = ProviderContainer.test(
-        overrides: [fakeDelayProvider.overrideWithValue(Duration.zero)],
+        overrides: [
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
+        ],
       );
 
       expect(container.read(authControllerProvider), const SignedOut());
@@ -194,7 +197,10 @@ void main() {
 
     test('a failed sign-in stays signed out', () async {
       final container = ProviderContainer.test(
-        overrides: [fakeDelayProvider.overrideWithValue(Duration.zero)],
+        overrides: [
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
+        ],
       );
 
       await expectLater(
@@ -206,9 +212,14 @@ void main() {
   });
 
   test('FAKE_FAIL_EVERY also wraps the activity fake', () {
-    final plain = ProviderContainer.test();
+    final plain = ProviderContainer.test(
+      overrides: [dataSourceProvider.overrideWithValue(DataSource.fakes)],
+    );
     final flaky = ProviderContainer.test(
-      overrides: [fakeFailEveryProvider.overrideWithValue(3)],
+      overrides: [
+        dataSourceProvider.overrideWithValue(DataSource.fakes),
+        fakeFailEveryProvider.overrideWithValue(3),
+      ],
     );
 
     expect(

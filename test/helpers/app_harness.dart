@@ -111,6 +111,8 @@ Future<ProviderContainer> pumpApp(
 
   final container = ProviderContainer(
     overrides: [
+      // The one switch: the Week 10 whole-app tests run on the fakes.
+      dataSourceProvider.overrideWithValue(DataSource.fakes),
       fakeDelayProvider.overrideWithValue(delay),
       if (as != null)
         authControllerProvider.overrideWith(
