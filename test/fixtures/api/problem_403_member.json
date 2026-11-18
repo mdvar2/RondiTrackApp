@@ -1,0 +1,8 @@
+{
+  "type": "about:blank",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "You do not have permission for this operation.",
+  "instance": "/api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201/close/preview",
+  "correlationId": "ac5599e767ea3fc67eca747bd96ba8f3"
+}

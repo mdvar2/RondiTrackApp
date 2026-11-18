@@ -1,0 +1,8 @@
+{
+  "type": "about:blank",
+  "title": "Precondition Failed",
+  "status": 412,
+  "detail": "The stokvel has changed. Refetch it and retry with the current ETag.",
+  "instance": "/api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+  "correlationId": "849c34c3d1c91c32477debb57d2aa094"
+}

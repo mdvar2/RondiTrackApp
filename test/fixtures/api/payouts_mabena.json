@@ -1,0 +1,30 @@
+{
+  "stokvelId": "5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+  "cycleId": "9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201",
+  "items": [
+    {
+      "position": 1,
+      "userId": "0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0004",
+      "memberName": "Nomsa Mabena",
+      "amountCents": 150000,
+      "paidAtUtc": "2026-10-31T15:00:00Z",
+      "status": "Paid"
+    },
+    {
+      "position": 2,
+      "userId": "0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0001",
+      "memberName": "Lerato Mokoena",
+      "amountCents": 150000,
+      "paidAtUtc": null,
+      "status": "Next"
+    },
+    {
+      "position": 3,
+      "userId": "0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0002",
+      "memberName": "Sipho Dlamini",
+      "amountCents": 150000,
+      "paidAtUtc": null,
+      "status": "Waiting"
+    }
+  ]
+}

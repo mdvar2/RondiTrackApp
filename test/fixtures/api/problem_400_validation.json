@@ -1,0 +1,19 @@
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "'Name' must not be empty. 'Email' is not a valid email address. The length of 'Password' must be at least 12 characters. You entered 1 characters.",
+  "instance": "/api/v1/auth/register",
+  "correlationId": "ce5bd171e73840902a6e88d368e18d27",
+  "errors": {
+    "name": [
+      "'Name' must not be empty."
+    ],
+    "email": [
+      "'Email' is not a valid email address."
+    ],
+    "password": [
+      "The length of 'Password' must be at least 12 characters. You entered 1 characters."
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Stokvel not found.",
+  "instance": "/api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+  "correlationId": "437fbd29aaa65f9cc4e2f1d750cef61f"
+}

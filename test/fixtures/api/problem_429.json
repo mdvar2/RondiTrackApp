@@ -1,0 +1,8 @@
+{
+  "type": "about:blank",
+  "title": "Too Many Requests",
+  "status": 429,
+  "detail": "Too many requests. Try again in 60 seconds.",
+  "instance": "/api/v1/auth/login",
+  "correlationId": "f7173f79d1531dcfb1386e1ca782564e"
+}

@@ -1,0 +1,8 @@
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Page token does not match the current sort or filter.",
+  "instance": "/api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201/contributions",
+  "correlationId": "0ed06d9277f89c35a21e0e12e287eb1c"
+}
