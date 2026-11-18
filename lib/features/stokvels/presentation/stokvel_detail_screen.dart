@@ -95,9 +95,10 @@ class StokvelDetailScreen extends ConsumerWidget {
             child: const Text('Refresh'),
           ),
         ),
-        ViewFailure(:final message) => MessagePanel(
+        ViewFailure(:final message, :final reference) => MessagePanel(
           key: const Key('stokvel-failure'),
           title: message,
+          reference: reference,
           action: Wrap(
             spacing: 8,
             runSpacing: 8,

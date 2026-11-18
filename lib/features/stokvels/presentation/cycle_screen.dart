@@ -42,9 +42,10 @@ class CycleScreen extends ConsumerWidget {
           key: Key('cycle-loading'),
           child: CircularProgressIndicator(semanticsLabel: 'Loading'),
         ),
-        ViewFailure(:final message) => MessagePanel(
+        ViewFailure(:final message, :final reference) => MessagePanel(
           key: const Key('cycle-failure'),
           title: message,
+          reference: reference,
           action: Wrap(
             spacing: 8,
             runSpacing: 8,

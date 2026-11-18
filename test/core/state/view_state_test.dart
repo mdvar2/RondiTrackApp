@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
@@ -26,10 +27,10 @@ void main() {
     });
 
     test('stokvels are data', () async {
-      final entries = await FakeHomeRepository(
+      final entries = (await FakeHomeRepository(
         userId: FakeSeed.lerato.id,
         delay: Duration.zero,
-      ).fetchHome();
+      ).fetchHome()).valueOrThrow;
 
       expect(
         homeViewState(AsyncData(entries)),
@@ -40,10 +41,10 @@ void main() {
     });
 
     test('a refresh keeps the old data on screen, marked refreshing', () async {
-      final entries = await FakeHomeRepository(
+      final entries = (await FakeHomeRepository(
         userId: FakeSeed.lerato.id,
         delay: Duration.zero,
-      ).fetchHome();
+      ).fetchHome()).valueOrThrow;
       final reload = Completer<List<HomeEntry>>();
       final container = ProviderContainer.test(
         overrides: [
@@ -67,12 +68,47 @@ void main() {
 
     test('an error with nothing to show is a failure with words', () {
       expect(
-        homeViewState(AsyncError(Exception('offline'), StackTrace.empty)),
-        isA<ViewFailure<List<HomeEntry>>>().having(
-          (view) => view.message,
-          'message',
-          genericFailureMessage,
+        homeViewState(const AsyncError(NoAnswerFailure(), StackTrace.empty)),
+        isA<ViewFailure<List<HomeEntry>>>()
+            .having(
+              (view) => view.message,
+              'message',
+              const NoAnswerFailure().message,
+            )
+            .having((view) => view.reference, 'reference', isNull),
+      );
+    });
+
+    test('a server failure shows its words and its reference', () {
+      expect(
+        homeViewState(
+          const AsyncError(
+            ServerFailure(correlationId: '9f21773e18af553124148fb4140b5bc4'),
+            StackTrace.empty,
+          ),
         ),
+        isA<ViewFailure<List<HomeEntry>>>()
+            .having(
+              (view) => view.message,
+              'message',
+              const ServerFailure().message,
+            )
+            .having(
+              (view) => view.reference,
+              'reference',
+              '9f21773e18af553124148fb4140b5bc4',
+            ),
+      );
+    });
+
+    test('an error that is not a Failure is shown as a server failure, '
+        'never raw', () {
+      final view = homeViewState(
+        AsyncError(StateError('a bug with a name in it'), StackTrace.empty),
+      );
+      expect(
+        (view as ViewFailure<List<HomeEntry>>).message,
+        const ServerFailure().message,
       );
     });
   });
@@ -84,7 +120,8 @@ void main() {
     );
 
     test('data for the requested id is data', () async {
-      final detail = await repository.fetchStokvel(FakeSeed.mabenaFamilyId);
+      final detail = (await repository.fetchStokvel(FakeSeed.mabenaFamilyId))
+          .valueOrThrow;
 
       expect(
         stokvelDetailViewState(FakeSeed.mabenaFamilyId, AsyncData(detail)),
@@ -93,7 +130,8 @@ void main() {
     });
 
     test('data for any other id is never shown: it is loading', () async {
-      final mabena = await repository.fetchStokvel(FakeSeed.mabenaFamilyId);
+      final mabena = (await repository.fetchStokvel(FakeSeed.mabenaFamilyId))
+          .valueOrThrow;
 
       expect(
         stokvelDetailViewState(FakeSeed.sowetoTeachersId, AsyncData(mabena)),
@@ -102,7 +140,8 @@ void main() {
     });
 
     test('a stokvel with no current cycle is empty', () async {
-      final detail = await repository.fetchStokvel(FakeSeed.mabenaFamilyId);
+      final detail = (await repository.fetchStokvel(FakeSeed.mabenaFamilyId))
+          .valueOrThrow;
 
       expect(
         stokvelDetailViewState(

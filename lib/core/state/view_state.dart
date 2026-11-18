@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 
 /// What a screen shows. Every screen renders all four with an exhaustive
 /// `switch`, so none can forget its empty or failure state.
@@ -36,25 +37,29 @@ final class ViewData<T> extends ViewState<T> {
 /// Loading failed, and there is nothing older to show.
 final class ViewFailure<T> extends ViewState<T> {
   /// Creates the failure state.
-  const new(this.message);
+  const new(this.message, {this.reference});
 
-  /// What the person reads. Never contains a name or an amount.
+  /// What the person reads, decided by the [Failure]. Never contains a
+  /// name or an amount.
   final String message;
-}
 
-/// The message for an error nobody planned for.
-const genericFailureMessage =
-    "We couldn't load this. Check your connection and try again.";
+  /// The failure's reference to quote, when it has one (a server failure).
+  final String? reference;
+}
 
 /// Turns a provider's [AsyncValue] into the [ViewState] a screen renders.
 ///
 /// A value, even an old one during a refresh, wins: the old cards stay on
 /// screen. [isEmpty] decides when a loaded value counts as empty rather
-/// than data. [describeError] turns an error into words for the person.
+/// than data.
+///
+/// An error is a [Failure] (anything else counts as a server failure), and
+/// its own words are shown, with its reference. Only "not found" is worded
+/// by the screen, as [notFoundMessage], so it can name what wasn't found.
 ViewState<T> viewStateFrom<T>(
   AsyncValue<T> value, {
   required bool Function(T value) isEmpty,
-  String Function(Object error) describeError = _generic,
+  String? notFoundMessage,
 }) {
   if (value.hasValue) {
     final loaded = value.requireValue;
@@ -62,8 +67,12 @@ ViewState<T> viewStateFrom<T>(
     return ViewData<T>(loaded, refreshing: value.isLoading);
   }
   final error = value.error;
-  if (error != null) return ViewFailure<T>(describeError(error));
+  if (error != null) {
+    final failure = failureOf(error);
+    return ViewFailure<T>(switch (failure) {
+      NotFoundFailure() => notFoundMessage ?? failure.message,
+      _ => failure.message,
+    }, reference: failure.reference);
+  }
   return ViewLoading<T>();
 }
-
-String _generic(Object error) => genericFailureMessage;

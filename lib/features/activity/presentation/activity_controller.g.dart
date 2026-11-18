@@ -46,7 +46,7 @@ final class ActivityControllerProvider
 }
 
 String _$activityControllerHash() =>
-    r'9c33a35328f5d241b43c830b0ea21fa3df5afc2a';
+    r'6796a32e3f3bf8302e77b0bd272cce53511aabe8';
 
 /// The activity feed across my stokvels.
 ///

@@ -167,7 +167,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('stokvel-failure')), findsOneWidget);
-    expect(find.textContaining("couldn't load"), findsOneWidget);
+    expect(find.textContaining("couldn't reach the server"), findsOneWidget);
 
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();

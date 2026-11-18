@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
-import 'package:ronditrack_app/features/auth/domain/auth_repository.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 
 /// The fake sign-in: an email, and Sign in.
@@ -55,10 +55,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     setState(() => _progress = const _Busy());
     try {
       await ref.read(authControllerProvider.notifier).signIn(_email.text);
-    } on SignInFailedException {
-      _fail('No account uses that email.');
-    } on Object {
-      _fail("We couldn't sign you in. Check your connection and try again.");
+    } on Failure catch (failure) {
+      // The failure's own words: a refused email, the wait after too many
+      // attempts, no answer.
+      _fail(failure.message);
+    } on Object catch (error) {
+      _fail(failureOf(error).message);
     }
   }
 

@@ -153,7 +153,8 @@ void main() {
     );
 
     test('Lerato manages Mabena Family, where she is Treasurer', () async {
-      final detail = await repository.fetchStokvel(FakeSeed.mabenaFamilyId);
+      final detail = (await repository.fetchStokvel(FakeSeed.mabenaFamilyId))
+          .valueOrThrow;
       expect(actionsFor(detail, FakeSeed.lerato.id), {
         _pay,
         _proof,
@@ -162,7 +163,8 @@ void main() {
     });
 
     test('and only pays in Soweto Teachers, where she is Member', () async {
-      final detail = await repository.fetchStokvel(FakeSeed.sowetoTeachersId);
+      final detail = (await repository.fetchStokvel(FakeSeed.sowetoTeachersId))
+          .valueOrThrow;
       expect(actionsFor(detail, FakeSeed.lerato.id), {_pay, _proof});
     });
   });

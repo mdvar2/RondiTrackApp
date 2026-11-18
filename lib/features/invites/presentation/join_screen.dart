@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
@@ -30,9 +31,10 @@ class JoinScreen extends ConsumerWidget {
           key: Key('invite-loading'),
           child: CircularProgressIndicator(semanticsLabel: 'Loading'),
         ),
-        ViewFailure(:final message) => MessagePanel(
+        ViewFailure(:final message, :final reference) => MessagePanel(
           key: const Key('invite-failure'),
           title: message,
+          reference: reference,
           action: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -106,10 +108,10 @@ class _InviteBody extends ConsumerWidget {
             ),
           ),
         ] else ...[
-          if (joining.hasError)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text("We couldn't join you. Try again."),
+          if (joining.error case final error?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(failureOf(error).message),
             ),
           Align(
             alignment: AlignmentDirectional.centerStart,

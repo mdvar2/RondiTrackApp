@@ -1,3 +1,4 @@
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
@@ -27,7 +28,7 @@ class FakeHomeRepository implements HomeRepository {
   final List<FakeStokvel> _stokvels;
 
   @override
-  Future<List<HomeEntry>> fetchHome() async {
+  Future<Result<List<HomeEntry>>> fetchHome() async {
     await Future<void>.delayed(delay);
 
     final entries = <HomeEntry>[];
@@ -55,6 +56,6 @@ class FakeHomeRepository implements HomeRepository {
       );
     }
     entries.sort((a, b) => a.stokvelName.compareTo(b.stokvelName));
-    return List.unmodifiable(entries);
+    return Ok(List.unmodifiable(entries));
   }
 }

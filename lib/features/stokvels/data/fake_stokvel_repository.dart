@@ -1,3 +1,4 @@
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/domain/membership.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
@@ -34,7 +35,7 @@ class FakeStokvelRepository implements StokvelRepository {
   final List<FakeStokvel> _stokvels;
 
   @override
-  Future<StokvelDetail> fetchStokvel(String stokvelId) async {
+  Future<Result<StokvelDetail>> fetchStokvel(String stokvelId) async {
     await Future<void>.delayed(delay + (slowStokvels[stokvelId] ?? .zero));
 
     for (final entry in _stokvels) {
@@ -42,18 +43,23 @@ class FakeStokvelRepository implements StokvelRepository {
       final role = entry.roles[userId];
       // Not a member: the same answer as a stokvel that doesn't exist.
       if (role == null) break;
-      return StokvelDetail(
-        stokvel: entry.stokvel,
-        membership: Membership(stokvelId: stokvelId, role: role),
-        currentCycle: entry.cycle,
-        contributions: List.unmodifiable(entry.contributions),
+      return Ok(
+        StokvelDetail(
+          stokvel: entry.stokvel,
+          membership: Membership(stokvelId: stokvelId, role: role),
+          currentCycle: entry.cycle,
+          contributions: List.unmodifiable(entry.contributions),
+        ),
       );
     }
-    throw const StokvelNotFoundException();
+    return const Err(StokvelNotFoundException());
   }
 
   @override
-  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) async {
+  Future<Result<CycleDetail>> fetchCycle(
+    String stokvelId,
+    String cycleId,
+  ) async {
     await Future<void>.delayed(delay + (slowStokvels[stokvelId] ?? .zero));
 
     for (final entry in _stokvels) {
@@ -63,12 +69,14 @@ class FakeStokvelRepository implements StokvelRepository {
       // cycle that doesn't exist.
       if (entry.roles[userId] == null || cycle == null) break;
       if (cycle.id != cycleId) break;
-      return CycleDetail(
-        stokvel: entry.stokvel,
-        cycle: cycle,
-        contributions: List.unmodifiable(entry.contributions),
+      return Ok(
+        CycleDetail(
+          stokvel: entry.stokvel,
+          cycle: cycle,
+          contributions: List.unmodifiable(entry.contributions),
+        ),
       );
     }
-    throw const CycleNotFoundException();
+    return const Err(CycleNotFoundException());
   }
 }

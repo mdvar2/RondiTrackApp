@@ -59,7 +59,7 @@ final class AuthControllerProvider
   }
 }
 
-String _$authControllerHash() => r'a1869b645a6cba50189229694aa4a239d8918fa4';
+String _$authControllerHash() => r'927f0cfe2e913c5b0c3216c7cb4052877b4ece8a';
 
 /// Who is signed in. The app starts signed out.
 ///

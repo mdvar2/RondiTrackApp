@@ -1,4 +1,5 @@
-import 'package:ronditrack_app/core/errors/not_found.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 
 /// Thrown when a stokvel can't be shown: it doesn't exist, *or* the caller
@@ -6,8 +7,8 @@ import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 ///
 /// The two are deliberately the same. The API answers both with `404`, so
 /// nobody can tell whether a stokvel they aren't in exists.
-class StokvelNotFoundException implements NotFoundException {
-  /// Creates the exception. It carries no id or name, so it is safe to log.
+class StokvelNotFoundException extends NotFoundFailure {
+  /// Creates the failure. It carries no id or name, so it is safe to log.
   const new();
 
   @override
@@ -19,8 +20,8 @@ class StokvelNotFoundException implements NotFoundException {
 ///
 /// All three are the same, as the API's `404` is for
 /// `GET /stokvels/{stokvelId}/cycles/{cycleId}`.
-class CycleNotFoundException implements NotFoundException {
-  /// Creates the exception. It carries no id, so it is safe to log.
+class CycleNotFoundException extends NotFoundFailure {
+  /// Creates the failure. It carries no id, so it is safe to log.
   const new();
 
   @override
@@ -32,14 +33,14 @@ abstract interface class StokvelRepository {
   /// The stokvel, the caller's membership, its current cycle and that
   /// cycle's contributions.
   ///
-  /// Throws [StokvelNotFoundException] for a stokvel that doesn't exist and
+  /// Fails with a [NotFoundFailure] for a stokvel that doesn't exist and
   /// for one the caller isn't a member of.
-  Future<StokvelDetail> fetchStokvel(String stokvelId);
+  Future<Result<StokvelDetail>> fetchStokvel(String stokvelId);
 
   /// One cycle of one stokvel, with its contributions.
   ///
-  /// Throws [CycleNotFoundException] for a cycle that doesn't exist, one
+  /// Fails with a [NotFoundFailure] for a cycle that doesn't exist, one
   /// that belongs to another stokvel, and one in a stokvel the caller isn't
   /// a member of.
-  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId);
+  Future<Result<CycleDetail>> fetchCycle(String stokvelId, String cycleId);
 }

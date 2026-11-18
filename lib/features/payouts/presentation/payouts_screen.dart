@@ -54,9 +54,10 @@ class PayoutsScreen extends ConsumerWidget {
             child: const Text('Refresh'),
           ),
         ),
-        ViewFailure(:final message) => MessagePanel(
+        ViewFailure(:final message, :final reference) => MessagePanel(
           key: const Key('payouts-failure'),
           title: message,
+          reference: reference,
           action: Wrap(
             spacing: 8,
             runSpacing: 8,

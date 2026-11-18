@@ -12,8 +12,9 @@ part 'activity_controller.g.dart';
 @riverpod
 class ActivityController extends _$ActivityController {
   @override
-  Future<List<ActivityItem>> build() =>
-      ref.watch(activityRepositoryProvider).fetchActivity();
+  Future<List<ActivityItem>> build() async =>
+      (await ref.watch(activityRepositoryProvider).fetchActivity())
+          .valueOrThrow;
 
   /// Reloads the feed, keeping the old items on screen until the new ones
   /// arrive. Completes even if the reload fails.

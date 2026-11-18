@@ -4,7 +4,6 @@ import 'package:ronditrack_app/core/logging/lifecycle_log.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_actions.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
-import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
 part 'stokvel_detail_provider.g.dart';
 
@@ -14,12 +13,13 @@ part 'stokvel_detail_provider.g.dart';
 /// never show the previous one's data under the new one's name.
 /// Lifetime: autoDispose. See README "Provider lifetimes".
 @riverpod
-Future<StokvelDetail> stokvelDetail(Ref ref, String stokvelId) {
+Future<StokvelDetail> stokvelDetail(Ref ref, String stokvelId) async {
   // Ids only: never a stokvel's name or an amount.
   final log = ref.watch(lifecycleLogProvider)
     ..call('stokvelDetail created id=$stokvelId');
   ref.onDispose(() => log('stokvelDetail disposed id=$stokvelId'));
-  return ref.watch(stokvelRepositoryProvider).fetchStokvel(stokvelId);
+  final repository = ref.watch(stokvelRepositoryProvider);
+  return (await repository.fetchStokvel(stokvelId)).valueOrThrow;
 }
 
 /// The message for a stokvel that can't be shown. The same words whether it
@@ -42,9 +42,7 @@ ViewState<StokvelDetail> stokvelDetailViewState(
   return viewStateFrom(
     value,
     isEmpty: (detail) => detail.currentCycle == null,
-    describeError: (error) => error is StokvelNotFoundException
-        ? stokvelNotFoundMessage
-        : genericFailureMessage,
+    notFoundMessage: stokvelNotFoundMessage,
   );
 }
 
@@ -53,8 +51,14 @@ ViewState<StokvelDetail> stokvelDetailViewState(
 ///
 /// Lifetime: autoDispose, like [stokvelDetailProvider].
 @riverpod
-Future<CycleDetail> cycleDetail(Ref ref, String stokvelId, String cycleId) =>
-    ref.watch(stokvelRepositoryProvider).fetchCycle(stokvelId, cycleId);
+Future<CycleDetail> cycleDetail(
+  Ref ref,
+  String stokvelId,
+  String cycleId,
+) async {
+  final repository = ref.watch(stokvelRepositoryProvider);
+  return (await repository.fetchCycle(stokvelId, cycleId)).valueOrThrow;
+}
 
 /// The message for a cycle that can't be shown. The same words whether it
 /// doesn't exist, belongs to another stokvel, or is in a stokvel the person
@@ -67,10 +71,7 @@ ViewState<CycleDetail> cycleDetailViewState(AsyncValue<CycleDetail> value) =>
     viewStateFrom(
       value,
       isEmpty: (_) => false,
-      describeError: (error) =>
-          error is CycleNotFoundException || error is StokvelNotFoundException
-          ? cycleNotFoundMessage
-          : genericFailureMessage,
+      notFoundMessage: cycleNotFoundMessage,
     );
 
 /// What [myUserId] may do in this stokvel's current cycle, from their role

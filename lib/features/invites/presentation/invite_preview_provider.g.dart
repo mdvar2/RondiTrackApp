@@ -68,7 +68,7 @@ final class InvitePreviewProvider
   }
 }
 
-String _$invitePreviewHash() => r'98e3bd35b027b8fc88c42f757d797f376b54d9e8';
+String _$invitePreviewHash() => r'729791c3fd85a778a96a03c3eeeaa4c8ba8c923f';
 
 /// One invite's preview, keyed by its code. Lifetime: autoDispose.
 
@@ -151,7 +151,7 @@ final class InviteJoinerProvider
   }
 }
 
-String _$inviteJoinerHash() => r'd570e89bb0d0e91dc0e163ea97357ac08e8b8e54';
+String _$inviteJoinerHash() => r'b83704fa111a72bb6879fa128eaa0cd3ababc5e4';
 
 /// Joining one invite: `null` until joined, then the stokvel's id.
 ///
