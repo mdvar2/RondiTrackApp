@@ -1101,3 +1101,17 @@ API:  Request rejected with 403 (ForbiddenException). CorrelationId: 50f1f433e45
 | `home_screen.dart` imports `package:dio/dio.dart` | `architecture_test.dart`: "no presentation or domain file imports Dio or the generated client" (and "no screen imports … Dio"), naming `home_screen.dart:1` |
 | The log line uses `request.uri` instead of `request.uri.path` | `api_client_test.dart`: "the log line leaves nothing personal in it": `API GET http://127.0.0.1:8081/api/v1/me/home?userId=lerato-secret-query 200 …` |
 | `AuthInterceptor` ends the session on a `403` as well as a `401` | `api_client_test.dart`: "a 403 signs nobody out, and keeps the token": expected no ended session, got one |
+
+#### Assignment 11.1: phone evidence
+
+The dev flavour, a **release** build (so INTERNET in `main/` is what reaches the API), on a Huawei MAO-LX9 (Android 12), against the API on a fresh seed through `adb reverse`:
+
+| What | Screenshot |
+|---|---|
+| Lerato's Home, from the API: Treasurer of Mabena Family, Member of Soweto Teachers, the API's own figures | [`01-home-lerato-real-data.png`](docs/evidence/11.1/01-home-lerato-real-data.png) |
+| Lerato opening a link to Molefe Burial Society, a real stokvel she isn't in: "not found" at once | [`02-not-found-stokvel-she-isnt-in.png`](docs/evidence/11.1/02-not-found-stokvel-she-isnt-in.png) |
+| Sipho, a Member, opening Mabena Family's Close cycle link: the 403 message, still signed in (the tabs stay) | [`03-forbidden-member-treasurer-action.png`](docs/evidence/11.1/03-forbidden-member-treasurer-action.png) |
+| A persona switch after the login limit was spent: the wait, from `Retry-After` | [`04-rate-limited-wait.png`](docs/evidence/11.1/04-rate-limited-wait.png) |
+| Thabo's Home, from the API: in no stokvel | [`06-home-thabo-empty.png`](docs/evidence/11.1/06-home-thabo-empty.png) |
+
+What the phone showed that the tests don't: the login limit is per address, and `curl localhost` on Windows goes over IPv6 (`::1`), a different bucket from the phone's `127.0.0.1` through `adb reverse`; spending the limit for the screenshot needed `curl 127.0.0.1`.
