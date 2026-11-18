@@ -43,6 +43,7 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
     - [4. Due dates: date-only or instants?](#4-due-dates-date-only-or-instants)
     - [5. The three seed personas](#5-the-three-seed-personas)
     - [Payouts: the five answers (Assignment 10.3)](#payouts-the-five-answers-assignment-103)
+    - [Real data: the seven answers (Assignment 11.1)](#real-data-the-seven-answers-assignment-111)
     - [Gaps found, and backend pull requests](#gaps-found-and-backend-pull-requests)
 - [Part 8: Tests, CI and evidence](#part-8-tests-ci-and-evidence)
   - [Tests and CI](#tests-and-ci)
@@ -716,6 +717,39 @@ An empty `items` means the cycle has no payout order: it isn't `Open` and had no
 **4. What does a non-member get?** **`404`**, a `ProblemDetails`, exactly as for `GET /stokvels/{id}`: `StokvelAuthorization` throws "Stokvel not found." when the caller has no membership. An unknown cycle, or a cycle of another stokvel, is also `404`. The app's fake throws `CycleNotFoundException` for all of them, and the screen says "We couldn't find that cycle." at once, with no retry spinner.
 
 **5. Which role may record a payout, and what does the API answer anyone else?** `POST …/payouts` needs `StokvelManage`: **Treasurer or Chairperson** of *that* stokvel. A Member gets **`403`**, a non-member **`404`** (the API's `AuthorizationMatrixTests` cover both). Any member may *read* the order. In the app, "Record payout" appears on the payouts view only where the 10.1 actions match ([`allowedActions`](lib/features/stokvels/domain/stokvel_actions.dart)) allows it, from that stokvel's membership and its cycle being `Open`. Recording itself arrives in Week 11; the request body is `{ amount }` as a `decimal` in rands (gap 10).
+
+#### Real data: the seven answers (Assignment 11.1)
+
+> **Why these come first.** The app now calls the API, so every rule below is one the app's code follows exactly. Each answer was read from the API's `README.md`, its `openapi/v1.json` and its C# source, then checked with real requests against a freshly seeded API before any networking code was written. Where the API and this list ever disagree, the API is right and this list is a bug.
+
+**Read at:** API commit [`6c52a0e`](https://github.com/mdvar2/RondiTrack/commit/6c52a0e710e350a3333a8d38a2ef51ded2f4afa9) (branch `fix/mobile-contract-gaps`: API PRs #14 and #15 merged), whose `openapi/v1.json` is byte-identical to [`contract/openapi/v1.json`](contract/openapi/v1.json). **Checked with requests at:** [`29c9556`](https://github.com/mdvar2/RondiTrack/commit/29c9556) (branch `feat/mobile-dev-seed`, [API PR #16](https://github.com/mdvar2/RondiTrack/pull/16)), which adds the seed and one fix found while answering question 1. Neither changes the contract document. The bodies the requests returned are kept as the API repository tests' fixtures in [`test/fixtures/api/`](test/fixtures/api/).
+
+| # | Question | The API's answer | What the app does |
+|---|---|---|---|
+| 1 | How does a page end? A token reused with other filters? | `nextPageToken` is **required and never `null`**: the last page sends **`""`** (and `hasMore: false`). A token used with a different `sortBy`, `sortDirection` or filter is **`400`**, *"Page token does not match the current sort or filter."* **Found:** every second page sorted by a date was a **`500`**; fixed in API PR #16 | The mapper turns `""`, `null` or a missing token into one meaning, "no more pages" (`PageCursor.end`). The app never sends a token with other filters: a repository follows a token only with the query that made it |
+| 2 | How is a stale write guarded? | **ETag**, not a body field: `GET /stokvels/{id}` and `GET …/cycles/{cycleId}` send `ETag: "2324"` (the row's `xmin`, quoted). `PUT` needs `If-Match` with it: missing is **`400`**, stale is **`412`**. Closing a cycle is the exception: its preview sends `version` (a 64-hex string, also as the ETag) and the `POST` body carries it back; stale is **`409`** | The ETag is kept exactly as sent, quotes included, as a `ConcurrencyToken` on the stokvel, the cycle and the close preview. `412` is `ConflictFailure` ("changed elsewhere"); a `409` is a `RuleFailure`, with the API's words |
+| 3 | How is every status spelled? | Cycle `Open`, `Closed`, `PaidOut`; contribution `Pending`, `Paid`, `Confirmed`; role `Member`, `Treasurer`, `Chairperson`; payout `Paid`, `Next`, `Waiting`. Case matters; OpenAPI types every one as plain `string` | Unchanged from 10.1 and 10.3: each maps to its enum, anything else to `unknown` ("Status not recognised"), never a crash |
+| 4 | Refresh cookie, access token lifetime, reuse grace? | Cookie **`__Secure-ronditrack_refresh`**: `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`, 7 days. The access token lasts **5 minutes** (`Jwt:AccessTokenMinutes`, 30 s clock skew). **No reuse grace window**: presenting a used refresh token revokes the whole family at once (`EfRefreshTokenRepository.RotateAsync`) | Today's stand-in keeps the access token **in memory only** and keeps no cookie. After 5 minutes the next call is a `401`, and the person is signed out with "Your session ended. Sign in again." Tomorrow's sign-in reads the cookie by name |
+| 5 | Does every error carry `correlationId`, and does the schema say so? | **Every error does**: exception handler, status-code pages, rate limiter, model validation and the `401`/`403` challenges all add it, a 32-hex W3C trace id. **The schema doesn't**: `ProblemDetails` lists only `type`, `title`, `status`, `detail`, `instance`. Validation adds `errors` (field to messages), also unlisted | The error body is read **raw**, never through a generated model: `correlationId`, `detail`, `errors` and `Retry-After` come from the JSON map and the headers |
+| 6 | A non-member, and a member without the role? | Non-member, on a stokvel route **or** a treasurer action: **`404`** *"Stokvel not found."*, the same as a stokvel that doesn't exist. Member without the role on a treasurer action (`GET …/close/preview`, any write needing `StokvelManage`): **`403`** *"You do not have permission for this operation."* | `404` is `NotFoundFailure`: "not found" at once, never retried. `403` is `ForbiddenFailure`: a message, and the person stays signed in |
+| 7 | Which endpoints are rate limited; does `429` carry `Retry-After`? | `POST /auth/login`: 5 a minute **per IP**, fixed window. Per account, token buckets: recording contributions (30/min), recording payouts (5/min), invite preview and join (10/min). `GET /invites/{code}/status`: 60/min per IP. Every `429` has **`Retry-After` in whole seconds** and a problem body. The login window answers `Retry-After: 60` (its whole window) | `RateLimitedFailure` carries the wait from `Retry-After`, and the person is told it: "Too many attempts. Wait 60 seconds, then try again." No number is typed into the app |
+
+**Measured, for the timeouts and retry policy** (the API with its database unreachable, `GET /me/home`): a closed database port answered **`500` after 19.5 to 21.0 s** (three tries), because EF Core's `EnableRetryOnFailure` tries four times; a database host that never answers took **64.2 s** (four 15 s connection timeouts). Both bodies carried a `correlationId`. See [Decisions](#decisions).
+
+**Other things the requests showed:**
+
+- `POST /invites/{code}/join` answers **`204` with no body**, and a second join is **`409`** *"You are already a member of this stokvel."* The 10.2 fake returned the stokvel's id and changed nothing on a second join. The API repository reads the id from the preview, and a second join is a `RuleFailure` with the API's words (the join screen only offers Join to a non-member, gap 8).
+- An unknown path is `404` with *"The requested endpoint was not found."*: the same status as a stokvel the person isn't in, so the app never shows the detail, only "not found".
+- `GET /invites/{code}` sends a fixed `schedule` ("Monthly") and `rules` text for every stokvel, not the fakes' per-stokvel words.
+
+**Gaps found in 11.1:**
+
+| # | Gap | Why it matters to the app | Status |
+|---|---|---|---|
+| 1 | No seed data (from 10.1) | The personas didn't exist in the API | **Fixed** in [API PR #16](https://github.com/mdvar2/RondiTrack/pull/16): a Development-only seed of the fakes' world, run only with `DevSeed:Password` passed at run time, with `DevSeedTests` |
+| 11 | Following a date-sorted page token was a `500` | Every cycle's contributions past the first page, and Day 4's infinite scroll | **Fixed** in [API PR #16](https://github.com/mdvar2/RondiTrack/pull/16), with `PageTokenTests` (seen to fail without the fix) |
+| 12 | `correlationId` and `errors` aren't in the `ProblemDetails` schema | A generated error model would drop them | Open. The app reads error bodies raw, so nothing is lost; declaring them changes the web client's types too |
+| 13 | Join answers `204` with no stokvel id, and `409` for a member | The 10.2 interface promised the id and a harmless second join | Open; handled in the app as described above |
 
 #### Gaps found, and backend pull requests
 
