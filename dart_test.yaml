@@ -1,0 +1,7 @@
+# Tests tagged `live` call the real API and are skipped by default, in CI
+# and locally. Run them against a freshly seeded API (README "Running
+# against the API"):
+#   flutter test --tags live --run-skipped
+tags:
+  live:
+    skip: "Calls the real API: flutter test --tags live --run-skipped"

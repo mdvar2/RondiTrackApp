@@ -1,0 +1,33 @@
+{
+  "items": [
+    {
+      "id": "7a6b5c4d-3e2f-4a1b-9c8d-7e6f5a4b0301",
+      "stokvelId": "5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+      "userId": "0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0001",
+      "userName": "Lerato Mokoena",
+      "userEmail": "lerato@ronditrack.example",
+      "memberRole": "Treasurer",
+      "contributionCycleId": "9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201",
+      "amount": 50000,
+      "status": "Paid",
+      "recordedAtUtc": "2026-11-05T08:30:00Z",
+      "version": 2324
+    },
+    {
+      "id": "7a6b5c4d-3e2f-4a1b-9c8d-7e6f5a4b0302",
+      "stokvelId": "5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+      "userId": "0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0004",
+      "userName": "Nomsa Mabena",
+      "userEmail": "nomsa@ronditrack.example",
+      "memberRole": "Chairperson",
+      "contributionCycleId": "9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201",
+      "amount": 50000,
+      "status": "Confirmed",
+      "recordedAtUtc": "2026-11-02T17:05:00Z",
+      "version": 2324
+    }
+  ],
+  "nextPageToken": "",
+  "pageSize": 100,
+  "hasMore": false
+}

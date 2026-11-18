@@ -3,7 +3,6 @@ import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/core/logging/lifecycle_log.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
-import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
 part 'payout_order_provider.g.dart';
 
@@ -21,14 +20,17 @@ typedef CycleKey = ({String stokvelId, String cycleId});
 /// Lifetime: autoDispose, like `cycleDetailProvider`: it holds other
 /// members' names and amounts, and goes when the screen does.
 @riverpod
-Future<PayoutOrder> payoutOrder(Ref ref, CycleKey cycle) {
+Future<PayoutOrder> payoutOrder(Ref ref, CycleKey cycle) async {
   // Ids only: never a member's name or an amount.
   final log = ref.watch(lifecycleLogProvider)
     ..call('payoutOrder created cycleId=${cycle.cycleId}');
   ref.onDispose(() => log('payoutOrder disposed cycleId=${cycle.cycleId}'));
-  return ref
-      .watch(payoutRepositoryProvider)
-      .fetchPayoutOrder(cycle.stokvelId, cycle.cycleId);
+  final repository = ref.watch(payoutRepositoryProvider);
+  final result = await repository.fetchPayoutOrder(
+    cycle.stokvelId,
+    cycle.cycleId,
+  );
+  return result.valueOrThrow;
 }
 
 /// The message for a payout order that can't be shown: the same words as
@@ -42,7 +44,7 @@ const payoutsNotFoundMessage = "We couldn't find that cycle.";
 /// * [ViewEmpty] when the cycle has no payout order (the API sent no
 ///   items): its own state, never an empty list of [ViewData].
 /// * [ViewData] with the order exactly as sent.
-/// * [ViewFailure], with "not found" for [CycleNotFoundException].
+/// * [ViewFailure], with "not found" for a `NotFoundFailure`.
 ///
 /// As a second guard against showing the wrong cycle, an order for any
 /// other cycle counts as still loading.
@@ -59,8 +61,6 @@ ViewState<PayoutOrder> payoutsViewState(
   return viewStateFrom(
     value,
     isEmpty: (order) => order.entries.isEmpty,
-    describeError: (error) => error is CycleNotFoundException
-        ? payoutsNotFoundMessage
-        : genericFailureMessage,
+    notFoundMessage: payoutsNotFoundMessage,
   );
 }

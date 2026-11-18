@@ -1,20 +1,30 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
+import 'package:ronditrack_app/core/data/api_client.dart';
+import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';
+import 'package:ronditrack_app/features/activity/data/api_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/data/fake_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/data/flaky_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/domain/activity_repository.dart';
+import 'package:ronditrack_app/features/auth/data/api_auth_repository.dart';
 import 'package:ronditrack_app/features/auth/data/fake_auth_repository.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_repository.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
+import 'package:ronditrack_app/features/home/data/api_home_repository.dart';
 import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
 import 'package:ronditrack_app/features/home/data/flaky_home_repository.dart';
 import 'package:ronditrack_app/features/home/domain/home_repository.dart';
+import 'package:ronditrack_app/features/invites/data/api_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/data/fake_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_repository.dart';
+import 'package:ronditrack_app/features/payouts/data/api_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/data/fake_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/data/flaky_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
+import 'package:ronditrack_app/features/stokvels/data/api_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/flaky_stokvel_repository.dart';
@@ -23,8 +33,8 @@ import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart'
 part 'providers.g.dart';
 
 // The composition root. These are the only lines that name a repository's
-// implementation; Week 11 swaps the fakes for the API here, and nowhere
-// else. Widgets never import this file's imports.
+// implementation: the API's, or the fakes' behind [dataSource]. Widgets
+// never import this file's imports.
 
 /// Who is signed in: their id, or `null` when nobody is. It follows
 /// [authControllerProvider], so signing in as someone else rebuilds every
@@ -35,9 +45,79 @@ String? signedInUserId(Ref ref) => switch (ref.watch(authControllerProvider)) {
   SignedOut() => null,
 };
 
+/// Where every repository gets its data.
+enum DataSource {
+  /// The RondiTrack API at the flavour's `API_BASE_URL`.
+  api,
+
+  /// The Week 10 fakes: the whole-app tests, and a dev build run with
+  /// `--dart-define=DATA_SOURCE=fakes`.
+  fakes,
+}
+
+/// The one switch between the API and the fakes. The app runs on the API;
+/// the Week 10 whole-app tests override this one provider with
+/// [DataSource.fakes] and run as before.
+@Riverpod(keepAlive: true)
+DataSource dataSource(Ref ref) => DataSource.api;
+
+/// The data source `main` may use: the fakes only in the dev flavour, and
+/// only when asked for with `--dart-define=DATA_SOURCE=fakes`.
+DataSource dataSourceFor(AppEnvironment environment, String requested) =>
+    environment == AppEnvironment.dev && requested == 'fakes'
+    ? DataSource.fakes
+    : DataSource.api;
+
+/// The seed password for the dev build's persona sign-in, passed at run
+/// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
+/// staging and prod, which have no personas.
+@Riverpod(keepAlive: true)
+String seedPassword(Ref ref) => ref.watch(appConfigProvider).hasDevTools
+    ? const String.fromEnvironment('SEED_PASSWORD')
+    : '';
+
+/// The flavour's validated configuration. `main` overrides it with the one
+/// it built from `config/<flavour>.json`; nothing has a default address.
+@Riverpod(keepAlive: true)
+AppConfig appConfig(Ref ref) => throw StateError(
+  'appConfigProvider has no value: main overrides it with the flavour config.',
+);
+
+/// Where the API's log lines go: the Run console, in debug builds only.
+/// Tests override it to read the lines back.
+@Riverpod(keepAlive: true)
+void Function(String line) apiLog(Ref ref) => (line) {
+  if (kDebugMode) debugPrint(line);
+};
+
+/// The signed-in person's access token, in memory only.
+@Riverpod(keepAlive: true)
+AccessTokenHolder accessToken(Ref ref) => AccessTokenHolder();
+
+/// The one Dio client, for the app's whole life: its base URL from the
+/// flavour's config, never typed in code. A `401` outside sign-in ends the
+/// session (README "Failures").
+@Riverpod(keepAlive: true)
+Dio apiClient(Ref ref) {
+  final dio = createApiClient(
+    baseUri: ref.watch(appConfigProvider).apiBaseUri,
+    tokens: ref.watch(accessTokenProvider),
+    onSessionEnded: () =>
+        ref.read(authControllerProvider.notifier).sessionEnded(),
+    log: ref.watch(apiLogProvider),
+  );
+  ref.onDispose(dio.close);
+  return dio;
+}
+
+/// The client generated from `contract/openapi/v1.json`, over [apiClient].
+/// Only `data/` code reads it.
+@Riverpod(keepAlive: true)
+RondiTrackApi api(Ref ref) => RondiTrackApi(ref.watch(apiClientProvider));
+
 /// How often the fakes fail: `0` never (the default), `3` the first call and
 /// every third after it. Only the dev flavour sets it, from
-/// `--dart-define=FAKE_FAIL_EVERY=` in `main`. Week 11 deletes it.
+/// `--dart-define=FAKE_FAIL_EVERY=` in `main`, with the fakes.
 @Riverpod(keepAlive: true)
 int fakeFailEvery(Ref ref) => 0;
 
@@ -49,33 +129,50 @@ int fakeFailEveryFor(AppEnvironment environment, int requested) =>
 
 /// The fakes' pretend network delay. Router-level tests set
 /// [Duration.zero], which also drops Soweto Teachers' extra slowness.
-/// Week 11 deletes it.
 @Riverpod(keepAlive: true)
 Duration fakeDelay(Ref ref) => const Duration(milliseconds: 600);
 
 /// The fakes' changeable copy of the seed: joining an invite adds a
 /// membership here, and every fake reads it. One per app session (and per
-/// test). Week 11 deletes it.
+/// test).
 @Riverpod(keepAlive: true)
 List<FakeStokvel> fakeStokvels(Ref ref) => FakeSeed.fresh();
 
-/// The accounts the sign-in screen offers to fill in, so a tester needn't
-/// type an email. Week 11 makes this empty.
+/// The accounts the dev build's sign-in screen and persona switcher offer:
+/// the three seed personas, which exist in the fakes and in the API's
+/// Development seed (API PR #16) with the same emails.
 @Riverpod(keepAlive: true)
 List<({String name, String email})> demoAccounts(Ref ref) => [
   for (final persona in FakeSeed.personas.values)
     (name: persona.name, email: persona.email),
 ];
 
-/// Signs in and out. Implementation: [FakeAuthRepository].
+/// Signs in and out. Implementation: [ApiAuthRepository], or
+/// [FakeAuthRepository].
 @Riverpod(keepAlive: true)
-AuthRepository authRepository(Ref ref) =>
-    FakeAuthRepository(delay: ref.watch(fakeDelayProvider));
+AuthRepository authRepository(Ref ref) => switch (ref.watch(
+  dataSourceProvider,
+)) {
+  DataSource.api => ApiAuthRepository(
+    ref.watch(apiProvider),
+    ref.watch(accessTokenProvider),
+    seedPassword: ref.watch(seedPasswordProvider),
+  ),
+  DataSource.fakes => FakeAuthRepository(delay: ref.watch(fakeDelayProvider)),
+};
 
-/// Reads Home. Implementation: [FakeHomeRepository], wrapped in
-/// [FlakyHomeRepository] when [fakeFailEvery] is set.
+/// Reads Home. Implementation: [ApiHomeRepository]; or
+/// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when
+/// [fakeFailEvery] is set.
+///
+/// Every repository watches who is signed in, on the API too, so signing in
+/// as someone else rebuilds it, and everything that read it.
 @Riverpod(keepAlive: true)
 HomeRepository homeRepository(Ref ref) {
+  if (ref.watch(dataSourceProvider) == DataSource.api) {
+    ref.watch(signedInUserIdProvider);
+    return ApiHomeRepository(ref.watch(apiProvider));
+  }
   final fake = FakeHomeRepository(
     userId: ref.watch(signedInUserIdProvider),
     delay: ref.watch(fakeDelayProvider),
@@ -85,11 +182,16 @@ HomeRepository homeRepository(Ref ref) {
   return failEvery > 0 ? FlakyHomeRepository(fake, failEvery: failEvery) : fake;
 }
 
-/// Reads stokvels and cycles. Implementation: [FakeStokvelRepository], with
-/// Soweto Teachers slow, as it is on Lerato's data bundle; wrapped in
-/// [FlakyStokvelRepository] when [fakeFailEvery] is set.
+/// Reads stokvels and cycles. Implementation: [ApiStokvelRepository]; or
+/// [FakeStokvelRepository], with Soweto Teachers slow, as it is on Lerato's
+/// data bundle, wrapped in [FlakyStokvelRepository] when [fakeFailEvery] is
+/// set.
 @Riverpod(keepAlive: true)
 StokvelRepository stokvelRepository(Ref ref) {
+  if (ref.watch(dataSourceProvider) == DataSource.api) {
+    ref.watch(signedInUserIdProvider);
+    return ApiStokvelRepository(ref.watch(apiProvider));
+  }
   final delay = ref.watch(fakeDelayProvider);
   final fake = FakeStokvelRepository(
     userId: ref.watch(signedInUserIdProvider),
@@ -105,10 +207,15 @@ StokvelRepository stokvelRepository(Ref ref) {
       : fake;
 }
 
-/// Reads the activity feed. Implementation: [FakeActivityRepository],
-/// wrapped in [FlakyActivityRepository] when [fakeFailEvery] is set.
+/// Reads the activity feed. Implementation: [ApiActivityRepository]; or
+/// [FakeActivityRepository], wrapped in [FlakyActivityRepository] when
+/// [fakeFailEvery] is set.
 @Riverpod(keepAlive: true)
 ActivityRepository activityRepository(Ref ref) {
+  if (ref.watch(dataSourceProvider) == DataSource.api) {
+    ref.watch(signedInUserIdProvider);
+    return ApiActivityRepository(ref.watch(apiProvider));
+  }
   final fake = FakeActivityRepository(
     userId: ref.watch(signedInUserIdProvider),
     delay: ref.watch(fakeDelayProvider),
@@ -120,18 +227,30 @@ ActivityRepository activityRepository(Ref ref) {
       : fake;
 }
 
-/// Reads and accepts invites. Implementation: [FakeInviteRepository].
+/// Reads and accepts invites. Implementation: [ApiInviteRepository], or
+/// [FakeInviteRepository].
 @Riverpod(keepAlive: true)
-InviteRepository inviteRepository(Ref ref) => FakeInviteRepository(
-  userId: ref.watch(signedInUserIdProvider),
-  stokvels: ref.watch(fakeStokvelsProvider),
-  delay: ref.watch(fakeDelayProvider),
-);
+InviteRepository inviteRepository(Ref ref) {
+  final userId = ref.watch(signedInUserIdProvider);
+  return switch (ref.watch(dataSourceProvider)) {
+    DataSource.api => ApiInviteRepository(ref.watch(apiProvider)),
+    DataSource.fakes => FakeInviteRepository(
+      userId: userId,
+      stokvels: ref.watch(fakeStokvelsProvider),
+      delay: ref.watch(fakeDelayProvider),
+    ),
+  };
+}
 
-/// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
-/// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+/// Reads a cycle's payout order. Implementation: [ApiPayoutRepository]; or
+/// [FakePayoutRepository], wrapped in [FlakyPayoutRepository] when
+/// [fakeFailEvery] is set.
 @Riverpod(keepAlive: true)
 PayoutRepository payoutRepository(Ref ref) {
+  if (ref.watch(dataSourceProvider) == DataSource.api) {
+    ref.watch(signedInUserIdProvider);
+    return ApiPayoutRepository(ref.watch(apiProvider));
+  }
   final fake = FakePayoutRepository(
     userId: ref.watch(signedInUserIdProvider),
     delay: ref.watch(fakeDelayProvider),

@@ -1,3 +1,4 @@
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/activity/domain/activity_item.dart';
 import 'package:ronditrack_app/features/activity/domain/activity_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
@@ -21,7 +22,7 @@ class FakeActivityRepository implements ActivityRepository {
   final List<FakeStokvel> _stokvels;
 
   @override
-  Future<List<ActivityItem>> fetchActivity() async {
+  Future<Result<List<ActivityItem>>> fetchActivity() async {
     await Future<void>.delayed(delay);
 
     final items = <ActivityItem>[
@@ -40,6 +41,6 @@ class FakeActivityRepository implements ActivityRepository {
                 occurredAt: contribution.recordedAt,
               ),
     ]..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
-    return List.unmodifiable(items);
+    return Ok(List.unmodifiable(items));
   }
 }

@@ -13,12 +13,20 @@ void main() {
   // native flavour (`appFlavor`, set by `--flavor`).
   final config = AppConfig.fromEnvironment(nativeFlavor: appFlavor);
 
-  // Dev only: --dart-define=FAKE_FAIL_EVERY=1 makes every fake call fail, so
-  // Riverpod's automatic retries fail too and the failure state stays; 3 fails
-  // the first call and every third after it, and the automatic retry recovers.
+  // Dev only, with the fakes: --dart-define=FAKE_FAIL_EVERY=1 makes every
+  // fake call fail, so the app's retries fail too and the failure state
+  // stays; 3 fails the first call and every third after it, and the retry
+  // recovers.
   final failEvery = fakeFailEveryFor(
     config.environment,
     const int.fromEnvironment('FAKE_FAIL_EVERY'),
+  );
+
+  // The API, unless a dev build asks for the fakes with
+  // --dart-define=DATA_SOURCE=fakes.
+  final dataSource = dataSourceFor(
+    config.environment,
+    const String.fromEnvironment('DATA_SOURCE'),
   );
 
   runApp(
@@ -26,6 +34,9 @@ void main() {
       // Never retry "not found" (README "State with Riverpod").
       retry: appRetry,
       overrides: [
+        appConfigProvider.overrideWithValue(config),
+        if (dataSource == DataSource.fakes)
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
         if (failEvery > 0) fakeFailEveryProvider.overrideWithValue(failEvery),
       ],
       child: RondiTrackApp(config: config),

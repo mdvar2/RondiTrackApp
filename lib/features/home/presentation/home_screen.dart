@@ -7,6 +7,7 @@ import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/theme/status_chip.dart';
 import 'package:ronditrack_app/core/theme/status_colors.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
+import 'package:ronditrack_app/core/widgets/failure_reference.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
@@ -34,8 +35,9 @@ class HomeScreen extends ConsumerWidget {
           child: CircularProgressIndicator(semanticsLabel: 'Loading'),
         ),
         ViewEmpty() => _HomeEmpty(onRefresh: refresh),
-        ViewFailure(:final message) => _HomeFailure(
+        ViewFailure(:final message, :final reference) => _HomeFailure(
           message: message,
+          reference: reference,
           onRetry: () => ref.invalidate(homeControllerProvider),
         ),
         ViewData(value: final entries, :final refreshing) => _HomeList(
@@ -224,21 +226,31 @@ class _HomeEmpty extends StatelessWidget {
 }
 
 class _HomeFailure extends StatelessWidget {
-  const new({required this.message, required this.onRetry});
+  const new({
+    required this.message,
+    required this.reference,
+    required this.onRetry,
+  });
 
   final String message;
+  final String? reference;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final reference = this.reference;
     return Center(
       key: const Key('home-failure'),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(message, textAlign: TextAlign.center),
+            if (reference != null) ...[
+              const SizedBox(height: 16),
+              FailureReference(reference: reference),
+            ],
             const SizedBox(height: 16),
             FilledButton(onPressed: onRetry, child: const Text('Try again')),
           ],

@@ -39,9 +39,10 @@ class ActivityScreen extends ConsumerWidget {
             child: const Text('Refresh'),
           ),
         ),
-        ViewFailure(:final message) => MessagePanel(
+        ViewFailure(:final message, :final reference) => MessagePanel(
           key: const Key('activity-failure'),
           title: message,
+          reference: reference,
           action: FilledButton(
             onPressed: () => ref.invalidate(activityControllerProvider),
             child: const Text('Try again'),

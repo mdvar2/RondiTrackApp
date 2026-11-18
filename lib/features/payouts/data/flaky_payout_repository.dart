@@ -1,9 +1,11 @@
+import 'package:ronditrack_app/core/errors/failure.dart';
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/core/fakes/fail_every.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
 
 /// Wraps a [PayoutRepository] so that some calls fail with
-/// [FakeNetworkException], after the usual wait. The dev flavour uses it
+/// [NoAnswerFailure], after the usual wait. The dev flavour uses it
 /// behind `--dart-define=FAKE_FAIL_EVERY=`, to show the payouts view's
 /// failure state and its retry on a phone.
 class FlakyPayoutRepository implements PayoutRepository {
@@ -14,10 +16,13 @@ class FlakyPayoutRepository implements PayoutRepository {
   final FailEvery _failures;
 
   @override
-  Future<PayoutOrder> fetchPayoutOrder(String stokvelId, String cycleId) async {
+  Future<Result<PayoutOrder>> fetchPayoutOrder(
+    String stokvelId,
+    String cycleId,
+  ) async {
     final fails = _failures.next();
     final order = await _inner.fetchPayoutOrder(stokvelId, cycleId);
-    if (fails) throw const FakeNetworkException();
+    if (fails) return const Err(NoAnswerFailure());
     return order;
   }
 }

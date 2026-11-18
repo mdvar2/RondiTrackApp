@@ -687,7 +687,8 @@ mixin _$Stokvel {
  String get name;/// `contributionAmountCents`. The API's `contributionAmount` is a
 /// double and is never read.
  Cents get contributionAmount;/// `memberCount`.
- int get memberCount;
+ int get memberCount;/// The response's `ETag`, exactly as sent; `null` from the fakes.
+ ConcurrencyToken? get concurrencyToken;
 /// Create a copy of Stokvel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -699,20 +700,20 @@ $StokvelCopyWith<Stokvel> get copyWith => _$StokvelCopyWithImpl<Stokvel>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Stokvel;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Stokvel&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.contributionAmount, _this.contributionAmount) || other.contributionAmount == _this.contributionAmount)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Stokvel&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.contributionAmount, _this.contributionAmount) || other.contributionAmount == _this.contributionAmount)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.concurrencyToken, _this.concurrencyToken) || other.concurrencyToken == _this.concurrencyToken));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Stokvel;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.contributionAmount,_this.memberCount);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.contributionAmount,_this.memberCount,_this.concurrencyToken);
 }
 
 @override
 String toString() {
   final _this = this as Stokvel;
-  return 'Stokvel(id: ${_this.id}, name: ${_this.name}, contributionAmount: ${_this.contributionAmount}, memberCount: ${_this.memberCount})';
+  return 'Stokvel(id: ${_this.id}, name: ${_this.name}, contributionAmount: ${_this.contributionAmount}, memberCount: ${_this.memberCount}, concurrencyToken: ${_this.concurrencyToken})';
 }
 
 
@@ -723,7 +724,7 @@ abstract mixin class $StokvelCopyWith<$Res>  {
   factory $StokvelCopyWith(Stokvel value, $Res Function(Stokvel) _then) = _$StokvelCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, Cents contributionAmount, int memberCount
+ String id, String name, Cents contributionAmount, int memberCount, ConcurrencyToken? concurrencyToken
 });
 
 
@@ -740,13 +741,14 @@ class _$StokvelCopyWithImpl<$Res>
 
 /// Create a copy of Stokvel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? contributionAmount = null,Object? memberCount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? contributionAmount = null,Object? memberCount = null,Object? concurrencyToken = freezed,}) {
   return _then(Stokvel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,contributionAmount: null == contributionAmount ? _self.contributionAmount : contributionAmount // ignore: cast_nullable_to_non_nullable
 as Cents,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int,
+as int,concurrencyToken: freezed == concurrencyToken ? _self.concurrencyToken : concurrencyToken // ignore: cast_nullable_to_non_nullable
+as ConcurrencyToken?,
   ));
 }
 
@@ -831,10 +833,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  Cents contributionAmount,  int memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  Cents contributionAmount,  int memberCount,  ConcurrencyToken? concurrencyToken)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Stokvel() when $default != null:
-return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount);case _:
+return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount,_that.concurrencyToken);case _:
   return orElse();
 
 }
@@ -852,10 +854,10 @@ return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount);
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  Cents contributionAmount,  int memberCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  Cents contributionAmount,  int memberCount,  ConcurrencyToken? concurrencyToken)  $default,) {final _that = this;
 switch (_that) {
 case _Stokvel():
-return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount);case _:
+return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount,_that.concurrencyToken);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -872,10 +874,10 @@ return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount);
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  Cents contributionAmount,  int memberCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  Cents contributionAmount,  int memberCount,  ConcurrencyToken? concurrencyToken)?  $default,) {final _that = this;
 switch (_that) {
 case _Stokvel() when $default != null:
-return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount);case _:
+return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount,_that.concurrencyToken);case _:
   return null;
 
 }
@@ -887,7 +889,7 @@ return $default(_that.id,_that.name,_that.contributionAmount,_that.memberCount);
 
 
 class _Stokvel implements Stokvel {
-  const _Stokvel({required this.id, required this.name, required this.contributionAmount, required this.memberCount});
+  const _Stokvel({required this.id, required this.name, required this.contributionAmount, required this.memberCount, this.concurrencyToken});
   
 
 /// `id`.
@@ -899,6 +901,8 @@ class _Stokvel implements Stokvel {
 @override final  Cents contributionAmount;
 /// `memberCount`.
 @override final  int memberCount;
+/// The response's `ETag`, exactly as sent; `null` from the fakes.
+@override final  ConcurrencyToken? concurrencyToken;
 
 /// Create a copy of Stokvel
 /// with the given fields replaced by the non-null parameter values.
@@ -910,18 +914,18 @@ _$StokvelCopyWith<_Stokvel> get copyWith => __$StokvelCopyWithImpl<_Stokvel>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Stokvel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.contributionAmount, contributionAmount) || other.contributionAmount == contributionAmount)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Stokvel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.contributionAmount, contributionAmount) || other.contributionAmount == contributionAmount)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.concurrencyToken, concurrencyToken) || other.concurrencyToken == concurrencyToken));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,contributionAmount,memberCount);
+    return Object.hash(runtimeType,id,name,contributionAmount,memberCount,concurrencyToken);
 }
 
 @override
 String toString() {
-    return 'Stokvel(id: $id, name: $name, contributionAmount: $contributionAmount, memberCount: $memberCount)';
+    return 'Stokvel(id: $id, name: $name, contributionAmount: $contributionAmount, memberCount: $memberCount, concurrencyToken: $concurrencyToken)';
 }
 
 
@@ -932,7 +936,7 @@ abstract mixin class _$StokvelCopyWith<$Res> implements $StokvelCopyWith<$Res> {
   factory _$StokvelCopyWith(_Stokvel value, $Res Function(_Stokvel) _then) = __$StokvelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, Cents contributionAmount, int memberCount
+ String id, String name, Cents contributionAmount, int memberCount, ConcurrencyToken? concurrencyToken
 });
 
 
@@ -949,13 +953,14 @@ class __$StokvelCopyWithImpl<$Res>
 
 /// Create a copy of Stokvel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? contributionAmount = null,Object? memberCount = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? contributionAmount = null,Object? memberCount = null,Object? concurrencyToken = freezed,}) {
   return _then(_Stokvel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,contributionAmount: null == contributionAmount ? _self.contributionAmount : contributionAmount // ignore: cast_nullable_to_non_nullable
 as Cents,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int,
+as int,concurrencyToken: freezed == concurrencyToken ? _self.concurrencyToken : concurrencyToken // ignore: cast_nullable_to_non_nullable
+as ConcurrencyToken?,
   ));
 }
 
@@ -973,7 +978,9 @@ mixin _$StokvelCycle {
  CalendarDate? get dueDate;/// `membersPaid`.
  int get membersPaid;/// `collectedCents`.
  Cents get collected;/// `targetCents`.
- Cents get target;
+ Cents get target;/// `GET …/cycles/{cycleId}`'s `ETag`, exactly as sent; `null` where the
+/// cycle came from the stokvel's summary, and from the fakes.
+ ConcurrencyToken? get concurrencyToken;
 /// Create a copy of StokvelCycle
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -985,20 +992,20 @@ $StokvelCycleCopyWith<StokvelCycle> get copyWith => _$StokvelCycleCopyWithImpl<S
 @override
 bool operator ==(Object other) {
   final _this = this as StokvelCycle;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StokvelCycle&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.period, _this.period) || other.period == _this.period)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.dueDate, _this.dueDate) || other.dueDate == _this.dueDate)&&(identical(other.membersPaid, _this.membersPaid) || other.membersPaid == _this.membersPaid)&&(identical(other.collected, _this.collected) || other.collected == _this.collected)&&(identical(other.target, _this.target) || other.target == _this.target));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StokvelCycle&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.period, _this.period) || other.period == _this.period)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.dueDate, _this.dueDate) || other.dueDate == _this.dueDate)&&(identical(other.membersPaid, _this.membersPaid) || other.membersPaid == _this.membersPaid)&&(identical(other.collected, _this.collected) || other.collected == _this.collected)&&(identical(other.target, _this.target) || other.target == _this.target)&&(identical(other.concurrencyToken, _this.concurrencyToken) || other.concurrencyToken == _this.concurrencyToken));
 }
 
 
 @override
 int get hashCode {
   final _this = this as StokvelCycle;
-  return Object.hash(runtimeType,_this.id,_this.period,_this.status,_this.dueDate,_this.membersPaid,_this.collected,_this.target);
+  return Object.hash(runtimeType,_this.id,_this.period,_this.status,_this.dueDate,_this.membersPaid,_this.collected,_this.target,_this.concurrencyToken);
 }
 
 @override
 String toString() {
   final _this = this as StokvelCycle;
-  return 'StokvelCycle(id: ${_this.id}, period: ${_this.period}, status: ${_this.status}, dueDate: ${_this.dueDate}, membersPaid: ${_this.membersPaid}, collected: ${_this.collected}, target: ${_this.target})';
+  return 'StokvelCycle(id: ${_this.id}, period: ${_this.period}, status: ${_this.status}, dueDate: ${_this.dueDate}, membersPaid: ${_this.membersPaid}, collected: ${_this.collected}, target: ${_this.target}, concurrencyToken: ${_this.concurrencyToken})';
 }
 
 
@@ -1009,7 +1016,7 @@ abstract mixin class $StokvelCycleCopyWith<$Res>  {
   factory $StokvelCycleCopyWith(StokvelCycle value, $Res Function(StokvelCycle) _then) = _$StokvelCycleCopyWithImpl;
 @useResult
 $Res call({
- String id, String period, CycleStatus status, CalendarDate? dueDate, int membersPaid, Cents collected, Cents target
+ String id, String period, CycleStatus status, CalendarDate? dueDate, int membersPaid, Cents collected, Cents target, ConcurrencyToken? concurrencyToken
 });
 
 
@@ -1026,7 +1033,7 @@ class _$StokvelCycleCopyWithImpl<$Res>
 
 /// Create a copy of StokvelCycle
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? period = null,Object? status = null,Object? dueDate = freezed,Object? membersPaid = null,Object? collected = null,Object? target = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? period = null,Object? status = null,Object? dueDate = freezed,Object? membersPaid = null,Object? collected = null,Object? target = null,Object? concurrencyToken = freezed,}) {
   return _then(StokvelCycle(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
@@ -1035,7 +1042,8 @@ as CycleStatus,dueDate: freezed == dueDate ? _self.dueDate : dueDate // ignore: 
 as CalendarDate?,membersPaid: null == membersPaid ? _self.membersPaid : membersPaid // ignore: cast_nullable_to_non_nullable
 as int,collected: null == collected ? _self.collected : collected // ignore: cast_nullable_to_non_nullable
 as Cents,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
-as Cents,
+as Cents,concurrencyToken: freezed == concurrencyToken ? _self.concurrencyToken : concurrencyToken // ignore: cast_nullable_to_non_nullable
+as ConcurrencyToken?,
   ));
 }
 
@@ -1120,10 +1128,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String period,  CycleStatus status,  CalendarDate? dueDate,  int membersPaid,  Cents collected,  Cents target)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String period,  CycleStatus status,  CalendarDate? dueDate,  int membersPaid,  Cents collected,  Cents target,  ConcurrencyToken? concurrencyToken)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StokvelCycle() when $default != null:
-return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPaid,_that.collected,_that.target);case _:
+return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPaid,_that.collected,_that.target,_that.concurrencyToken);case _:
   return orElse();
 
 }
@@ -1141,10 +1149,10 @@ return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPa
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String period,  CycleStatus status,  CalendarDate? dueDate,  int membersPaid,  Cents collected,  Cents target)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String period,  CycleStatus status,  CalendarDate? dueDate,  int membersPaid,  Cents collected,  Cents target,  ConcurrencyToken? concurrencyToken)  $default,) {final _that = this;
 switch (_that) {
 case _StokvelCycle():
-return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPaid,_that.collected,_that.target);case _:
+return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPaid,_that.collected,_that.target,_that.concurrencyToken);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1161,10 +1169,10 @@ return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPa
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String period,  CycleStatus status,  CalendarDate? dueDate,  int membersPaid,  Cents collected,  Cents target)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String period,  CycleStatus status,  CalendarDate? dueDate,  int membersPaid,  Cents collected,  Cents target,  ConcurrencyToken? concurrencyToken)?  $default,) {final _that = this;
 switch (_that) {
 case _StokvelCycle() when $default != null:
-return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPaid,_that.collected,_that.target);case _:
+return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPaid,_that.collected,_that.target,_that.concurrencyToken);case _:
   return null;
 
 }
@@ -1176,7 +1184,7 @@ return $default(_that.id,_that.period,_that.status,_that.dueDate,_that.membersPa
 
 
 class _StokvelCycle implements StokvelCycle {
-  const _StokvelCycle({required this.id, required this.period, required this.status, required this.dueDate, required this.membersPaid, required this.collected, required this.target});
+  const _StokvelCycle({required this.id, required this.period, required this.status, required this.dueDate, required this.membersPaid, required this.collected, required this.target, this.concurrencyToken});
   
 
 /// `id`, from `GET /stokvels/{id}/cycles`. The detail response's
@@ -1194,6 +1202,9 @@ class _StokvelCycle implements StokvelCycle {
 @override final  Cents collected;
 /// `targetCents`.
 @override final  Cents target;
+/// `GET …/cycles/{cycleId}`'s `ETag`, exactly as sent; `null` where the
+/// cycle came from the stokvel's summary, and from the fakes.
+@override final  ConcurrencyToken? concurrencyToken;
 
 /// Create a copy of StokvelCycle
 /// with the given fields replaced by the non-null parameter values.
@@ -1205,18 +1216,18 @@ _$StokvelCycleCopyWith<_StokvelCycle> get copyWith => __$StokvelCycleCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _StokvelCycle&&(identical(other.id, id) || other.id == id)&&(identical(other.period, period) || other.period == period)&&(identical(other.status, status) || other.status == status)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.membersPaid, membersPaid) || other.membersPaid == membersPaid)&&(identical(other.collected, collected) || other.collected == collected)&&(identical(other.target, target) || other.target == target));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _StokvelCycle&&(identical(other.id, id) || other.id == id)&&(identical(other.period, period) || other.period == period)&&(identical(other.status, status) || other.status == status)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.membersPaid, membersPaid) || other.membersPaid == membersPaid)&&(identical(other.collected, collected) || other.collected == collected)&&(identical(other.target, target) || other.target == target)&&(identical(other.concurrencyToken, concurrencyToken) || other.concurrencyToken == concurrencyToken));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,period,status,dueDate,membersPaid,collected,target);
+    return Object.hash(runtimeType,id,period,status,dueDate,membersPaid,collected,target,concurrencyToken);
 }
 
 @override
 String toString() {
-    return 'StokvelCycle(id: $id, period: $period, status: $status, dueDate: $dueDate, membersPaid: $membersPaid, collected: $collected, target: $target)';
+    return 'StokvelCycle(id: $id, period: $period, status: $status, dueDate: $dueDate, membersPaid: $membersPaid, collected: $collected, target: $target, concurrencyToken: $concurrencyToken)';
 }
 
 
@@ -1227,7 +1238,7 @@ abstract mixin class _$StokvelCycleCopyWith<$Res> implements $StokvelCycleCopyWi
   factory _$StokvelCycleCopyWith(_StokvelCycle value, $Res Function(_StokvelCycle) _then) = __$StokvelCycleCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String period, CycleStatus status, CalendarDate? dueDate, int membersPaid, Cents collected, Cents target
+ String id, String period, CycleStatus status, CalendarDate? dueDate, int membersPaid, Cents collected, Cents target, ConcurrencyToken? concurrencyToken
 });
 
 
@@ -1244,7 +1255,7 @@ class __$StokvelCycleCopyWithImpl<$Res>
 
 /// Create a copy of StokvelCycle
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? period = null,Object? status = null,Object? dueDate = freezed,Object? membersPaid = null,Object? collected = null,Object? target = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? period = null,Object? status = null,Object? dueDate = freezed,Object? membersPaid = null,Object? collected = null,Object? target = null,Object? concurrencyToken = freezed,}) {
   return _then(_StokvelCycle(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
@@ -1253,7 +1264,8 @@ as CycleStatus,dueDate: freezed == dueDate ? _self.dueDate : dueDate // ignore: 
 as CalendarDate?,membersPaid: null == membersPaid ? _self.membersPaid : membersPaid // ignore: cast_nullable_to_non_nullable
 as int,collected: null == collected ? _self.collected : collected // ignore: cast_nullable_to_non_nullable
 as Cents,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
-as Cents,
+as Cents,concurrencyToken: freezed == concurrencyToken ? _self.concurrencyToken : concurrencyToken // ignore: cast_nullable_to_non_nullable
+as ConcurrencyToken?,
   ));
 }
 

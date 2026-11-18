@@ -11,8 +11,8 @@ part 'home_controller.g.dart';
 @riverpod
 class HomeController extends _$HomeController {
   @override
-  Future<List<HomeEntry>> build() =>
-      ref.watch(homeRepositoryProvider).fetchHome();
+  Future<List<HomeEntry>> build() async =>
+      (await ref.watch(homeRepositoryProvider).fetchHome()).valueOrThrow;
 
   /// Reloads Home. The old entries stay in [state] (and on screen) until the
   /// new ones arrive. Completes when the reload finishes, even if it fails,

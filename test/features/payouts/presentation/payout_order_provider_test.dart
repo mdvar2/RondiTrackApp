@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/providers.dart';
-import 'package:ronditrack_app/core/fakes/fail_every.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/logging/lifecycle_log.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
@@ -81,13 +81,16 @@ void main() {
       );
     });
 
-    test('failure: any other error reads as a connection problem', () {
+    test('failure: no answer reads as a connection problem', () {
       final view = payoutsViewState(
         _mabena,
-        const AsyncError(FakeNetworkException(), StackTrace.empty),
+        const AsyncError(NoAnswerFailure(), StackTrace.empty),
       );
 
-      expect((view as ViewFailure<PayoutOrder>).message, genericFailureMessage);
+      expect(
+        (view as ViewFailure<PayoutOrder>).message,
+        const NoAnswerFailure().message,
+      );
     });
 
     test("another cycle's order is never shown under this one", () {

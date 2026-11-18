@@ -29,6 +29,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            dataSourceProvider.overrideWithValue(DataSource.fakes),
             fakeDelayProvider.overrideWithValue(Duration.zero),
             authControllerProvider.overrideWith(
               () => StartingAuthController(signedInAs(FakeSeed.lerato)),

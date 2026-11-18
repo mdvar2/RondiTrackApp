@@ -24,7 +24,7 @@ Future<List<HomeEntry>> _homeOf(
       delay: Duration.zero,
     ).fetchHome(),
   );
-  return entries!;
+  return entries!.valueOrThrow;
 }
 
 void main() {
@@ -132,7 +132,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('home-failure')), findsOneWidget);
-    expect(find.textContaining("couldn't load"), findsOneWidget);
+    expect(find.textContaining("couldn't reach the server"), findsOneWidget);
 
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();

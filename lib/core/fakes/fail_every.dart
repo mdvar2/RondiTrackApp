@@ -1,12 +1,3 @@
-/// What a flaky fake throws: a stand-in for a dropped connection.
-class FakeNetworkException implements Exception {
-  /// Creates the exception.
-  const new();
-
-  @override
-  String toString() => 'FakeNetworkException: the pretend network dropped';
-}
-
 /// Decides which calls a flaky fake fails: the first, then every [every]th
 /// one after it. With 3, calls 1, 4, 7… fail; with 1, every call fails.
 class FailEvery {

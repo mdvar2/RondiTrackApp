@@ -49,6 +49,11 @@ RouteBase get $appShellRoute => StatefulShellRouteData.$route(
                       hasOverriddenOnExit: false,
                       factory: $PayoutsRoute._fromState,
                     ),
+                    GoRouteData.$route(
+                      path: 'close',
+                      hasOverriddenOnExit: false,
+                      factory: $CloseCycleRoute._fromState,
+                    ),
                   ],
                 ),
               ],
@@ -208,6 +213,33 @@ mixin $PayoutsRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
     '/stokvels/${Uri.encodeComponent(_self.id)}/cycles/${Uri.encodeComponent(_self.cycleId)}/payouts',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CloseCycleRoute on GoRouteData {
+  static CloseCycleRoute _fromState(GoRouterState state) => CloseCycleRoute(
+    id: state.pathParameters['id']!,
+    cycleId: state.pathParameters['cycleId']!,
+  );
+
+  CloseCycleRoute get _self => this as CloseCycleRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/stokvels/${Uri.encodeComponent(_self.id)}/cycles/${Uri.encodeComponent(_self.cycleId)}/close',
   );
 
   @override

@@ -95,9 +95,10 @@ class StokvelDetailScreen extends ConsumerWidget {
             child: const Text('Refresh'),
           ),
         ),
-        ViewFailure(:final message) => MessagePanel(
+        ViewFailure(:final message, :final reference) => MessagePanel(
           key: const Key('stokvel-failure'),
           title: message,
+          reference: reference,
           action: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -211,15 +212,26 @@ class _StokvelBody extends StatelessWidget {
                   if (actions.contains(action))
                     FilledButton.tonal(
                       key: Key('action-${action.name}'),
-                      // The actions arrive in Week 11.
-                      onPressed: () => ScaffoldMessenger.of(context)
-                          .showSnackBar(
+                      onPressed: switch (action) {
+                        // Closing starts with what it would record.
+                        StokvelAction.closeCycle => () => CloseCycleRoute(
+                          id: detail.stokvel.id,
+                          cycleId: cycle.id,
+                        ).go(context),
+                        // The writes arrive later in Week 11.
+                        StokvelAction.pay ||
+                        StokvelAction.uploadProof ||
+                        StokvelAction.confirmContributions ||
+                        StokvelAction.recordPayout =>
+                          () => ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                '${stokvelActionLabel(action)} is coming soon.',
+                                '${stokvelActionLabel(action)} is coming '
+                                'soon.',
                               ),
                             ),
                           ),
+                      },
                       child: Text(stokvelActionLabel(action)),
                     ),
               ],

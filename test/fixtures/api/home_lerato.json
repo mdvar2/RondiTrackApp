@@ -1,0 +1,32 @@
+{
+  "stokvels": [
+    {
+      "stokvelId": "5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+      "stokvelName": "Mabena Family",
+      "role": "Treasurer",
+      "currentCycle": {
+        "period": "2026-11",
+        "status": "Open",
+        "dueDate": "2026-11-30"
+      },
+      "amountPaid": 50000,
+      "amountOwed": 0,
+      "nextPayoutDate": null,
+      "arrearsCents": 0
+    },
+    {
+      "stokvelId": "5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102",
+      "stokvelName": "Soweto Teachers",
+      "role": "Member",
+      "currentCycle": {
+        "period": "2026-11",
+        "status": "Open",
+        "dueDate": "2026-11-25"
+      },
+      "amountPaid": 75000,
+      "amountOwed": 75000,
+      "nextPayoutDate": null,
+      "arrearsCents": 0
+    }
+  ]
+}

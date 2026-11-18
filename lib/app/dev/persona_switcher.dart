@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
+import 'package:ronditrack_app/features/auth/presentation/sign_in_notice.dart';
 
 /// Signs out, then signs in as [email], through the same auth state a
 /// person uses: the gate sends the open screen to sign-in (remembering its
 /// address), the shell and every provider holding the last person's data
 /// are disposed, and signing in brings the new person back to that address.
 ///
-/// [auth] is read before the switch starts: the widget that asked is
-/// disposed with the shell half way through.
-Future<void> switchPersona(AuthController auth, String email) async {
+/// [auth] and [notice] are read before the switch starts: the widget that
+/// asked is disposed with the shell half way through. If the sign-in is
+/// refused (the API allows five sign-ins a minute from one address), the
+/// person is left on sign-in with the failure's words, the wait included.
+Future<void> switchPersona(
+  AuthController auth,
+  SignInNotice notice,
+  String email,
+) async {
   await auth.signOut();
-  await auth.signIn(email);
+  try {
+    await auth.signIn(email);
+  } on Failure catch (failure) {
+    notice.show(failure);
+  }
 }
 
 /// The dev build's persona switcher: a small button on the tab shell that
@@ -74,8 +86,9 @@ class _PersonaSheet extends ConsumerWidget {
               enabled: account.email != current,
               onTap: () {
                 final auth = ref.read(authControllerProvider.notifier);
+                final notice = ref.read(signInNoticeProvider.notifier);
                 Navigator.of(context).pop();
-                switchPersona(auth, account.email).ignore();
+                switchPersona(auth, notice, account.email).ignore();
               },
             ),
         ],

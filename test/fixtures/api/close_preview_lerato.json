@@ -1,0 +1,14 @@
+{
+  "cycleId": "9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201",
+  "period": "2026-11",
+  "asOfDate": "2026-11-18",
+  "version": "BD351F68D58C795CB70501C5837CDE07D46C813A74762603221D733763954CD6",
+  "arrears": [
+    {
+      "userId": "0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0002",
+      "userName": "Sipho Dlamini",
+      "amountCents": 50000
+    }
+  ],
+  "totalCents": 50000
+}

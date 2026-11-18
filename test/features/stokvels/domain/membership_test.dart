@@ -6,6 +6,8 @@ import 'package:ronditrack_app/features/stokvels/domain/membership.dart';
 import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
+import '../../../helpers/result_matchers.dart';
+
 void main() {
   const lerato = FakeSeed.lerato;
 
@@ -23,10 +25,10 @@ void main() {
   group('the role belongs to the membership, not the person', () {
     test('Lerato, one login, is Treasurer of Mabena Family and Member of '
         'Soweto Teachers on Home', () async {
-      final home = await FakeHomeRepository(
+      final home = (await FakeHomeRepository(
         userId: lerato.id,
         delay: Duration.zero,
-      ).fetchHome();
+      ).fetchHome()).valueOrThrow;
 
       expect(home.map((entry) => entry.membership), [
         const Membership(
@@ -46,18 +48,20 @@ void main() {
         delay: Duration.zero,
       );
 
-      final mabena = await repository.fetchStokvel(FakeSeed.mabenaFamilyId);
-      final soweto = await repository.fetchStokvel(FakeSeed.sowetoTeachersId);
+      final mabena = (await repository.fetchStokvel(FakeSeed.mabenaFamilyId))
+          .valueOrThrow;
+      final soweto = (await repository.fetchStokvel(FakeSeed.sowetoTeachersId))
+          .valueOrThrow;
 
       expect(mabena.membership.role, StokvelRole.treasurer);
       expect(soweto.membership.role, StokvelRole.member);
     });
 
     test('Sipho is a Member of both, and Treasurer of neither', () async {
-      final home = await FakeHomeRepository(
+      final home = (await FakeHomeRepository(
         userId: FakeSeed.sipho.id,
         delay: Duration.zero,
-      ).fetchHome();
+      ).fetchHome()).valueOrThrow;
 
       expect(home.map((entry) => entry.membership.role), [
         StokvelRole.member,
@@ -66,30 +70,33 @@ void main() {
     });
 
     test('Thabo is in no stokvel', () async {
-      final home = await FakeHomeRepository(
+      final home = (await FakeHomeRepository(
         userId: FakeSeed.thabo.id,
         delay: Duration.zero,
-      ).fetchHome();
+      ).fetchHome()).valueOrThrow;
 
       expect(home, isEmpty);
     });
   });
 
   group("a stokvel that isn't yours is the API's 404", () {
-    test('Thabo opening Mabena Family is not found, like a random id', () {
-      final repository = FakeStokvelRepository(
-        userId: FakeSeed.thabo.id,
-        delay: Duration.zero,
-      );
+    test(
+      'Thabo opening Mabena Family is not found, like a random id',
+      () async {
+        final repository = FakeStokvelRepository(
+          userId: FakeSeed.thabo.id,
+          delay: Duration.zero,
+        );
 
-      expect(
-        repository.fetchStokvel(FakeSeed.mabenaFamilyId),
-        throwsA(isA<StokvelNotFoundException>()),
-      );
-      expect(
-        repository.fetchStokvel('00000000-0000-0000-0000-000000000000'),
-        throwsA(isA<StokvelNotFoundException>()),
-      );
-    });
+        expect(
+          await repository.fetchStokvel(FakeSeed.mabenaFamilyId),
+          failsWith<StokvelNotFoundException>(),
+        );
+        expect(
+          await repository.fetchStokvel('00000000-0000-0000-0000-000000000000'),
+          failsWith<StokvelNotFoundException>(),
+        );
+      },
+    );
   });
 }

@@ -60,22 +60,382 @@ final class SignedInUserIdProvider
 
 String _$signedInUserIdHash() => r'96c3a33ea3335b74a06427da799eba3dabb47c6b';
 
+/// The one switch between the API and the fakes. The app runs on the API;
+/// the Week 10 whole-app tests override this one provider with
+/// [DataSource.fakes] and run as before.
+
+@ProviderFor(dataSource)
+final dataSourceProvider = DataSourceProvider._();
+
+/// The one switch between the API and the fakes. The app runs on the API;
+/// the Week 10 whole-app tests override this one provider with
+/// [DataSource.fakes] and run as before.
+
+final class DataSourceProvider
+    extends $FunctionalProvider<DataSource, DataSource, DataSource>
+    with $Provider<DataSource> {
+  /// The one switch between the API and the fakes. The app runs on the API;
+  /// the Week 10 whole-app tests override this one provider with
+  /// [DataSource.fakes] and run as before.
+  DataSourceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dataSourceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dataSourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<DataSource> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DataSource create(Ref ref) {
+    return dataSource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DataSource value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DataSource>(value),
+    );
+  }
+}
+
+String _$dataSourceHash() => r'24466549ff5788bf9df6035fa72b289fb6a3c569';
+
+/// The seed password for the dev build's persona sign-in, passed at run
+/// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
+/// staging and prod, which have no personas.
+
+@ProviderFor(seedPassword)
+final seedPasswordProvider = SeedPasswordProvider._();
+
+/// The seed password for the dev build's persona sign-in, passed at run
+/// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
+/// staging and prod, which have no personas.
+
+final class SeedPasswordProvider
+    extends $FunctionalProvider<String, String, String>
+    with $Provider<String> {
+  /// The seed password for the dev build's persona sign-in, passed at run
+  /// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
+  /// staging and prod, which have no personas.
+  SeedPasswordProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'seedPasswordProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$seedPasswordHash();
+
+  @$internal
+  @override
+  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String create(Ref ref) {
+    return seedPassword(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$seedPasswordHash() => r'68efd89162cb575ee56c6ae87a04ddcc2962611a';
+
+/// The flavour's validated configuration. `main` overrides it with the one
+/// it built from `config/<flavour>.json`; nothing has a default address.
+
+@ProviderFor(appConfig)
+final appConfigProvider = AppConfigProvider._();
+
+/// The flavour's validated configuration. `main` overrides it with the one
+/// it built from `config/<flavour>.json`; nothing has a default address.
+
+final class AppConfigProvider
+    extends $FunctionalProvider<AppConfig, AppConfig, AppConfig>
+    with $Provider<AppConfig> {
+  /// The flavour's validated configuration. `main` overrides it with the one
+  /// it built from `config/<flavour>.json`; nothing has a default address.
+  AppConfigProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appConfigProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appConfigHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppConfig> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppConfig create(Ref ref) {
+    return appConfig(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppConfig value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppConfig>(value),
+    );
+  }
+}
+
+String _$appConfigHash() => r'32a0155f586772c5503259bbd2e0a9bf56ba3f41';
+
+/// Where the API's log lines go: the Run console, in debug builds only.
+/// Tests override it to read the lines back.
+
+@ProviderFor(apiLog)
+final apiLogProvider = ApiLogProvider._();
+
+/// Where the API's log lines go: the Run console, in debug builds only.
+/// Tests override it to read the lines back.
+
+final class ApiLogProvider
+    extends
+        $FunctionalProvider<
+          void Function(String line),
+          void Function(String line),
+          void Function(String line)
+        >
+    with $Provider<void Function(String line)> {
+  /// Where the API's log lines go: the Run console, in debug builds only.
+  /// Tests override it to read the lines back.
+  ApiLogProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiLogProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiLogHash();
+
+  @$internal
+  @override
+  $ProviderElement<void Function(String line)> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  void Function(String line) create(Ref ref) {
+    return apiLog(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void Function(String line) value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void Function(String line)>(value),
+    );
+  }
+}
+
+String _$apiLogHash() => r'7140338884dd23922c68037ad174ce0e8f31e295';
+
+/// The signed-in person's access token, in memory only.
+
+@ProviderFor(accessToken)
+final accessTokenProvider = AccessTokenProvider._();
+
+/// The signed-in person's access token, in memory only.
+
+final class AccessTokenProvider
+    extends
+        $FunctionalProvider<
+          AccessTokenHolder,
+          AccessTokenHolder,
+          AccessTokenHolder
+        >
+    with $Provider<AccessTokenHolder> {
+  /// The signed-in person's access token, in memory only.
+  AccessTokenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'accessTokenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$accessTokenHash();
+
+  @$internal
+  @override
+  $ProviderElement<AccessTokenHolder> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AccessTokenHolder create(Ref ref) {
+    return accessToken(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AccessTokenHolder value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AccessTokenHolder>(value),
+    );
+  }
+}
+
+String _$accessTokenHash() => r'76bbd078a7137a2dd44a03982926688eb37e3beb';
+
+/// The one Dio client, for the app's whole life: its base URL from the
+/// flavour's config, never typed in code. A `401` outside sign-in ends the
+/// session (README "Failures").
+
+@ProviderFor(apiClient)
+final apiClientProvider = ApiClientProvider._();
+
+/// The one Dio client, for the app's whole life: its base URL from the
+/// flavour's config, never typed in code. A `401` outside sign-in ends the
+/// session (README "Failures").
+
+final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
+    with $Provider<Dio> {
+  /// The one Dio client, for the app's whole life: its base URL from the
+  /// flavour's config, never typed in code. A `401` outside sign-in ends the
+  /// session (README "Failures").
+  ApiClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiClientProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<Dio> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Dio create(Ref ref) {
+    return apiClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Dio value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Dio>(value),
+    );
+  }
+}
+
+String _$apiClientHash() => r'2f6071b871da9b85260609a905bbede607919372';
+
+/// The client generated from `contract/openapi/v1.json`, over [apiClient].
+/// Only `data/` code reads it.
+
+@ProviderFor(api)
+final apiProvider = ApiProvider._();
+
+/// The client generated from `contract/openapi/v1.json`, over [apiClient].
+/// Only `data/` code reads it.
+
+final class ApiProvider
+    extends $FunctionalProvider<RondiTrackApi, RondiTrackApi, RondiTrackApi>
+    with $Provider<RondiTrackApi> {
+  /// The client generated from `contract/openapi/v1.json`, over [apiClient].
+  /// Only `data/` code reads it.
+  ApiProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiHash();
+
+  @$internal
+  @override
+  $ProviderElement<RondiTrackApi> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  RondiTrackApi create(Ref ref) {
+    return api(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RondiTrackApi value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RondiTrackApi>(value),
+    );
+  }
+}
+
+String _$apiHash() => r'aaa7bff90b788c4242871cac8aa04a456c9676ec';
+
 /// How often the fakes fail: `0` never (the default), `3` the first call and
 /// every third after it. Only the dev flavour sets it, from
-/// `--dart-define=FAKE_FAIL_EVERY=` in `main`. Week 11 deletes it.
+/// `--dart-define=FAKE_FAIL_EVERY=` in `main`, with the fakes.
 
 @ProviderFor(fakeFailEvery)
 final fakeFailEveryProvider = FakeFailEveryProvider._();
 
 /// How often the fakes fail: `0` never (the default), `3` the first call and
 /// every third after it. Only the dev flavour sets it, from
-/// `--dart-define=FAKE_FAIL_EVERY=` in `main`. Week 11 deletes it.
+/// `--dart-define=FAKE_FAIL_EVERY=` in `main`, with the fakes.
 
 final class FakeFailEveryProvider extends $FunctionalProvider<int, int, int>
     with $Provider<int> {
   /// How often the fakes fail: `0` never (the default), `3` the first call and
   /// every third after it. Only the dev flavour sets it, from
-  /// `--dart-define=FAKE_FAIL_EVERY=` in `main`. Week 11 deletes it.
+  /// `--dart-define=FAKE_FAIL_EVERY=` in `main`, with the fakes.
   FakeFailEveryProvider._()
     : super(
         from: null,
@@ -113,21 +473,18 @@ String _$fakeFailEveryHash() => r'347eaf6c618d8636b5f585836382bb98e14ff136';
 
 /// The fakes' pretend network delay. Router-level tests set
 /// [Duration.zero], which also drops Soweto Teachers' extra slowness.
-/// Week 11 deletes it.
 
 @ProviderFor(fakeDelay)
 final fakeDelayProvider = FakeDelayProvider._();
 
 /// The fakes' pretend network delay. Router-level tests set
 /// [Duration.zero], which also drops Soweto Teachers' extra slowness.
-/// Week 11 deletes it.
 
 final class FakeDelayProvider
     extends $FunctionalProvider<Duration, Duration, Duration>
     with $Provider<Duration> {
   /// The fakes' pretend network delay. Router-level tests set
   /// [Duration.zero], which also drops Soweto Teachers' extra slowness.
-  /// Week 11 deletes it.
   FakeDelayProvider._()
     : super(
         from: null,
@@ -165,14 +522,14 @@ String _$fakeDelayHash() => r'4ba5ba795ca86c916f235f56774883fa048008b2';
 
 /// The fakes' changeable copy of the seed: joining an invite adds a
 /// membership here, and every fake reads it. One per app session (and per
-/// test). Week 11 deletes it.
+/// test).
 
 @ProviderFor(fakeStokvels)
 final fakeStokvelsProvider = FakeStokvelsProvider._();
 
 /// The fakes' changeable copy of the seed: joining an invite adds a
 /// membership here, and every fake reads it. One per app session (and per
-/// test). Week 11 deletes it.
+/// test).
 
 final class FakeStokvelsProvider
     extends
@@ -184,7 +541,7 @@ final class FakeStokvelsProvider
     with $Provider<List<FakeStokvel>> {
   /// The fakes' changeable copy of the seed: joining an invite adds a
   /// membership here, and every fake reads it. One per app session (and per
-  /// test). Week 11 deletes it.
+  /// test).
   FakeStokvelsProvider._()
     : super(
         from: null,
@@ -221,14 +578,16 @@ final class FakeStokvelsProvider
 
 String _$fakeStokvelsHash() => r'3ced7d4f7cc494159cec54d89f54a5275f47474f';
 
-/// The accounts the sign-in screen offers to fill in, so a tester needn't
-/// type an email. Week 11 makes this empty.
+/// The accounts the dev build's sign-in screen and persona switcher offer:
+/// the three seed personas, which exist in the fakes and in the API's
+/// Development seed (API PR #16) with the same emails.
 
 @ProviderFor(demoAccounts)
 final demoAccountsProvider = DemoAccountsProvider._();
 
-/// The accounts the sign-in screen offers to fill in, so a tester needn't
-/// type an email. Week 11 makes this empty.
+/// The accounts the dev build's sign-in screen and persona switcher offer:
+/// the three seed personas, which exist in the fakes and in the API's
+/// Development seed (API PR #16) with the same emails.
 
 final class DemoAccountsProvider
     extends
@@ -238,8 +597,9 @@ final class DemoAccountsProvider
           List<({String email, String name})>
         >
     with $Provider<List<({String email, String name})>> {
-  /// The accounts the sign-in screen offers to fill in, so a tester needn't
-  /// type an email. Week 11 makes this empty.
+  /// The accounts the dev build's sign-in screen and persona switcher offer:
+  /// the three seed personas, which exist in the fakes and in the API's
+  /// Development seed (API PR #16) with the same emails.
   DemoAccountsProvider._()
     : super(
         from: null,
@@ -278,17 +638,20 @@ final class DemoAccountsProvider
 
 String _$demoAccountsHash() => r'4a776dee9d5ef16bd4e397683c8ca9ed282038ba';
 
-/// Signs in and out. Implementation: [FakeAuthRepository].
+/// Signs in and out. Implementation: [ApiAuthRepository], or
+/// [FakeAuthRepository].
 
 @ProviderFor(authRepository)
 final authRepositoryProvider = AuthRepositoryProvider._();
 
-/// Signs in and out. Implementation: [FakeAuthRepository].
+/// Signs in and out. Implementation: [ApiAuthRepository], or
+/// [FakeAuthRepository].
 
 final class AuthRepositoryProvider
     extends $FunctionalProvider<AuthRepository, AuthRepository, AuthRepository>
     with $Provider<AuthRepository> {
-  /// Signs in and out. Implementation: [FakeAuthRepository].
+  /// Signs in and out. Implementation: [ApiAuthRepository], or
+  /// [FakeAuthRepository].
   AuthRepositoryProvider._()
     : super(
         from: null,
@@ -322,22 +685,34 @@ final class AuthRepositoryProvider
   }
 }
 
-String _$authRepositoryHash() => r'fdf69d26fa7dac0c40337cd69c692e55876abf7e';
+String _$authRepositoryHash() => r'cf339617de056a40afd92b40e2909cf8f6b8df50';
 
-/// Reads Home. Implementation: [FakeHomeRepository], wrapped in
-/// [FlakyHomeRepository] when [fakeFailEvery] is set.
+/// Reads Home. Implementation: [ApiHomeRepository]; or
+/// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when
+/// [fakeFailEvery] is set.
+///
+/// Every repository watches who is signed in, on the API too, so signing in
+/// as someone else rebuilds it, and everything that read it.
 
 @ProviderFor(homeRepository)
 final homeRepositoryProvider = HomeRepositoryProvider._();
 
-/// Reads Home. Implementation: [FakeHomeRepository], wrapped in
-/// [FlakyHomeRepository] when [fakeFailEvery] is set.
+/// Reads Home. Implementation: [ApiHomeRepository]; or
+/// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when
+/// [fakeFailEvery] is set.
+///
+/// Every repository watches who is signed in, on the API too, so signing in
+/// as someone else rebuilds it, and everything that read it.
 
 final class HomeRepositoryProvider
     extends $FunctionalProvider<HomeRepository, HomeRepository, HomeRepository>
     with $Provider<HomeRepository> {
-  /// Reads Home. Implementation: [FakeHomeRepository], wrapped in
-  /// [FlakyHomeRepository] when [fakeFailEvery] is set.
+  /// Reads Home. Implementation: [ApiHomeRepository]; or
+  /// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when
+  /// [fakeFailEvery] is set.
+  ///
+  /// Every repository watches who is signed in, on the API too, so signing in
+  /// as someone else rebuilds it, and everything that read it.
   HomeRepositoryProvider._()
     : super(
         from: null,
@@ -371,18 +746,20 @@ final class HomeRepositoryProvider
   }
 }
 
-String _$homeRepositoryHash() => r'c173fd592539f781a8c9c85d46f86b976701896b';
+String _$homeRepositoryHash() => r'40c6f74887047f67a8e6b1192fa75589a74b210f';
 
-/// Reads stokvels and cycles. Implementation: [FakeStokvelRepository], with
-/// Soweto Teachers slow, as it is on Lerato's data bundle; wrapped in
-/// [FlakyStokvelRepository] when [fakeFailEvery] is set.
+/// Reads stokvels and cycles. Implementation: [ApiStokvelRepository]; or
+/// [FakeStokvelRepository], with Soweto Teachers slow, as it is on Lerato's
+/// data bundle, wrapped in [FlakyStokvelRepository] when [fakeFailEvery] is
+/// set.
 
 @ProviderFor(stokvelRepository)
 final stokvelRepositoryProvider = StokvelRepositoryProvider._();
 
-/// Reads stokvels and cycles. Implementation: [FakeStokvelRepository], with
-/// Soweto Teachers slow, as it is on Lerato's data bundle; wrapped in
-/// [FlakyStokvelRepository] when [fakeFailEvery] is set.
+/// Reads stokvels and cycles. Implementation: [ApiStokvelRepository]; or
+/// [FakeStokvelRepository], with Soweto Teachers slow, as it is on Lerato's
+/// data bundle, wrapped in [FlakyStokvelRepository] when [fakeFailEvery] is
+/// set.
 
 final class StokvelRepositoryProvider
     extends
@@ -392,9 +769,10 @@ final class StokvelRepositoryProvider
           StokvelRepository
         >
     with $Provider<StokvelRepository> {
-  /// Reads stokvels and cycles. Implementation: [FakeStokvelRepository], with
-  /// Soweto Teachers slow, as it is on Lerato's data bundle; wrapped in
-  /// [FlakyStokvelRepository] when [fakeFailEvery] is set.
+  /// Reads stokvels and cycles. Implementation: [ApiStokvelRepository]; or
+  /// [FakeStokvelRepository], with Soweto Teachers slow, as it is on Lerato's
+  /// data bundle, wrapped in [FlakyStokvelRepository] when [fakeFailEvery] is
+  /// set.
   StokvelRepositoryProvider._()
     : super(
         from: null,
@@ -429,16 +807,18 @@ final class StokvelRepositoryProvider
   }
 }
 
-String _$stokvelRepositoryHash() => r'900de1268c7e8310934dcd9d8c649de04656d4ff';
+String _$stokvelRepositoryHash() => r'ab446f1391288939bb0822254531d64a63cb5fa6';
 
-/// Reads the activity feed. Implementation: [FakeActivityRepository],
-/// wrapped in [FlakyActivityRepository] when [fakeFailEvery] is set.
+/// Reads the activity feed. Implementation: [ApiActivityRepository]; or
+/// [FakeActivityRepository], wrapped in [FlakyActivityRepository] when
+/// [fakeFailEvery] is set.
 
 @ProviderFor(activityRepository)
 final activityRepositoryProvider = ActivityRepositoryProvider._();
 
-/// Reads the activity feed. Implementation: [FakeActivityRepository],
-/// wrapped in [FlakyActivityRepository] when [fakeFailEvery] is set.
+/// Reads the activity feed. Implementation: [ApiActivityRepository]; or
+/// [FakeActivityRepository], wrapped in [FlakyActivityRepository] when
+/// [fakeFailEvery] is set.
 
 final class ActivityRepositoryProvider
     extends
@@ -448,8 +828,9 @@ final class ActivityRepositoryProvider
           ActivityRepository
         >
     with $Provider<ActivityRepository> {
-  /// Reads the activity feed. Implementation: [FakeActivityRepository],
-  /// wrapped in [FlakyActivityRepository] when [fakeFailEvery] is set.
+  /// Reads the activity feed. Implementation: [ApiActivityRepository]; or
+  /// [FakeActivityRepository], wrapped in [FlakyActivityRepository] when
+  /// [fakeFailEvery] is set.
   ActivityRepositoryProvider._()
     : super(
         from: null,
@@ -485,14 +866,16 @@ final class ActivityRepositoryProvider
 }
 
 String _$activityRepositoryHash() =>
-    r'2cfbdd0652ece13e066fdf63eff5a0f2b43a1549';
+    r'00ce49b7a78b65c32a26e5f2945d5f48d0b5763f';
 
-/// Reads and accepts invites. Implementation: [FakeInviteRepository].
+/// Reads and accepts invites. Implementation: [ApiInviteRepository], or
+/// [FakeInviteRepository].
 
 @ProviderFor(inviteRepository)
 final inviteRepositoryProvider = InviteRepositoryProvider._();
 
-/// Reads and accepts invites. Implementation: [FakeInviteRepository].
+/// Reads and accepts invites. Implementation: [ApiInviteRepository], or
+/// [FakeInviteRepository].
 
 final class InviteRepositoryProvider
     extends
@@ -502,7 +885,8 @@ final class InviteRepositoryProvider
           InviteRepository
         >
     with $Provider<InviteRepository> {
-  /// Reads and accepts invites. Implementation: [FakeInviteRepository].
+  /// Reads and accepts invites. Implementation: [ApiInviteRepository], or
+  /// [FakeInviteRepository].
   InviteRepositoryProvider._()
     : super(
         from: null,
@@ -536,16 +920,18 @@ final class InviteRepositoryProvider
   }
 }
 
-String _$inviteRepositoryHash() => r'4ed8aecfabb04bffaf5878a8f52d7a34d9a65e72';
+String _$inviteRepositoryHash() => r'aee17ca50210401ff50350d7945965f5be6d28a3';
 
-/// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
-/// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+/// Reads a cycle's payout order. Implementation: [ApiPayoutRepository]; or
+/// [FakePayoutRepository], wrapped in [FlakyPayoutRepository] when
+/// [fakeFailEvery] is set.
 
 @ProviderFor(payoutRepository)
 final payoutRepositoryProvider = PayoutRepositoryProvider._();
 
-/// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
-/// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+/// Reads a cycle's payout order. Implementation: [ApiPayoutRepository]; or
+/// [FakePayoutRepository], wrapped in [FlakyPayoutRepository] when
+/// [fakeFailEvery] is set.
 
 final class PayoutRepositoryProvider
     extends
@@ -555,8 +941,9 @@ final class PayoutRepositoryProvider
           PayoutRepository
         >
     with $Provider<PayoutRepository> {
-  /// Reads a cycle's payout order. Implementation: [FakePayoutRepository],
-  /// wrapped in [FlakyPayoutRepository] when [fakeFailEvery] is set.
+  /// Reads a cycle's payout order. Implementation: [ApiPayoutRepository]; or
+  /// [FakePayoutRepository], wrapped in [FlakyPayoutRepository] when
+  /// [fakeFailEvery] is set.
   PayoutRepositoryProvider._()
     : super(
         from: null,
@@ -590,4 +977,4 @@ final class PayoutRepositoryProvider
   }
 }
 
-String _$payoutRepositoryHash() => r'fbe11b722e0f0f8072dd07378e38d86242f6495f';
+String _$payoutRepositoryHash() => r'd80e6a695b3c6970cfad11e81764275c04902dd7';

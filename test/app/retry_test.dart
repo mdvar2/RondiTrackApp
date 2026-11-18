@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/retry.dart';
-import 'package:ronditrack_app/core/errors/not_found.dart';
-import 'package:ronditrack_app/core/fakes/fail_every.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
@@ -17,29 +16,46 @@ const String _mabenaCycle = FakeSeed.mabenaCycleId;
 
 void main() {
   group('appRetry', () {
-    final notFound = <NotFoundException>[
+    // Every answer the API gave is final, a 500 included: the API retried
+    // its database before answering.
+    final answers = <Failure>[
       const StokvelNotFoundException(),
       const CycleNotFoundException(),
       const InviteNotFoundException(),
+      const NotFoundFailure(),
+      const ForbiddenFailure(),
+      const UnauthorisedFailure(),
+      const ValidationFailure(),
+      const ConflictFailure(),
+      const RuleFailure(),
+      const RateLimitedFailure(wait: Duration(seconds: 60)),
+      const ServerFailure(correlationId: 'abc'),
     ];
 
-    for (final error in notFound) {
-      test('never retries $error', () {
+    for (final failure in answers) {
+      test('never retries $failure', () {
         for (var count = 0; count < 3; count++) {
-          expect(appRetry(count, error), isNull);
+          expect(appRetry(count, failure), isNull);
         }
       });
     }
 
-    test('retries anything else as Riverpod would', () {
-      const offline = FakeNetworkException();
-      for (var count = 0; count < 12; count++) {
-        expect(
-          appRetry(count, offline),
-          ProviderContainer.defaultRetry(count, offline),
-        );
-      }
-      expect(appRetry(0, offline), isNotNull);
+    test('retries no answer three times, after 1, 2 and 4 seconds', () {
+      const offline = NoAnswerFailure();
+      expect(
+        [for (var count = 0; count < 5; count++) appRetry(count, offline)],
+        [
+          const Duration(seconds: 1),
+          const Duration(seconds: 2),
+          const Duration(seconds: 4),
+          null,
+          null,
+        ],
+      );
+    });
+
+    test('never retries an error that is not a Failure: a bug', () {
+      expect(appRetry(0, StateError('bug')), isNull);
     });
   });
 

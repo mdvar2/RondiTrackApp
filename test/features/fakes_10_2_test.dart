@@ -15,6 +15,8 @@ import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.da
 import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
+import '../helpers/result_matchers.dart';
+
 const String _mabena = FakeSeed.mabenaFamilyId;
 const String _soweto = FakeSeed.sowetoTeachersId;
 
@@ -24,8 +26,9 @@ void main() {
         FakeStokvelRepository(userId: persona.id, delay: Duration.zero);
 
     test("a member gets the cycle and its stokvel's contributions", () async {
-      final detail = await repo(FakeSeed.lerato)
-          .fetchCycle(_mabena, FakeSeed.mabenaCycleId);
+      final detail = (await repo(
+        FakeSeed.lerato,
+      ).fetchCycle(_mabena, FakeSeed.mabenaCycleId)).valueOrThrow;
 
       expect(detail.cycle.id, FakeSeed.mabenaCycleId);
       expect(detail.stokvel.name, 'Mabena Family');
@@ -34,41 +37,41 @@ void main() {
 
     test("not a member, another stokvel's cycle, or no such cycle: all "
         'the same CycleNotFoundException', () async {
-      await expectLater(
-        repo(FakeSeed.thabo).fetchCycle(_mabena, FakeSeed.mabenaCycleId),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await repo(FakeSeed.thabo).fetchCycle(_mabena, FakeSeed.mabenaCycleId),
+        failsWith<CycleNotFoundException>(),
       );
-      await expectLater(
-        repo(FakeSeed.lerato).fetchCycle(_mabena, FakeSeed.sowetoCycleId),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await repo(FakeSeed.lerato).fetchCycle(_mabena, FakeSeed.sowetoCycleId),
+        failsWith<CycleNotFoundException>(),
       );
-      await expectLater(
-        repo(FakeSeed.lerato).fetchCycle(_mabena, 'no-such-cycle'),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await repo(FakeSeed.lerato).fetchCycle(_mabena, 'no-such-cycle'),
+        failsWith<CycleNotFoundException>(),
       );
-      await expectLater(
-        repo(FakeSeed.lerato).fetchCycle('no-such-stokvel', 'x'),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await repo(FakeSeed.lerato).fetchCycle('no-such-stokvel', 'x'),
+        failsWith<CycleNotFoundException>(),
       );
     });
 
     test('signed out, every stokvel is not found', () async {
-      await expectLater(
-        FakeStokvelRepository(
+      expect(
+        await FakeStokvelRepository(
           userId: null,
           delay: Duration.zero,
         ).fetchStokvel(_mabena),
-        throwsA(isA<StokvelNotFoundException>()),
+        failsWith<StokvelNotFoundException>(),
       );
     });
   });
 
   group('activity', () {
     test("Lerato's feed covers both stokvels, newest first", () async {
-      final items = await FakeActivityRepository(
+      final items = (await FakeActivityRepository(
         userId: FakeSeed.lerato.id,
         delay: Duration.zero,
-      ).fetchActivity();
+      ).fetchActivity()).valueOrThrow;
 
       expect(items.map((i) => i.stokvelId).toSet(), {_mabena, _soweto});
       for (var i = 1; i < items.length; i++) {
@@ -78,10 +81,10 @@ void main() {
 
     test('Thabo, and nobody signed in, have none', () async {
       for (final userId in [FakeSeed.thabo.id, null]) {
-        final items = await FakeActivityRepository(
+        final items = (await FakeActivityRepository(
           userId: userId,
           delay: Duration.zero,
-        ).fetchActivity();
+        ).fetchActivity()).valueOrThrow;
         expect(items, isEmpty);
       }
     });
@@ -89,11 +92,11 @@ void main() {
 
   group('invites', () {
     test('a code previews its stokvel', () async {
-      final invite = await FakeInviteRepository(
+      final invite = (await FakeInviteRepository(
         userId: FakeSeed.thabo.id,
         stokvels: FakeSeed.fresh(),
         delay: Duration.zero,
-      ).fetchInvite('MABENA26');
+      ).fetchInvite('MABENA26')).valueOrThrow;
 
       expect(invite.stokvelId, _mabena);
       expect(invite.stokvelName, 'Mabena Family');
@@ -101,31 +104,31 @@ void main() {
     });
 
     test('an unknown code is InviteNotFoundException', () async {
-      await expectLater(
-        FakeInviteRepository(
+      expect(
+        await FakeInviteRepository(
           userId: FakeSeed.thabo.id,
           stokvels: FakeSeed.fresh(),
           delay: Duration.zero,
         ).fetchInvite('NOPE'),
-        throwsA(isA<InviteNotFoundException>()),
+        failsWith<InviteNotFoundException>(),
       );
     });
 
     test('joining makes Thabo a Member everywhere the fakes look, without '
         'touching the seed', () async {
       final shared = FakeSeed.fresh();
-      final id = await FakeInviteRepository(
+      final id = (await FakeInviteRepository(
         userId: FakeSeed.thabo.id,
         stokvels: shared,
         delay: Duration.zero,
-      ).join('MABENA26');
+      ).join('MABENA26')).valueOrThrow;
 
       expect(id, _mabena);
-      final home = await FakeHomeRepository(
+      final home = (await FakeHomeRepository(
         userId: FakeSeed.thabo.id,
         delay: Duration.zero,
         stokvels: shared,
-      ).fetchHome();
+      ).fetchHome()).valueOrThrow;
       expect(home.single.membership.role, StokvelRole.member);
 
       final seedRoles = FakeSeed.stokvels
@@ -136,11 +139,11 @@ void main() {
 
     test("joining a stokvel you're in keeps your role", () async {
       final shared = FakeSeed.fresh();
-      await FakeInviteRepository(
+      (await FakeInviteRepository(
         userId: FakeSeed.lerato.id,
         stokvels: shared,
         delay: Duration.zero,
-      ).join('MABENA26');
+      ).join('MABENA26')).valueOrThrow;
 
       final mabena = shared.firstWhere((s) => s.stokvel.id == _mabena);
       expect(mabena.roles[FakeSeed.lerato.id], StokvelRole.treasurer);
@@ -151,22 +154,26 @@ void main() {
     final auth = FakeAuthRepository(delay: Duration.zero);
 
     test('by email, ignoring case and spaces', () async {
-      final user = await auth.signIn(email: '  Sipho@RondiTrack.example ');
+      final user = (await auth.signIn(email: '  Sipho@RondiTrack.example '))
+          .valueOrThrow;
       expect(user.id, FakeSeed.sipho.id);
       expect(user.name, 'Sipho Dlamini');
     });
 
     test('an unknown email is SignInFailedException', () async {
-      await expectLater(
-        auth.signIn(email: 'someone@example.com'),
-        throwsA(isA<SignInFailedException>()),
+      expect(
+        await auth.signIn(email: 'someone@example.com'),
+        failsWith<SignInFailedException>(),
       );
     });
 
     test('the app starts signed out; signing in and out moves the user id '
         'every repository reads', () async {
       final container = ProviderContainer.test(
-        overrides: [fakeDelayProvider.overrideWithValue(Duration.zero)],
+        overrides: [
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
+        ],
       );
 
       expect(container.read(authControllerProvider), const SignedOut());
@@ -176,17 +183,24 @@ void main() {
           .read(authControllerProvider.notifier)
           .signIn(FakeSeed.lerato.email);
       expect(container.read(signedInUserIdProvider), FakeSeed.lerato.id);
-      final home = await container.read(homeRepositoryProvider).fetchHome();
+      final home = (await container.read(homeRepositoryProvider).fetchHome())
+          .valueOrThrow;
       expect(home, hasLength(2));
 
       await container.read(authControllerProvider.notifier).signOut();
       expect(container.read(signedInUserIdProvider), isNull);
-      expect(await container.read(homeRepositoryProvider).fetchHome(), isEmpty);
+      expect(
+        (await container.read(homeRepositoryProvider).fetchHome()).valueOrThrow,
+        isEmpty,
+      );
     });
 
     test('a failed sign-in stays signed out', () async {
       final container = ProviderContainer.test(
-        overrides: [fakeDelayProvider.overrideWithValue(Duration.zero)],
+        overrides: [
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
+        ],
       );
 
       await expectLater(
@@ -198,9 +212,14 @@ void main() {
   });
 
   test('FAKE_FAIL_EVERY also wraps the activity fake', () {
-    final plain = ProviderContainer.test();
+    final plain = ProviderContainer.test(
+      overrides: [dataSourceProvider.overrideWithValue(DataSource.fakes)],
+    );
     final flaky = ProviderContainer.test(
-      overrides: [fakeFailEveryProvider.overrideWithValue(3)],
+      overrides: [
+        dataSourceProvider.overrideWithValue(DataSource.fakes),
+        fakeFailEveryProvider.overrideWithValue(3),
+      ],
     );
 
     expect(

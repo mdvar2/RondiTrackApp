@@ -11,6 +11,7 @@ import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
 import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/close_cycle_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/cycle_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvels_screen.dart';
@@ -112,6 +113,14 @@ final List<_Row> _rows = [
     as: FakeSeed.lerato,
     lands: '$_cycle/payouts',
     screen: PayoutsScreen,
+    tab: 1,
+  ),
+  (
+    pattern: '/stokvels/:id/cycles/:cycleId/close',
+    open: '$_cycle/close',
+    as: FakeSeed.lerato,
+    lands: '$_cycle/close',
+    screen: CloseCycleScreen,
     tab: 1,
   ),
   (

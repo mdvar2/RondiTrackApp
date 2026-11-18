@@ -1,0 +1,12 @@
+{
+  "id": "9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201",
+  "stokvelId": "5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101",
+  "period": "2026-11",
+  "targetAmount": 1500,
+  "version": 2324,
+  "endDate": "2026-11-30",
+  "status": "Open",
+  "dueDate": "2026-11-30",
+  "totalCollectedCents": 100000,
+  "amountDueCents": 50000
+}

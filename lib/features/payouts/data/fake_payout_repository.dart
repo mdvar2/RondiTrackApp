@@ -1,3 +1,4 @@
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_order.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
@@ -30,7 +31,10 @@ class FakePayoutRepository implements PayoutRepository {
   final Map<String, List<PayoutEntry>> _orders;
 
   @override
-  Future<PayoutOrder> fetchPayoutOrder(String stokvelId, String cycleId) async {
+  Future<Result<PayoutOrder>> fetchPayoutOrder(
+    String stokvelId,
+    String cycleId,
+  ) async {
     await Future<void>.delayed(delay);
 
     for (final entry in _stokvels) {
@@ -39,12 +43,14 @@ class FakePayoutRepository implements PayoutRepository {
       // cycle that doesn't exist.
       if (entry.roles[userId] == null) break;
       if (entry.cycle?.id != cycleId) break;
-      return PayoutOrder(
-        stokvelId: stokvelId,
-        cycleId: cycleId,
-        entries: List.unmodifiable(_orders[cycleId] ?? const <PayoutEntry>[]),
+      return Ok(
+        PayoutOrder(
+          stokvelId: stokvelId,
+          cycleId: cycleId,
+          entries: List.unmodifiable(_orders[cycleId] ?? const <PayoutEntry>[]),
+        ),
       );
     }
-    throw const CycleNotFoundException();
+    return const Err(CycleNotFoundException());
   }
 }

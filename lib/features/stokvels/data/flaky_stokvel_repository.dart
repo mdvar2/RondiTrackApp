@@ -1,9 +1,12 @@
+import 'package:ronditrack_app/core/errors/failure.dart';
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/core/fakes/fail_every.dart';
+import 'package:ronditrack_app/features/stokvels/domain/cycle_close_preview.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
 /// Wraps a [StokvelRepository] so that some calls fail with
-/// [FakeNetworkException], after the usual wait. The dev flavour uses it
+/// [NoAnswerFailure], after the usual wait. The dev flavour uses it
 /// behind `--dart-define=FAKE_FAIL_EVERY=`: `1` shows the failure state on a
 /// phone; `3` shows Riverpod's automatic retry recovering by itself.
 class FlakyStokvelRepository implements StokvelRepository {
@@ -14,18 +17,32 @@ class FlakyStokvelRepository implements StokvelRepository {
   final FailEvery _failures;
 
   @override
-  Future<StokvelDetail> fetchStokvel(String stokvelId) async {
+  Future<Result<StokvelDetail>> fetchStokvel(String stokvelId) async {
     final fails = _failures.next();
     final detail = await _inner.fetchStokvel(stokvelId);
-    if (fails) throw const FakeNetworkException();
+    if (fails) return const Err(NoAnswerFailure());
     return detail;
   }
 
   @override
-  Future<CycleDetail> fetchCycle(String stokvelId, String cycleId) async {
+  Future<Result<CycleDetail>> fetchCycle(
+    String stokvelId,
+    String cycleId,
+  ) async {
     final fails = _failures.next();
     final detail = await _inner.fetchCycle(stokvelId, cycleId);
-    if (fails) throw const FakeNetworkException();
+    if (fails) return const Err(NoAnswerFailure());
     return detail;
+  }
+
+  @override
+  Future<Result<CycleClosePreview>> fetchClosePreview(
+    String stokvelId,
+    String cycleId,
+  ) async {
+    final fails = _failures.next();
+    final preview = await _inner.fetchClosePreview(stokvelId, cycleId);
+    if (fails) return const Err(NoAnswerFailure());
+    return preview;
   }
 }

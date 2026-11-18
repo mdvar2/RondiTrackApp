@@ -5,6 +5,8 @@ import 'package:ronditrack_app/features/payouts/domain/payout_status.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
+import '../../../helpers/result_matchers.dart';
+
 const String _mabena = FakeSeed.mabenaFamilyId;
 const String _soweto = FakeSeed.sowetoTeachersId;
 const String _mabenaCycle = FakeSeed.mabenaCycleId;
@@ -23,42 +25,43 @@ void main() {
       (_soweto, _sowetoCycle),
     ]) {
       test('Thabo, in no stokvel, asking for $cycleId', () async {
-        await expectLater(
-          _as(FakeSeed.thabo.id).fetchPayoutOrder(stokvelId, cycleId),
-          throwsA(isA<CycleNotFoundException>()),
+        expect(
+          await _as(FakeSeed.thabo.id).fetchPayoutOrder(stokvelId, cycleId),
+          failsWith<CycleNotFoundException>(),
         );
       });
     }
 
     test('nobody signed in', () async {
-      await expectLater(
-        _as(null).fetchPayoutOrder(_mabena, _mabenaCycle),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await _as(null).fetchPayoutOrder(_mabena, _mabenaCycle),
+        failsWith<CycleNotFoundException>(),
       );
     });
 
     test('the same for a cycle that does not exist, and for a cycle of '
         'another stokvel, even to a member of both', () async {
       final lerato = _as(FakeSeed.lerato.id);
-      await expectLater(
-        lerato.fetchPayoutOrder(_mabena, 'not-a-cycle'),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await lerato.fetchPayoutOrder(_mabena, 'not-a-cycle'),
+        failsWith<CycleNotFoundException>(),
       );
-      await expectLater(
-        lerato.fetchPayoutOrder(_mabena, _sowetoCycle),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await lerato.fetchPayoutOrder(_mabena, _sowetoCycle),
+        failsWith<CycleNotFoundException>(),
       );
-      await expectLater(
-        lerato.fetchPayoutOrder('no-such-stokvel', _mabenaCycle),
-        throwsA(isA<CycleNotFoundException>()),
+      expect(
+        await lerato.fetchPayoutOrder('no-such-stokvel', _mabenaCycle),
+        failsWith<CycleNotFoundException>(),
       );
     });
   });
 
   group('a member gets the order as seeded', () {
     test('Mabena Family: Nomsa paid, Lerato next, Sipho waiting', () async {
-      final order = await _as(FakeSeed.lerato.id)
-          .fetchPayoutOrder(_mabena, _mabenaCycle);
+      final order = (await _as(
+        FakeSeed.lerato.id,
+      ).fetchPayoutOrder(_mabena, _mabenaCycle)).valueOrThrow;
 
       expect(order.stokvelId, _mabena);
       expect(order.cycleId, _mabenaCycle);
@@ -80,8 +83,9 @@ void main() {
 
     test('Soweto Teachers, in its own order: Kagiso next, then Sipho, then '
         'Lerato', () async {
-      final order = await _as(FakeSeed.sipho.id)
-          .fetchPayoutOrder(_soweto, _sowetoCycle);
+      final order = (await _as(
+        FakeSeed.sipho.id,
+      ).fetchPayoutOrder(_soweto, _sowetoCycle)).valueOrThrow;
 
       expect(order.entries.map((entry) => entry.memberName), [
         'Kagiso Molefe',
@@ -97,27 +101,30 @@ void main() {
 
     test("the order is the stokvel's, not the caller's: Lerato and Sipho "
         'get the same answer', () async {
-      final lerato = await _as(FakeSeed.lerato.id)
-          .fetchPayoutOrder(_mabena, _mabenaCycle);
-      final sipho = await _as(FakeSeed.sipho.id)
-          .fetchPayoutOrder(_mabena, _mabenaCycle);
+      final lerato = (await _as(
+        FakeSeed.lerato.id,
+      ).fetchPayoutOrder(_mabena, _mabenaCycle)).valueOrThrow;
+      final sipho = (await _as(
+        FakeSeed.sipho.id,
+      ).fetchPayoutOrder(_mabena, _mabenaCycle)).valueOrThrow;
 
       expect(sipho, lerato);
     });
 
     test('a cycle with no order is an empty order, not "not found"', () async {
-      final order = await FakePayoutRepository(
+      final order = (await FakePayoutRepository(
         userId: FakeSeed.lerato.id,
         delay: Duration.zero,
         orders: const {},
-      ).fetchPayoutOrder(_mabena, _mabenaCycle);
+      ).fetchPayoutOrder(_mabena, _mabenaCycle)).valueOrThrow;
 
       expect(order.entries, isEmpty);
     });
 
     test('the caller cannot change the seed through the answer', () async {
-      final order = await _as(FakeSeed.lerato.id)
-          .fetchPayoutOrder(_mabena, _mabenaCycle);
+      final order = (await _as(
+        FakeSeed.lerato.id,
+      ).fetchPayoutOrder(_mabena, _mabenaCycle)).valueOrThrow;
 
       expect(() => order.entries.removeLast(), throwsUnsupportedError);
     });

@@ -1,3 +1,4 @@
+import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/core/money/cents.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_preview.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_repository.dart';
@@ -26,25 +27,29 @@ class FakeInviteRepository implements InviteRepository {
   final Duration delay;
 
   @override
-  Future<InvitePreview> fetchInvite(String code) async {
+  Future<Result<InvitePreview>> fetchInvite(String code) async {
     await Future<void>.delayed(delay);
     final entry = _entryFor(code);
+    if (entry == null) return const Err(InviteNotFoundException());
     final terms = FakeSeed.inviteTerms[entry.stokvel.id];
-    return InvitePreview(
-      code: code,
-      stokvelId: entry.stokvel.id,
-      stokvelName: entry.stokvel.name,
-      contributionAmount: entry.stokvel.contributionAmount,
-      schedule: terms?.schedule ?? '',
-      rules: terms?.rules ?? '',
-      memberCount: entry.stokvel.memberCount,
+    return Ok(
+      InvitePreview(
+        code: code,
+        stokvelId: entry.stokvel.id,
+        stokvelName: entry.stokvel.name,
+        contributionAmount: entry.stokvel.contributionAmount,
+        schedule: terms?.schedule ?? '',
+        rules: terms?.rules ?? '',
+        memberCount: entry.stokvel.memberCount,
+      ),
     );
   }
 
   @override
-  Future<String> join(String code) async {
+  Future<Result<String>> join(String code) async {
     await Future<void>.delayed(delay);
     final entry = _entryFor(code);
+    if (entry == null) return const Err(InviteNotFoundException());
     final me = userId;
     if (me != null && !entry.roles.containsKey(me)) {
       entry.roles[me] = StokvelRole.member;
@@ -54,14 +59,14 @@ class FakeInviteRepository implements InviteRepository {
         arrears: Cents.zero,
       );
     }
-    return entry.stokvel.id;
+    return Ok(entry.stokvel.id);
   }
 
-  FakeStokvel _entryFor(String code) {
+  FakeStokvel? _entryFor(String code) {
     final stokvelId = FakeSeed.invites[code];
     for (final entry in stokvels) {
       if (entry.stokvel.id == stokvelId) return entry;
     }
-    throw const InviteNotFoundException();
+    return null;
   }
 }
