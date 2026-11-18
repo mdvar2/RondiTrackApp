@@ -4,6 +4,8 @@ The RondiTrack phone app (Flutter, Android and iOS). It shows each person their 
 
 This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every screen has an address) and Assignment 10.3 (the foundations capstone: rotation and payouts through every layer, and three people on one phone). **Nothing calls the API yet.** Fake repositories hold three seed personas. Week 11 swaps them for the real API in [`lib/app/providers.dart`](lib/app/providers.dart), and no widget changes.
 
+**Since Assignment 11.1 it does:** every repository runs on the RondiTrack API through a client generated from the contract copy, with every failure turned into one `Failure`. The swap changed no widget. The fakes stay, for the tests, behind one switch. See [Part 10](#part-10-real-data-assignment-111).
+
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
 - API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`da39b16`](https://github.com/mdvar2/RondiTrack/commit/da39b168f78d521fe0fecff751c85862cb64ce40) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `1111c20c…16321`). That commit adds the payout order endpoint ([API PR #15](https://github.com/mdvar2/RondiTrack/pull/15)) on top of the 10.1 contract fixes ([API PR #14](https://github.com/mdvar2/RondiTrack/pull/14)). 10.1 and 10.2 read the contract at `3d04a52` (SHA-256 `7292b744…4a0dc3`).
 
@@ -54,6 +56,12 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
     - [Assignment 10.3: verification](#assignment-103-verification)
 - [Part 9: Still open](#part-9-still-open)
   - [Still open](#still-open)
+- [Part 10: Real data (Assignment 11.1)](#part-10-real-data-assignment-111)
+  - [Running against the API](#running-against-the-api)
+  - [The API client](#the-api-client)
+  - [Failures](#failures)
+  - [Decisions](#decisions)
+  - [Assignment 11.1: verification](#assignment-111-verification)
 
 ---
 
@@ -751,6 +759,7 @@ An empty `items` means the cycle has no payout order: it isn't `Open` and had no
 | 11 | Following a date-sorted page token was a `500` | Every cycle's contributions past the first page, and Day 4's infinite scroll | **Fixed** in [API PR #16](https://github.com/mdvar2/RondiTrack/pull/16), with `PageTokenTests` (seen to fail without the fix) |
 | 12 | `correlationId` and `errors` aren't in the `ProblemDetails` schema | A generated error model would drop them | Open. The app reads error bodies raw, so nothing is lost; declaring them changes the web client's types too |
 | 13 | Join answers `204` with no stokvel id, and `409` for a member | The 10.2 interface promised the id and a harmless second join | Open; handled in the app as described above |
+| 14 | `GET …/cycles/{cycleId}` has no `membersPaid`, and its target only as rands (`targetAmount`, a `double`) | The cycle screen shows both | Open. The app takes them from the stokvel's current-cycle summary (`StokvelCycleSummaryResponse`, in cents), which covers every cycle the app links to. For any other cycle it follows the API's own definitions (members with a contribution; collected plus `amountDueCents`). Adding them to the response changes both web clients' types, so it waits for its own pull request |
 
 #### Gaps found, and backend pull requests
 
@@ -966,3 +975,129 @@ What the phone showed that the tests don't: after the switch, the dev build land
 - [ ] 10.3: Record payout says "coming soon"; the request body is rands as a `decimal` (contract gap 10).
 - [ ] 10.3 stretch goals not attempted: the switcher listing what it cleared, a contract check for the fakes, a second Dart 3 refactor.
 - [ ] Stretch goals not attempted: every route as every persona in one test, a dev-only theme gallery, predictive back, a real App Link.
+- [ ] 11.1: Gaps 12, 13 and 14 in "Contract notes" are open, with reasons.
+- [ ] 11.1: the architecture exceptions that read `signedInUserIdProvider` and `demoAccountsProvider` from presentation are still listed as ending in Week 11; they end with tomorrow's sign-in, which gives the session its own home.
+- [ ] 11.1: the writes (pay, confirm, close, record payout) still say "coming soon"; the close screen shows the preview a close would send back.
+- [x] 11.1 stretch: a nightly contract check, and one request id end to end (the app's `traceparent`, the API's `correlationId`). Not attempted: the fakes checked against the schema, staging over HTTPS for real.
+
+---
+
+## Part 10: Real data (Assignment 11.1)
+
+*The app on its own API: the client, the failures, the swap, and how to run it.*
+
+### Running against the API
+
+> **In plain words.** The dev build now talks to the RondiTrack API running on your laptop, signed in as one of the three seed personas. These are the steps from nothing.
+
+**1. The API, on a fresh seed** (in the API repository, branch `feat/mobile-dev-seed` or later, [API PR #16](https://github.com/mdvar2/RondiTrack/pull/16)). The API's user secrets hold the PostgreSQL connection and JWT key (API README "Configure the API"). The mobile seed uses its own database, so your usual development data is untouched:
+
+```powershell
+cd ..\RondiTrack
+# Point the API at a database of its own for the seed (the same server and login as your user secret).
+$env:ConnectionStrings__RondiTrackDb = 'Host=localhost;Port=5432;Database=ronditrack_mobile;Username=<user>;Password=<password>'
+# A fresh seed: drop and recreate that database.
+dotnet ef database drop --force --project Infrastructure --startup-project API
+dotnet ef database update --project Infrastructure --startup-project API
+# The seed password is yours to choose, kept outside both repositories. Never commit it.
+$env:DevSeed__Password = '<seed password>'
+dotnet run --project API --launch-profile http -- --urls http://localhost:8081
+```
+
+The log says `Development seed created.` The seed runs only in Development and only with a password. Port **8081**, not 5101: on this machine Windows reserves 5041–5140 once Docker Desktop is running (`netsh int ipv4 show excludedportrange protocol=tcp`).
+
+**2. The phone (or emulator) reaches the laptop over USB** with `adb reverse`, so the dev flavour's address, `http://127.0.0.1:8081` in [`config/dev.json`](config/dev.json), is the laptop's API. No LAN address or firewall rule is needed:
+
+```powershell
+adb reverse tcp:8081 tcp:8081
+```
+
+**3. The dev flavour, with the seed password passed in at run time:**
+
+```powershell
+flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=SEED_PASSWORD=<seed password>
+```
+
+Sign in with a test account (or the persona switcher). `--dart-define=DATA_SOURCE=fakes` runs the dev build on the Week 10 fakes instead.
+
+**4. The live test**, against the same API (it signs in three times; the login limit is five a minute per IP):
+
+```powershell
+$env:SEED_PASSWORD = '<seed password>'
+flutter test --tags live --run-skipped
+```
+
+### The API client
+
+> **In plain words.** The app doesn't hand-write HTTP calls. A tool reads the API's contract (its OpenAPI document) and writes a typed client for exactly the calls the app makes. Two CI checks make sure that client, the contract copy and the real API never drift apart.
+
+- **Generated with swagger_parser 1.45.1** from [`contract/openapi/v1.json`](contract/openapi/v1.json), for only the paths in `include_paths` of [`swagger_parser.yaml`](swagger_parser.yaml) (the 11 the app calls), into [`lib/core/data/generated/`](lib/core/data/generated/), and committed. Every call returns its `HttpResponse`, so a repository can read the `ETag`.
+- **Regenerate it** (the generator never deletes a file it stopped writing, so the folder goes first):
+
+  ```powershell
+  Remove-Item -Recurse -Force lib\core\data\generated
+  dart run swagger_parser
+  dart run build_runner build
+  ```
+
+- **Generated types stop in `data/`.** A mapper per feature ([`home_mapper.dart`](lib/features/home/data/home_mapper.dart), [`stokvel_mapper.dart`](lib/features/stokvels/data/stokvel_mapper.dart), and the payout and invite mappers beside their repositories) turns each into a domain type: statuses and roles into the 10.1 enums with `unknown`, amounts into `Cents`, instants in UTC, due dates as `CalendarDate`, the ETag kept exactly as sent (`ConcurrencyToken`), and the end marker `""` as "no more pages" ([`api_values.dart`](lib/core/data/api_values.dart)). The architecture test fails if any presentation or domain file imports Dio, Retrofit or anything in `core/data/`.
+
+**The two CI checks** ([`ci.yml`](.github/workflows/ci.yml)):
+
+| Check | Compares | Fails on |
+|---|---|---|
+| **The client matches the contract copy** (job `verify`) | The committed client with what swagger_parser and build_runner generate again from the committed `contract/openapi/v1.json`, after deleting the folder | Any changed, deleted **or new untracked** file under `lib/core/data/generated` (`git status --porcelain --untracked-files=all`) |
+| **Contract copy matches the API** (job `contract`) | `contract/openapi/v1.json` with `openapi/v1.json` in [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack) at `fix/mobile-contract-gaps` (public, so no token), or at the branch given by the workflow input `api_ref` (Actions → CI → Run workflow) | Any difference (`diff -u`). It also runs nightly, so an API change turns the app red within a day |
+
+### Failures
+
+> **In plain words.** Every way a call can fail becomes one value of one type, `Failure`, and each kind decides its own words. Screens never look at status codes. Only [`toFailure`](lib/core/data/to_failure.dart) does, once, in `core/`.
+
+| The API says | `Failure` | Retried? | The person sees |
+|---|---|---|---|
+| `400` (validation; also a page token reused with other filters) | `ValidationFailure`, with `detail` and each field's `errors` | No | The API's words |
+| `401` on a call | `UnauthorisedFailure` | No | Signed out, and sign-in says **"Your session ended. Sign in again."** |
+| `401` signing in | `UnauthorisedFailure(atSignIn: true)` | No | **"That email and password don't match an account."** |
+| `403`, a treasurer action opened by a Member | `ForbiddenFailure` | No | **"Your role in this stokvel doesn't allow that. Only its treasurer or chairperson can do it."** They stay signed in |
+| `404`, a stokvel or cycle they aren't in, or one that doesn't exist | `NotFoundFailure` | No | **"We couldn't find that stokvel."** (or cycle, or invite) at once, with no spinner. Never "you don't have access" |
+| `409` (a business rule, a stale close preview), `410` (an expired invite) | `RuleFailure`, with `detail` | No | The API's words |
+| `412`, a stale `If-Match` | `ConflictFailure` | No | **"This changed somewhere else. Reload it and try again."** |
+| `429`, the login limit | `RateLimitedFailure`, with `Retry-After` | No | **"Too many attempts. Wait 60 seconds, then try again."** The number is the API's |
+| `500` (or any other status), a proxy's HTML `502`, a body the models can't read | `ServerFailure`, with `correlationId` (or the trace id the app sent) | No | **"Sorry, something went wrong on our side. If it keeps happening, quote the reference."** and the reference, selectable, with a copy button, until they act. Never the API's message or a stack trace |
+| No answer (offline, refused, a timeout) | `NoAnswerFailure` | **Yes**: 3 times, after 1, 2 and 4 s | **"You're offline, or we couldn't reach the server."** with **Try again** |
+
+Calls awaited together (a cycle's stokvel, cycle and contributions) that fail arrive as a `ParallelWaitError`; `toFailure` takes the most telling of its failures, so a `404` among them is still not found. The words live on each `Failure` ([`failure.dart`](lib/core/errors/failure.dart)); a screen only names *what* wasn't found.
+
+**The reference** is the API's `correlationId`, the W3C trace id of the request. The app sends its own `traceparent` on every request, and the API adopts it, so even an answer with no body has a reference. The app's log line and the API's log carry the same id:
+
+```text
+App:  API GET /api/v1/stokvels/5d0c…0101/cycles/9e8f…0201/close/preview 403 in 49 ms [correlationId 50f1f433e45663c4111f982d98d0a9a4]
+API:  Request rejected with 403 (ForbiddenException). CorrelationId: 50f1f433e45663c4111f982d98d0a9a4
+```
+
+**The log line** ([`ApiLogInterceptor`](lib/core/data/api_client.dart)) is the method, the path (never the query), the status, the time and the trace or correlation id. Never a header (the token), a cookie, a body, a name or an amount: under POPIA a member's amounts, arrears and name are personal information. Dio's own `LogInterceptor` prints request headers, so it isn't used.
+
+### Decisions
+
+| Decision | What, and why |
+|---|---|
+| **`Result` is a sealed class** | `Ok(value)` or `Err(failure)` ([`result.dart`](lib/core/errors/result.dart)). A record such as `(T?, Failure?)` can hold both or neither, and a switch over it can't prove every case was handled; a sealed class has exactly two cases, and the compiler checks both. Providers unwrap with `valueOrThrow`, so Riverpod holds the `Failure` in an `AsyncError` |
+| **Generated models, not hand-written freezed** | swagger_parser and json_serializable, from the contract copy, checked by CI. Hand-written models would be a second copy of the contract that nothing checks. The error body is the one thing read raw: the contract's `ProblemDetails` lists none of `correlationId`, `errors` |
+| **Timeouts: connect 10 s, send 10 s, receive 30 s** | Measured with the API's database unreachable (`GET /me/home`, three tries each): a closed database port answered `500` after **19.5 to 21.0 s** (EF Core's `EnableRetryOnFailure` tries four times); a database host that never answers took **64.2 s** (four 15 s connection timeouts). Receive at 30 s lets the API's own 20 s `500`, with its reference, arrive, instead of the app giving up first. The 64 s case is cut off and shown as no answer. Connect and send are short: the API is one hop away, and every body is a few hundred bytes |
+| **Retry only "no answer"** | [`appRetry`](lib/app/retry.dart) is a rule over `Failure` types: `NoAnswerFailure` three times, after 1, 2 and 4 s; everything else never. Every 4xx is final. A 500 isn't retried either: the API already retries its database (measured above), so three more tries in the app would be a minute of spinner. Only providers retry, and every provider reads: no write is retried |
+| **The access token in memory only** | [`AccessTokenHolder`](lib/core/data/api_client.dart), gone at sign-out or when the app stops; the API's 5 minutes, with no refresh until tomorrow's sign-in. No storage, no cookie jar |
+| **One switch for fakes** | `dataSourceProvider`, `DataSource.api` by default. The Week 10 whole-app tests override it once, in the harness, and pass as before |
+
+### Assignment 11.1: verification
+
+- `dart format` clean (hand-written files), `dart analyze --fatal-infos`: **No issues found!**, `flutter test`: **all passing**, the live test skipped.
+- The live test against a fresh seed, through the app's own providers: **4 passed** (output in the pull request).
+- API: `dotnet test` **195 passed** with Docker running ([API PR #16](https://github.com/mdvar2/RondiTrack/pull/16)).
+
+**Three tests seen to fail.** For each, the code it guards was broken and the test went red, then the change was reverted:
+
+| Broke | Test that went red |
+|---|---|
+| `home_screen.dart` imports `package:dio/dio.dart` | `architecture_test.dart`: "no presentation or domain file imports Dio or the generated client" (and "no screen imports … Dio"), naming `home_screen.dart:1` |
+| The log line uses `request.uri` instead of `request.uri.path` | `api_client_test.dart`: "the log line leaves nothing personal in it": `API GET http://127.0.0.1:8081/api/v1/me/home?userId=lerato-secret-query 200 …` |
+| `AuthInterceptor` ends the session on a `403` as well as a `401` | `api_client_test.dart`: "a 403 signs nobody out, and keeps the token": expected no ended session, got one |
