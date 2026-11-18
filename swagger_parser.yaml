@@ -1,0 +1,37 @@
+# The API client, generated from the committed contract copy (README "The
+# API client"). Regenerate with:
+#   rm -rf lib/core/data/generated
+#   dart run swagger_parser
+#   dart run build_runner build
+# CI does the same and fails on any changed or new file.
+swagger_parser:
+  schema_path: contract/openapi/v1.json
+  output_directory: lib/core/data/generated
+  name: ronditrack_api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: RondiTrackApi
+  export_file: true
+  put_clients_in_folder: true
+  client_postfix: Client
+  # Every call returns its HttpResponse, so a repository can read the ETag
+  # header (the concurrency token) beside the body.
+  original_http_response: true
+  # The API types statuses and roles as plain strings; the mappers turn them
+  # into the domain's enums with `unknown`. Kept for any enum it may add.
+  unknown_enum_value: true
+  mark_files_as_generated: true
+  # Only what the app calls. The full contract doesn't need to compile here,
+  # and every extra endpoint is code nobody runs.
+  include_paths:
+    - /api/v1/auth/login
+    - /api/v1/auth/logout
+    - /api/v1/me/home
+    - /api/v1/stokvels/{id}
+    - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}
+    - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/contributions
+    - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/payouts
+    - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/close/preview
+    - /api/v1/invites/{code}
+    - /api/v1/invites/{code}/join
