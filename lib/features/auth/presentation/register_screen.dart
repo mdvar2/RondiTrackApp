@@ -107,6 +107,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           decoration: InputDecoration(
             labelText: 'Your name',
             border: const OutlineInputBorder(),
+            errorMaxLines: 4,
             errorText: fieldErrors['name']?.join(' '),
           ),
         ),
@@ -122,6 +123,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           decoration: InputDecoration(
             labelText: 'Email',
             border: const OutlineInputBorder(),
+            errorMaxLines: 4,
             errorText: emailError,
           ),
         ),

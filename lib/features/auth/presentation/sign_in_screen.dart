@@ -121,6 +121,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           decoration: InputDecoration(
             labelText: 'Email',
             border: const OutlineInputBorder(),
+            errorMaxLines: 4,
             errorText: fieldErrors['email']?.join(' '),
           ),
         ),

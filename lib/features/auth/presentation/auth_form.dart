@@ -110,6 +110,7 @@ class _PasswordFieldState extends State<PasswordField> {
       decoration: InputDecoration(
         labelText: 'Password',
         border: const OutlineInputBorder(),
+        errorMaxLines: 4,
         errorText: widget.errorText,
         helperText: widget.helperText,
         suffixIcon: IconButton(

@@ -1256,3 +1256,22 @@ The refresh token is read from `Set-Cookie` **by hand**, by the name in the flav
 | `AuthController.signOut` awaits the API before changing the state | "sign-out with a slow network: signed out and wiped before the API answers": `Expected: <Instance of 'SignedOut'>`, `Actual: <Instance of 'SignedIn'>` |
 
 The live run also found one real bug the unit tests had missed, now fixed with a test: a sign-in sent before the launch's restore had run was overruled by it.
+
+#### Assignment 11.2: phone evidence
+
+The dev flavour, a **debug** build (so the app's log lines reach logcat, the Run console), on a Huawei MAO-LX9 (Android 12), against the seeded API through `adb reverse`, in [`docs/evidence/11.2/`](docs/evidence/11.2/):
+
+| What | Evidence |
+|---|---|
+| Lerato signed in with a typed password: her Home from the API | [`01-home-lerato-signed-in.png`](docs/evidence/11.2/01-home-lerato-signed-in.png) |
+| Stopped (`am force-stop`, as Android Studio's Stop) and reopened: the splash, never the form, then Home; one refresh, then `/me` | [`02a-splash-restoring-after-stop.png`](docs/evidence/11.2/02a-splash-restoring-after-stop.png), [`02b-restored-home-after-stop.png`](docs/evidence/11.2/02b-restored-home-after-stop.png), [`02-restore-run-console.txt`](docs/evidence/11.2/02-restore-run-console.txt) |
+| Spoil access token, then a cycle opened by link: **four `401`s, one refresh, the retries** | [`03a-spoil-access-token.png`](docs/evidence/11.2/03a-spoil-access-token.png), [`03b-cycle-after-spoiled-token.png`](docs/evidence/11.2/03b-cycle-after-spoiled-token.png), [`03-spoiled-token-run-console.txt`](docs/evidence/11.2/03-spoiled-token-run-console.txt) |
+| Secure storage (`shared_prefs/FlutterSecureStorage.xml`, read with `run-as`, the file Device Explorer shows): one encrypted `session.refresh` entry while signed in; `<map />` after sign-out | [`04a-secure-storage-signed-in.txt`](docs/evidence/11.2/04a-secure-storage-signed-in.txt), [`04b-secure-storage-after-sign-out.txt`](docs/evidence/11.2/04b-secure-storage-after-sign-out.txt) |
+| Reopened with the API unreachable: the offline splash, still signed in; Try again once it was back: Home | [`05a-offline-splash.png`](docs/evidence/11.2/05a-offline-splash.png), [`05b-try-again-signed-in.png`](docs/evidence/11.2/05b-try-again-signed-in.png) |
+| The family phone: Lerato's Treasurer stokvel; sign out; Thabo signs in on the same phone: his Profile, his empty Home, nothing of hers | [`06a`](docs/evidence/11.2/06a-family-phone-lerato-treasurer-stokvel.png), [`06b`](docs/evidence/11.2/06b-family-phone-signed-out.png), [`06c`](docs/evidence/11.2/06c-family-phone-thabo-profile.png), [`06d`](docs/evidence/11.2/06d-family-phone-thabo-home.png) |
+| Register's field errors under their fields; a wrong password; the `429` wait with the button disabled | [`07a-register-field-errors.png`](docs/evidence/11.2/07a-register-field-errors.png), [`07b-wrong-password.png`](docs/evidence/11.2/07b-wrong-password.png), [`07c-429-wait.png`](docs/evidence/11.2/07c-429-wait.png) |
+| `ronditrack-dev://app/join/SOWETO26` opened signed out: sign-in; after it, **one** join and Soweto Teachers, as a Member | [`08a-join-link-signed-out.png`](docs/evidence/11.2/08a-join-link-signed-out.png), [`08b-join-link-after-sign-in-in-the-stokvel.png`](docs/evidence/11.2/08b-join-link-after-sign-in-in-the-stokvel.png), [`08-join-run-console.txt`](docs/evidence/11.2/08-join-run-console.txt) |
+
+**Offline, honestly:** the phone reaches the laptop's API through `adb reverse`, so airplane mode would not have cut it. The route was removed instead (`adb reverse --remove tcp:8081`): the same "no answer" the app gets in airplane mode.
+
+**Found on the phone:** register's password error was cut to one line ("The length of '…"); the forms now let an error wrap (`errorMaxLines`), as the screenshot shows.
