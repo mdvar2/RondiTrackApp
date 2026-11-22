@@ -15,8 +15,10 @@ import 'package:ronditrack_app/features/activity/data/flaky_activity_repository.
 import 'package:ronditrack_app/features/activity/domain/activity_repository.dart';
 import 'package:ronditrack_app/features/auth/data/api_auth_repository.dart';
 import 'package:ronditrack_app/features/auth/data/fake_auth_repository.dart';
+import 'package:ronditrack_app/features/auth/data/last_user_store.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_repository.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
+import 'package:ronditrack_app/features/auth/domain/last_user.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/home/data/api_home_repository.dart';
 import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
@@ -210,6 +212,10 @@ AppDatabase appDatabase(Ref ref) {
   ref.onDispose(db.close);
   return db;
 }
+
+/// Who was last signed in on this phone, kept with their cached data.
+@Riverpod(keepAlive: true)
+LastUser lastUser(Ref ref) => DriftLastUser(ref.watch(appDatabaseProvider));
 
 /// Home as the phone last saw it, refreshed from [homeRepository]. It
 /// follows who is signed in, like the repository.

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
+import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
@@ -72,53 +74,67 @@ class StokvelDetailScreen extends ConsumerWidget {
                 ),
               ),
       ),
-      body: switch (view) {
-        ViewLoading() => Center(
-          key: Key('stokvel-loading-$stokvelId'),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text('Loading ${pickerEntry?.stokvelName ?? 'stokvel'}…'),
-            ],
+      body: Column(
+        children: [
+          CacheBanner(
+            status: ref.watch(syncStatusesProvider)[stokvelSyncKey(stokvelId)],
+            onRetry: retry,
           ),
-        ),
-        ViewEmpty() => MessagePanel(
-          key: const Key('stokvel-empty'),
-          title: 'No open cycle',
-          body:
-              'This stokvel has no cycle yet. When your treasurer opens '
-              'the next one, it shows here.',
-          action: OutlinedButton(
-            onPressed: retry,
-            child: const Text('Refresh'),
-          ),
-        ),
-        ViewFailure(:final message, :final reference) => MessagePanel(
-          key: const Key('stokvel-failure'),
-          title: message,
-          reference: reference,
-          action: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              FilledButton(onPressed: retry, child: const Text('Try again')),
-              OutlinedButton(
-                onPressed: () => const StokvelsRoute().go(context),
-                child: const Text('Back to my stokvels'),
+          Expanded(
+            child: switch (view) {
+              ViewLoading() => Center(
+                key: Key('stokvel-loading-$stokvelId'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text('Loading ${pickerEntry?.stokvelName ?? 'stokvel'}…'),
+                  ],
+                ),
               ),
-            ],
+              ViewEmpty() => MessagePanel(
+                key: const Key('stokvel-empty'),
+                title: 'No open cycle',
+                body:
+                    'This stokvel has no cycle yet. When your treasurer opens '
+                    'the next one, it shows here.',
+                action: OutlinedButton(
+                  onPressed: retry,
+                  child: const Text('Refresh'),
+                ),
+              ),
+              ViewFailure(:final message, :final reference) => MessagePanel(
+                key: const Key('stokvel-failure'),
+                title: message,
+                reference: reference,
+                action: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    FilledButton(
+                      onPressed: retry,
+                      child: const Text('Try again'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => const StokvelsRoute().go(context),
+                      child: const Text('Back to my stokvels'),
+                    ),
+                  ],
+                ),
+              ),
+              ViewData(value: final detail) => _StokvelBody(
+                key: Key('stokvel-data-${detail.stokvel.id}'),
+                detail: detail,
+                actions: actionsFor(detail, myUserId),
+                onRefresh: () =>
+                    ref.refresh(stokvelDetailProvider(stokvelId).future),
+              ),
+            },
           ),
-        ),
-        ViewData(value: final detail) => _StokvelBody(
-          key: Key('stokvel-data-${detail.stokvel.id}'),
-          detail: detail,
-          actions: actionsFor(detail, myUserId),
-          onRefresh: () => ref.refresh(stokvelDetailProvider(stokvelId).future),
-        ),
-      },
+        ],
+      ),
     );
   }
 }

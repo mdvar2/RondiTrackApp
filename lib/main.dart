@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/app.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/retry.dart';
+import 'package:ronditrack_app/app/settings.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Refuses to start without a config, or with one that doesn't match the
@@ -29,12 +30,17 @@ void main() {
     const String.fromEnvironment('DATA_SOURCE'),
   );
 
+  // Settings (the language) are read before the first frame, so the app
+  // never draws in one language and then another.
+  final settings = await PreferencesSettingsStore.open();
+
   runApp(
     ProviderScope(
       // Never retry "not found" (README "State with Riverpod").
       retry: appRetry,
       overrides: [
         appConfigProvider.overrideWithValue(config),
+        settingsStoreProvider.overrideWithValue(settings),
         if (dataSource == DataSource.fakes)
           dataSourceProvider.overrideWithValue(DataSource.fakes),
         if (failEvery > 0) fakeFailEveryProvider.overrideWithValue(failEvery),

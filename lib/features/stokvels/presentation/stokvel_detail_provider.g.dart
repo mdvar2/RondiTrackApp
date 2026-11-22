@@ -89,7 +89,7 @@ final class StokvelDetailProvider
   }
 }
 
-String _$stokvelDetailHash() => r'9e11d58adddd77d225db4968cf2ab69c64adc7b1';
+String _$stokvelDetailHash() => r'fa392743dcf6e4a753dfd0841256472c7ebae1b6';
 
 /// One stokvel's detail, keyed by its id.
 ///
@@ -196,7 +196,7 @@ final class CycleDetailProvider
   }
 }
 
-String _$cycleDetailHash() => r'dd1e40e557a5b00814229afef14165e3a3176571';
+String _$cycleDetailHash() => r'e26b047cafc70ce7e68de6b6f81fd3fec3b0708e';
 
 /// One cycle of one stokvel, keyed by both ids, so a cycle id under the
 /// wrong stokvel is its own request, and is not found.

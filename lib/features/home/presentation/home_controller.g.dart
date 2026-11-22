@@ -42,7 +42,7 @@ final class HomeControllerProvider
   HomeController create() => HomeController();
 }
 
-String _$homeControllerHash() => r'171464256e1419552c06d7056cadd95f0c32e631';
+String _$homeControllerHash() => r'e9fc03060fb055eca2c219e10c528836586ca385';
 
 /// Home: one entry per stokvel the signed-in person belongs to.
 ///

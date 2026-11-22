@@ -897,6 +897,52 @@ final class AppDatabaseProvider
 
 String _$appDatabaseHash() => r'742ceb6fe06dae282a737a0b1b2766b29e27599d';
 
+/// Who was last signed in on this phone, kept with their cached data.
+
+@ProviderFor(lastUser)
+final lastUserProvider = LastUserProvider._();
+
+/// Who was last signed in on this phone, kept with their cached data.
+
+final class LastUserProvider
+    extends $FunctionalProvider<LastUser, LastUser, LastUser>
+    with $Provider<LastUser> {
+  /// Who was last signed in on this phone, kept with their cached data.
+  LastUserProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lastUserProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lastUserHash();
+
+  @$internal
+  @override
+  $ProviderElement<LastUser> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LastUser create(Ref ref) {
+    return lastUser(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LastUser value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LastUser>(value),
+    );
+  }
+}
+
+String _$lastUserHash() => r'48970d2675838c7190ba2ebebb69a7d8403903d9';
+
 /// Home as the phone last saw it, refreshed from [homeRepository]. It
 /// follows who is signed in, like the repository.
 

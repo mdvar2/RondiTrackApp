@@ -114,7 +114,13 @@ class CacheSync<T> {
   /// to the screen. Completes when it is done, whatever happened.
   Future<void> refresh() async {
     if (_closed) return;
-    _set(SyncStatus(fetchedAt: _status.fetchedAt, refreshing: true));
+    _set(
+      SyncStatus(
+        fetchedAt: _status.fetchedAt,
+        failure: _status.failure,
+        refreshing: true,
+      ),
+    );
     Failure? failure;
     try {
       failure = await source.refresh();

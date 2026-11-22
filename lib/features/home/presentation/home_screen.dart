@@ -8,6 +8,7 @@ import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/theme/status_chip.dart';
 import 'package:ronditrack_app/core/theme/status_colors.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
+import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/failure_reference.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
@@ -31,23 +32,33 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: switch (view) {
-        ViewLoading() => const Center(
-          key: Key('home-loading'),
-          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
-        ),
-        ViewEmpty() => _HomeEmpty(onRefresh: refresh),
-        ViewFailure(:final message, :final reference) => _HomeFailure(
-          message: message,
-          reference: reference,
-          onRetry: () => ref.invalidate(homeControllerProvider),
-        ),
-        ViewData(value: final entries, :final refreshing) => _HomeList(
-          entries: entries,
-          refreshing: refreshing || (sync?.refreshing ?? false),
-          onRefresh: refresh,
-        ),
-      },
+      body: Column(
+        children: [
+          CacheBanner(
+            status: sync,
+            onRetry: () => ref.read(homeControllerProvider.notifier).refresh(),
+          ),
+          Expanded(
+            child: switch (view) {
+              ViewLoading() => const Center(
+                key: Key('home-loading'),
+                child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+              ),
+              ViewEmpty() => _HomeEmpty(onRefresh: refresh),
+              ViewFailure(:final message, :final reference) => _HomeFailure(
+                message: message,
+                reference: reference,
+                onRetry: () => ref.invalidate(homeControllerProvider),
+              ),
+              ViewData(value: final entries, :final refreshing) => _HomeList(
+                entries: entries,
+                refreshing: refreshing || (sync?.refreshing ?? false),
+                onRefresh: refresh,
+              ),
+            },
+          ),
+        ],
+      ),
     );
   }
 }

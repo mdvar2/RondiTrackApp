@@ -38,19 +38,41 @@ class AuthController extends _$AuthController {
 
   /// Finds out whether the session the app stopped with is still good:
   /// [SignedIn] if the API accepts the stored refresh token, [SignedOut]
-  /// if there is none or the API refuses it, and still [Restoring], with
-  /// the failure, if it can't tell (no signal is not signed out).
+  /// if there is none or the API refuses it.
+  ///
+  /// If it can't tell (no signal, the server's fault, a `429`), no signal
+  /// is not signed out: the app opens as the person last signed in on this
+  /// phone, on their cached data (11.3), and the session comes back with
+  /// the first request that gets through. With nobody remembered, it stays
+  /// [Restoring], with the failure, on the splash.
   Future<void> restore() async {
     final generation = ++_generation;
     state = const Restoring();
     final result = await ref.read(authRepositoryProvider).restore();
     if (!ref.mounted || generation != _generation) return;
-    state = switch (result) {
-      Ok(value: final AuthUser user) => SignedIn(user),
-      Ok(value: null) => const SignedOut(),
-      Err(failure: UnauthorisedFailure()) => const SignedOut(),
-      Err(:final failure) => Restoring(failure: failure),
-    };
+    switch (result) {
+      case Ok(value: final AuthUser user):
+        await _remember(user);
+        if (!ref.mounted || generation != _generation) return;
+        state = SignedIn(user);
+      case Ok(value: null) || Err(failure: UnauthorisedFailure()):
+        state = const SignedOut();
+      case Err(:final failure):
+        final last = await ref.read(lastUserProvider).read();
+        if (!ref.mounted || generation != _generation) return;
+        state = last == null ? Restoring(failure: failure) : SignedIn(last);
+    }
+  }
+
+  /// Remembers [user] as who is signed in on this phone. If someone else
+  /// was, their cached data goes first.
+  Future<void> _remember(AuthUser user) async {
+    final last = ref.read(lastUserProvider);
+    final before = await last.read();
+    if (before != null && before.id != user.id) {
+      await ref.read(appDatabaseProvider).wipe();
+    }
+    await last.remember(user);
   }
 
   /// Signs in. Throws the repository's [Failure] (a refused email and
@@ -78,18 +100,23 @@ class AuthController extends _$AuthController {
     final generation = ++_generation;
     final user = (await attempt()).valueOrThrow;
     if (!ref.mounted || generation != _generation) return;
+    await _remember(user);
+    if (!ref.mounted || generation != _generation) return;
     state = SignedIn(user);
   }
 
-  /// Signs out: the session is wiped from the phone and the state is
-  /// [SignedOut] at once, so every provider holding this person's data is
-  /// rebuilt for nobody; then the API is told, with a short timeout. A dead
+  /// Signs out: the session is wiped from the phone, then the database
+  /// (every cached row, the outbox, who was signed in), and the state is
+  /// [SignedOut], so every provider holding this person's data is rebuilt
+  /// for nobody; then the API is told, with a short timeout. A dead
   /// network can't keep anyone signed in, and a slow one can't make this
-  /// hang longer than the timeout.
+  /// hang longer than the timeout. Asking first about an unsent payment is
+  /// the screen's job, before it calls this.
   Future<void> signOut() async {
     _generation++;
     // The repository wipes the access token before its first await.
     final told = ref.read(authRepositoryProvider).signOut();
+    await ref.read(appDatabaseProvider).wipe();
     state = const SignedOut();
     await told;
   }

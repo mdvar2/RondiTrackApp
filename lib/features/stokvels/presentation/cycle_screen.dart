@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
+import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/contribution_row.dart';
@@ -37,36 +39,48 @@ class CycleScreen extends ConsumerWidget {
           _ => 'Cycle',
         }),
       ),
-      body: switch (view) {
-        ViewLoading() || ViewEmpty() => const Center(
-          key: Key('cycle-loading'),
-          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
-        ),
-        ViewFailure(:final message, :final reference) => MessagePanel(
-          key: const Key('cycle-failure'),
-          title: message,
-          reference: reference,
-          action: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              FilledButton(
-                onPressed: () => ref.invalidate(provider),
-                child: const Text('Try again'),
-              ),
-              OutlinedButton(
-                onPressed: () => const StokvelsRoute().go(context),
-                child: const Text('Back to my stokvels'),
-              ),
-            ],
+      body: Column(
+        children: [
+          CacheBanner(
+            status: ref.watch(
+              syncStatusesProvider,
+            )[cycleSyncKey(stokvelId, cycleId)],
+            onRetry: () => ref.invalidate(provider),
           ),
-        ),
-        ViewData(value: final detail) => _CycleBody(
-          key: Key('cycle-data-${detail.cycle.id}'),
-          detail: detail,
-        ),
-      },
+          Expanded(
+            child: switch (view) {
+              ViewLoading() || ViewEmpty() => const Center(
+                key: Key('cycle-loading'),
+                child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+              ),
+              ViewFailure(:final message, :final reference) => MessagePanel(
+                key: const Key('cycle-failure'),
+                title: message,
+                reference: reference,
+                action: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    FilledButton(
+                      onPressed: () => ref.invalidate(provider),
+                      child: const Text('Try again'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => const StokvelsRoute().go(context),
+                      child: const Text('Back to my stokvels'),
+                    ),
+                  ],
+                ),
+              ),
+              ViewData(value: final detail) => _CycleBody(
+                key: Key('cycle-data-${detail.cycle.id}'),
+                detail: detail,
+              ),
+            },
+          ),
+        ],
+      ),
     );
   }
 }
