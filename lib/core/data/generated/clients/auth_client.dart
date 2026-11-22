@@ -7,6 +7,8 @@ import 'package:retrofit/retrofit.dart';
 
 import '../models/access_token_response.dart';
 import '../models/login_request.dart';
+import '../models/register_request.dart';
+import '../models/user_response.dart';
 
 part 'auth_client.g.dart';
 
@@ -19,6 +21,14 @@ abstract class AuthClient {
     @Body() required LoginRequest body,
   });
 
+  @POST('/api/v1/auth/refresh')
+  Future<HttpResponse<AccessTokenResponse>> postApiV1AuthRefresh();
+
   @POST('/api/v1/auth/logout')
   Future<HttpResponse<void>> postApiV1AuthLogout();
+
+  @POST('/api/v1/auth/register')
+  Future<HttpResponse<UserResponse>> postApiV1AuthRegister({
+    @Body() required RegisterRequest body,
+  });
 }
