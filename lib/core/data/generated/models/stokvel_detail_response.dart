@@ -20,9 +20,10 @@ class StokvelDetailResponse {
     required this.role,
     required this.currentCycle,
   });
-  
-  factory StokvelDetailResponse.fromJson(Map<String, Object?> json) => _$StokvelDetailResponseFromJson(json);
-  
+
+  factory StokvelDetailResponse.fromJson(Map<String, Object?> json) =>
+      _$StokvelDetailResponseFromJson(json);
+
   final String id;
   final String name;
   final double contributionAmount;

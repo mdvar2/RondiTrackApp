@@ -20,9 +20,10 @@ class HomeStokvelResponse {
     required this.nextPayoutDate,
     required this.arrearsCents,
   });
-  
-  factory HomeStokvelResponse.fromJson(Map<String, Object?> json) => _$HomeStokvelResponseFromJson(json);
-  
+
+  factory HomeStokvelResponse.fromJson(Map<String, Object?> json) =>
+      _$HomeStokvelResponseFromJson(json);
+
   final String stokvelId;
   final String stokvelName;
   final String role;

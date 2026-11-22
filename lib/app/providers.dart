@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:ronditrack_app/app/database.dart';
+import 'package:ronditrack_app/core/cache/cached.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 import 'package:ronditrack_app/core/data/api_client.dart';
 import 'package:ronditrack_app/core/data/auth_calls.dart';
@@ -19,6 +21,8 @@ import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/home/data/api_home_repository.dart';
 import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
 import 'package:ronditrack_app/features/home/data/flaky_home_repository.dart';
+import 'package:ronditrack_app/features/home/data/home_cache.dart';
+import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/invites/data/api_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/data/fake_invite_repository.dart';
@@ -31,6 +35,8 @@ import 'package:ronditrack_app/features/stokvels/data/api_stokvel_repository.dar
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/flaky_stokvel_repository.dart';
+import 'package:ronditrack_app/features/stokvels/data/stokvel_cache.dart';
+import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
 part 'providers.g.dart';
@@ -194,6 +200,47 @@ AuthRepository authRepository(Ref ref) => switch (ref.watch(
   ),
   DataSource.fakes => FakeAuthRepository(delay: ref.watch(fakeDelayProvider)),
 };
+
+/// The phone's database: Home, stokvels and cycles as last seen, who was
+/// signed in, and the payment outbox. Tests override it with an in-memory
+/// one.
+@Riverpod(keepAlive: true)
+AppDatabase appDatabase(Ref ref) {
+  final db = AppDatabase.onDevice();
+  ref.onDispose(db.close);
+  return db;
+}
+
+/// Home as the phone last saw it, refreshed from [homeRepository]. It
+/// follows who is signed in, like the repository.
+@Riverpod(keepAlive: true)
+CachedSource<List<HomeEntry>> homeCache(Ref ref) => HomeCache(
+  ref.watch(appDatabaseProvider),
+  ref.watch(homeRepositoryProvider),
+);
+
+/// One stokvel as the phone last saw it, refreshed from
+/// [stokvelRepository].
+@riverpod
+CachedSource<StokvelDetail> stokvelCache(Ref ref, String stokvelId) =>
+    StokvelCache(
+      ref.watch(appDatabaseProvider),
+      ref.watch(stokvelRepositoryProvider),
+      stokvelId,
+    );
+
+/// One cycle as the phone last saw it, refreshed from [stokvelRepository].
+@riverpod
+CachedSource<CycleDetail> cycleCache(
+  Ref ref,
+  String stokvelId,
+  String cycleId,
+) => CycleCache(
+  ref.watch(appDatabaseProvider),
+  ref.watch(stokvelRepositoryProvider),
+  stokvelId,
+  cycleId,
+);
 
 /// Reads Home. Implementation: [ApiHomeRepository]; or
 /// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when

@@ -5,7 +5,11 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/contribution_response.dart';
+import '../models/create_stokvel_request.dart';
+import '../models/record_contribution_request.dart';
 import '../models/stokvel_detail_response.dart';
+import '../models/stokvel_response.dart';
 import '../models/update_stokvel_request.dart';
 
 part 'stokvels_client.g.dart';
@@ -13,6 +17,22 @@ part 'stokvels_client.g.dart';
 @RestApi()
 abstract class StokvelsClient {
   factory StokvelsClient(Dio dio, {String? baseUrl}) = _StokvelsClient;
+
+  /// Gets all stokvels.
+  ///
+  /// Returns all stokvels currently available in RondiTrack.
+  /// An empty collection is returned when no stokvels are available.
+  @GET('/api/v1/stokvels')
+  Future<HttpResponse<List<StokvelResponse>>> getApiV1Stokvels();
+
+  /// Creates a new stokvel.
+  ///
+  /// Creates a stokvel from a valid name and contribution amount.
+  /// Returns 400 when the request fails validation.
+  @POST('/api/v1/stokvels')
+  Future<HttpResponse<StokvelResponse>> postApiV1Stokvels({
+    @Body() required CreateStokvelRequest body,
+  });
 
   /// Gets a stokvel by ID.
   ///
@@ -44,5 +64,25 @@ abstract class StokvelsClient {
   @DELETE('/api/v1/stokvels/{id}')
   Future<HttpResponse<void>> deleteApiV1StokvelsId({
     @Path('id') required String id,
+  });
+
+  /// Records a contribution for a stokvel member.
+  ///
+  /// Records a contribution for an existing member and contribution cycle.
+  /// An Idempotency-Key header is required to safely retry the request.
+  /// Repeating the same request with the same key returns the stored response.
+  /// without creating another contribution.
+  /// Returns 400 when the Idempotency-Key is missing or the request fails validation.
+  /// Returns 404 when the stokvel, user, or contribution cycle does not exist.
+  /// Returns 409 when a business rule is violated, such as when the user is not.
+  /// a member, the cycle belongs to another stokvel, a contribution already exists.
+  /// for the member and cycle, or an idempotency key is reused with different data.
+  @POST('/api/v1/stokvels/{stokvelId}/members/{userId}/contributions')
+  Future<HttpResponse<ContributionResponse>>
+  postApiV1StokvelsStokvelIdMembersUserIdContributions({
+    @Path('stokvelId') required String stokvelId,
+    @Path('userId') required String userId,
+    @Header('Idempotency-Key') required String idempotencyKey,
+    @Body() required RecordContributionRequest body,
   });
 }

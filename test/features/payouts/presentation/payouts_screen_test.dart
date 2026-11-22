@@ -17,6 +17,7 @@ import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 
 import '../../../helpers/app_harness.dart';
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 const String _mabena = FakeSeed.mabenaFamilyId;
@@ -36,6 +37,7 @@ Future<void> _pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        inMemoryDatabase(),
         signedInUserIdProvider.overrideWithValue(persona.id),
         stokvelRepositoryProvider.overrideWithValue(
           FakeStokvelRepository(userId: persona.id, delay: Duration.zero),

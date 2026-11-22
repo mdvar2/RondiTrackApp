@@ -17,9 +17,10 @@ class PayoutResponse {
     required this.paidAtUtc,
     required this.version,
   });
-  
-  factory PayoutResponse.fromJson(Map<String, Object?> json) => _$PayoutResponseFromJson(json);
-  
+
+  factory PayoutResponse.fromJson(Map<String, Object?> json) =>
+      _$PayoutResponseFromJson(json);
+
   final String id;
   final String stokvelId;
   final String recipientUserId;

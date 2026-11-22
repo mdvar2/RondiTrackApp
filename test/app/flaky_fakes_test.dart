@@ -10,6 +10,7 @@ import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.da
 import 'package:ronditrack_app/features/stokvels/data/flaky_stokvel_repository.dart';
 
 import '../helpers/result_matchers.dart';
+import '../helpers/test_database.dart';
 
 void main() {
   group('FAKE_FAIL_EVERY is for the dev flavour only', () {
@@ -31,7 +32,10 @@ void main() {
   group('the composition root', () {
     test('by default the repositories are the plain fakes', () {
       final container = ProviderContainer.test(
-        overrides: [dataSourceProvider.overrideWithValue(DataSource.fakes)],
+        overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+        ],
       );
 
       expect(container.read(homeRepositoryProvider), isA<FakeHomeRepository>());
@@ -44,6 +48,7 @@ void main() {
     test('with FAKE_FAIL_EVERY set, both are wrapped as flaky', () {
       final container = ProviderContainer.test(
         overrides: [
+          inMemoryDatabase(),
           dataSourceProvider.overrideWithValue(DataSource.fakes),
           fakeFailEveryProvider.overrideWithValue(3),
         ],

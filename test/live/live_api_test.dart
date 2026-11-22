@@ -21,6 +21,7 @@ import 'package:ronditrack_app/features/stokvels/presentation/close_cycle_provid
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
 
 import '../helpers/flavour_config.dart';
+import '../helpers/test_database.dart';
 
 // The app's own providers against the real API on a fresh seed (README
 // "Running against the API"). Skipped unless asked for:
@@ -44,6 +45,7 @@ final String _password = Platform.environment['SEED_PASSWORD'] ?? '';
 ProviderContainer _app({String? base}) {
   final container = ProviderContainer(
     overrides: [
+      inMemoryDatabase(),
       appConfigProvider.overrideWithValue(
         AppConfig.fromValues(
           environment: 'dev',

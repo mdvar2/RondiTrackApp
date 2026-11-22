@@ -18,7 +18,11 @@ dependencies:
   cupertino_ui: 1.1.4
   # Week 11: the HTTP client and the generated Retrofit client's runtime.
   dio: 5.11.1
+  drift: 2.35.3
+  drift_flutter: 0.3.1
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   flutter_riverpod: 3.4.3
   # Week 11.2: the refresh token, encrypted at rest (Android Keystore).
@@ -29,6 +33,8 @@ dependencies:
   material_ui: 1.8.0
   retrofit: 4.10.0
   riverpod_annotation: 4.0.7
+  shared_preferences: 2.5.6
+  uuid: 4.6.0
 
 dev_dependencies:
   # Not imported. Pinned so the analyser that codegen and riverpod_lint run
@@ -37,6 +43,7 @@ dev_dependencies:
   # 2.17.0 is retracted; 2.16.2 is the release known to work with
   # riverpod_generator 4.0.9 and freezed 4.0.3.
   build_runner: 2.16.2
+  drift_dev: 2.35.2
   flutter_test:
     sdk: flutter
   freezed: 4.0.3
@@ -55,8 +62,14 @@ dev_dependencies:
 # both lines on or after 2026-12-03 (jni 1.2.1 was published 2026-11-19),
 # once `flutter pub get` without them picks nothing under two weeks old.
 dependency_overrides:
+  # Through drift_dev, 0.6.1 published 2026-11-20. Remove on or after
+  # 2026-12-04.
+  cli_util: 0.6.0
   jni: 1.1.2
   jni_flutter: 1.0.4+1
+  # Through shared_preferences 2.5.6, 2.5.5 published 2026-11-11.
+  # Remove on or after 2026-11-25.
+  shared_preferences_android: 2.5.4
 
 flutter:
   uses-material-design: true

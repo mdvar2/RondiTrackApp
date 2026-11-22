@@ -21,9 +21,10 @@ class ContributionWithMemberResponse {
     required this.recordedAtUtc,
     required this.version,
   });
-  
-  factory ContributionWithMemberResponse.fromJson(Map<String, Object?> json) => _$ContributionWithMemberResponseFromJson(json);
-  
+
+  factory ContributionWithMemberResponse.fromJson(Map<String, Object?> json) =>
+      _$ContributionWithMemberResponseFromJson(json);
+
   final String id;
   final String stokvelId;
   final String userId;

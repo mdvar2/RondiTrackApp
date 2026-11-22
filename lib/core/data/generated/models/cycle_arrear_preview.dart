@@ -13,9 +13,10 @@ class CycleArrearPreview {
     required this.userName,
     required this.amountCents,
   });
-  
-  factory CycleArrearPreview.fromJson(Map<String, Object?> json) => _$CycleArrearPreviewFromJson(json);
-  
+
+  factory CycleArrearPreview.fromJson(Map<String, Object?> json) =>
+      _$CycleArrearPreviewFromJson(json);
+
   final String userId;
   final String userName;
   final int amountCents;

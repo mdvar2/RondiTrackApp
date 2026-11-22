@@ -18,9 +18,10 @@ class CycleClosePreviewResponse {
     required this.arrears,
     required this.totalCents,
   });
-  
-  factory CycleClosePreviewResponse.fromJson(Map<String, Object?> json) => _$CycleClosePreviewResponseFromJson(json);
-  
+
+  factory CycleClosePreviewResponse.fromJson(Map<String, Object?> json) =>
+      _$CycleClosePreviewResponseFromJson(json);
+
   final String cycleId;
   final String period;
   final DateTime asOfDate;

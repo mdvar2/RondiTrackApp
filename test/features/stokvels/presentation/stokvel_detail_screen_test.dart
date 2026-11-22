@@ -7,6 +7,7 @@ import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
 
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 const _treasurerActionKeys = [
@@ -22,6 +23,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -52,6 +54,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -82,6 +85,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -120,6 +124,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -152,6 +157,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -185,6 +191,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            inMemoryDatabase(),
             signedInUserIdProvider.overrideWithValue(thabo),
             homeRepositoryProvider.overrideWithValue(
               FakeHomeRepository(userId: thabo, delay: Duration.zero),

@@ -21,6 +21,76 @@ class _ContributionCyclesClient implements ContributionCyclesClient {
   final ParseErrorLogger? errorLogger;
 
   @override
+  Future<HttpResponse<List<ContributionCycleResponse>>>
+  getApiV1StokvelsStokvelIdCycles({required String stokvelId}) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options =
+        _setStreamType<HttpResponse<List<ContributionCycleResponse>>>(
+          Options(method: 'GET', headers: _headers, extra: _extra)
+              .compose(
+                _dio.options,
+                '/api/v1/stokvels/${stokvelId}/cycles',
+                queryParameters: queryParameters,
+                data: _data,
+              )
+              .copyWith(
+                baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl),
+              ),
+        );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<ContributionCycleResponse> _value;
+    try {
+      _value = _result.data!
+          .map(
+            (dynamic i) =>
+                ContributionCycleResponse.fromJson(i as Map<String, dynamic>),
+          )
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    final httpResponse = HttpResponse(_value, _result);
+    return httpResponse;
+  }
+
+  @override
+  Future<HttpResponse<ContributionCycleResponse>>
+  postApiV1StokvelsStokvelIdCycles({
+    required String stokvelId,
+    required CreateContributionCycleRequest body,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body.toJson());
+    final _options = _setStreamType<HttpResponse<ContributionCycleResponse>>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v1/stokvels/${stokvelId}/cycles',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late ContributionCycleResponse _value;
+    try {
+      _value = ContributionCycleResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    final httpResponse = HttpResponse(_value, _result);
+    return httpResponse;
+  }
+
+  @override
   Future<HttpResponse<ContributionCycleResponse>>
   getApiV1StokvelsStokvelIdCyclesCycleId({
     required String stokvelId,
@@ -115,6 +185,9 @@ class _ContributionCyclesClient implements ContributionCyclesClient {
     String? role,
     double? minAmount,
     double? maxAmount,
+    String? status,
+    DateTime? recordedFrom,
+    DateTime? recordedBefore,
     int? pageSize = 25,
     String? sortBy = 'recordedAtUtc',
     String? sortDirection = 'desc',
@@ -126,6 +199,9 @@ class _ContributionCyclesClient implements ContributionCyclesClient {
       r'role': role,
       r'minAmount': minAmount,
       r'maxAmount': maxAmount,
+      r'status': status,
+      r'recordedFrom': recordedFrom?.toIso8601String(),
+      r'recordedBefore': recordedBefore?.toIso8601String(),
       r'pageSize': pageSize,
       r'sortBy': sortBy,
       r'sortDirection': sortDirection,

@@ -16,13 +16,16 @@ class PagedResultOfContributionWithMemberResponse {
     required this.pageSize,
     this.hasMore,
   });
-  
-  factory PagedResultOfContributionWithMemberResponse.fromJson(Map<String, Object?> json) => _$PagedResultOfContributionWithMemberResponseFromJson(json);
-  
+
+  factory PagedResultOfContributionWithMemberResponse.fromJson(
+    Map<String, Object?> json,
+  ) => _$PagedResultOfContributionWithMemberResponseFromJson(json);
+
   final List<ContributionWithMemberResponse> items;
   final String nextPageToken;
   final int pageSize;
   final bool? hasMore;
 
-  Map<String, Object?> toJson() => _$PagedResultOfContributionWithMemberResponseToJson(this);
+  Map<String, Object?> toJson() =>
+      _$PagedResultOfContributionWithMemberResponseToJson(this);
 }

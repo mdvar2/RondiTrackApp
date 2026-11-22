@@ -6,6 +6,7 @@ import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
 
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 void main() {
@@ -24,6 +25,9 @@ void main() {
     log = [];
     container = ProviderContainer.test(
       overrides: [
+        inMemoryDatabase(),
+        dataSourceProvider.overrideWithValue(DataSource.fakes),
+        fakeDelayProvider.overrideWithValue(Duration.zero),
         stokvelRepositoryProvider.overrideWithValue(repository),
         lifecycleLogProvider.overrideWithValue(log.add),
       ],

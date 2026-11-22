@@ -13,8 +13,11 @@ export 'clients/stokvels_client.dart';
 // Data classes
 export 'models/access_token_response.dart';
 export 'models/contribution_cycle_response.dart';
+export 'models/contribution_response.dart';
 export 'models/contribution_with_member_response.dart';
+export 'models/create_contribution_cycle_request.dart';
 export 'models/create_payout_request.dart';
+export 'models/create_stokvel_request.dart';
 export 'models/cycle_arrear_preview.dart';
 export 'models/cycle_close_preview_response.dart';
 export 'models/home_cycle_response.dart';
@@ -26,12 +29,13 @@ export 'models/paged_result_of_contribution_with_member_response.dart';
 export 'models/payout_order_entry_response.dart';
 export 'models/payout_order_response.dart';
 export 'models/payout_response.dart';
+export 'models/record_contribution_request.dart';
 export 'models/register_request.dart';
 export 'models/stokvel_cycle_summary_response.dart';
 export 'models/stokvel_detail_response.dart';
+export 'models/stokvel_response.dart';
 export 'models/update_contribution_cycle_request.dart';
 export 'models/update_stokvel_request.dart';
 export 'models/user_response.dart';
 // Root client
 export 'rondi_track_api.dart';
-

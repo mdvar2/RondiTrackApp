@@ -13,6 +13,9 @@ part of 'stokvel_detail_provider.dart';
 /// A family: every stokvel has its own state, so switching stokvels can
 /// never show the previous one's data under the new one's name.
 /// Lifetime: autoDispose. See README "Provider lifetimes".
+///
+/// What the phone has, at once, then the server's answer once it is in the
+/// cache (README "Offline").
 
 @ProviderFor(stokvelDetail)
 final stokvelDetailProvider = StokvelDetailFamily._();
@@ -22,20 +25,26 @@ final stokvelDetailProvider = StokvelDetailFamily._();
 /// A family: every stokvel has its own state, so switching stokvels can
 /// never show the previous one's data under the new one's name.
 /// Lifetime: autoDispose. See README "Provider lifetimes".
+///
+/// What the phone has, at once, then the server's answer once it is in the
+/// cache (README "Offline").
 
 final class StokvelDetailProvider
     extends
         $FunctionalProvider<
           AsyncValue<StokvelDetail>,
           StokvelDetail,
-          FutureOr<StokvelDetail>
+          Stream<StokvelDetail>
         >
-    with $FutureModifier<StokvelDetail>, $FutureProvider<StokvelDetail> {
+    with $FutureModifier<StokvelDetail>, $StreamProvider<StokvelDetail> {
   /// One stokvel's detail, keyed by its id.
   ///
   /// A family: every stokvel has its own state, so switching stokvels can
   /// never show the previous one's data under the new one's name.
   /// Lifetime: autoDispose. See README "Provider lifetimes".
+  ///
+  /// What the phone has, at once, then the server's answer once it is in the
+  /// cache (README "Offline").
   StokvelDetailProvider._({
     required StokvelDetailFamily super.from,
     required String super.argument,
@@ -59,12 +68,12 @@ final class StokvelDetailProvider
 
   @$internal
   @override
-  $FutureProviderElement<StokvelDetail> $createElement(
+  $StreamProviderElement<StokvelDetail> $createElement(
     $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  ) => $StreamProviderElement(pointer);
 
   @override
-  FutureOr<StokvelDetail> create(Ref ref) {
+  Stream<StokvelDetail> create(Ref ref) {
     final argument = this.argument as String;
     return stokvelDetail(ref, argument);
   }
@@ -80,16 +89,19 @@ final class StokvelDetailProvider
   }
 }
 
-String _$stokvelDetailHash() => r'617427f89147c71706a0cab96566be13e7797b0e';
+String _$stokvelDetailHash() => r'9e11d58adddd77d225db4968cf2ab69c64adc7b1';
 
 /// One stokvel's detail, keyed by its id.
 ///
 /// A family: every stokvel has its own state, so switching stokvels can
 /// never show the previous one's data under the new one's name.
 /// Lifetime: autoDispose. See README "Provider lifetimes".
+///
+/// What the phone has, at once, then the server's answer once it is in the
+/// cache (README "Offline").
 
 final class StokvelDetailFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<StokvelDetail>, String> {
+    with $FunctionalFamilyOverride<Stream<StokvelDetail>, String> {
   StokvelDetailFamily._()
     : super(
         retry: null,
@@ -104,6 +116,9 @@ final class StokvelDetailFamily extends $Family
   /// A family: every stokvel has its own state, so switching stokvels can
   /// never show the previous one's data under the new one's name.
   /// Lifetime: autoDispose. See README "Provider lifetimes".
+  ///
+  /// What the phone has, at once, then the server's answer once it is in the
+  /// cache (README "Offline").
 
   StokvelDetailProvider call(String stokvelId) =>
       StokvelDetailProvider._(argument: stokvelId, from: this);
@@ -130,9 +145,9 @@ final class CycleDetailProvider
         $FunctionalProvider<
           AsyncValue<CycleDetail>,
           CycleDetail,
-          FutureOr<CycleDetail>
+          Stream<CycleDetail>
         >
-    with $FutureModifier<CycleDetail>, $FutureProvider<CycleDetail> {
+    with $FutureModifier<CycleDetail>, $StreamProvider<CycleDetail> {
   /// One cycle of one stokvel, keyed by both ids, so a cycle id under the
   /// wrong stokvel is its own request, and is not found.
   ///
@@ -160,12 +175,12 @@ final class CycleDetailProvider
 
   @$internal
   @override
-  $FutureProviderElement<CycleDetail> $createElement(
+  $StreamProviderElement<CycleDetail> $createElement(
     $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  ) => $StreamProviderElement(pointer);
 
   @override
-  FutureOr<CycleDetail> create(Ref ref) {
+  Stream<CycleDetail> create(Ref ref) {
     final argument = this.argument as (String, String);
     return cycleDetail(ref, argument.$1, argument.$2);
   }
@@ -181,7 +196,7 @@ final class CycleDetailProvider
   }
 }
 
-String _$cycleDetailHash() => r'5643b512db07af2b51d13727290c6b7ff0ffe90a';
+String _$cycleDetailHash() => r'dd1e40e557a5b00814229afef14165e3a3176571';
 
 /// One cycle of one stokvel, keyed by both ids, so a cycle id under the
 /// wrong stokvel is its own request, and is not found.
@@ -189,7 +204,7 @@ String _$cycleDetailHash() => r'5643b512db07af2b51d13727290c6b7ff0ffe90a';
 /// Lifetime: autoDispose, like [stokvelDetailProvider].
 
 final class CycleDetailFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<CycleDetail>, (String, String)> {
+    with $FunctionalFamilyOverride<Stream<CycleDetail>, (String, String)> {
   CycleDetailFamily._()
     : super(
         retry: null,

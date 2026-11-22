@@ -10,6 +10,7 @@ import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
 import 'helpers/app_harness.dart';
 import 'helpers/flavour_config.dart';
+import 'helpers/test_database.dart';
 
 void main() {
   for (final (environment, appName, apiBaseUrl) in [
@@ -31,6 +32,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            inMemoryDatabase(),
             dataSourceProvider.overrideWithValue(DataSource.fakes),
             fakeDelayProvider.overrideWithValue(Duration.zero),
             authControllerProvider.overrideWith(

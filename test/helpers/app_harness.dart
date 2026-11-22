@@ -14,6 +14,7 @@ import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
 import 'flavour_config.dart';
+import 'test_database.dart';
 
 /// The dev flavour's configuration.
 final devConfig = AppConfig.fromValues(
@@ -116,6 +117,7 @@ Future<ProviderContainer> pumpApp(
 
   final container = ProviderContainer(
     overrides: [
+      inMemoryDatabase(),
       // As `main` does: providers that read the flavour's config (the API
       // client, the cookie's name) get the same one the app is built with.
       appConfigProvider.overrideWithValue(config ?? devConfig),

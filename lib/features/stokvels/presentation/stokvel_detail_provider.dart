@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
+import 'package:ronditrack_app/core/cache/cached.dart';
 import 'package:ronditrack_app/core/logging/lifecycle_log.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_actions.dart';
@@ -12,15 +14,29 @@ part 'stokvel_detail_provider.g.dart';
 /// A family: every stokvel has its own state, so switching stokvels can
 /// never show the previous one's data under the new one's name.
 /// Lifetime: autoDispose. See README "Provider lifetimes".
+///
+/// What the phone has, at once, then the server's answer once it is in the
+/// cache (README "Offline").
 @riverpod
-Future<StokvelDetail> stokvelDetail(Ref ref, String stokvelId) async {
+Stream<StokvelDetail> stokvelDetail(Ref ref, String stokvelId) {
   // Ids only: never a stokvel's name or an amount.
   final log = ref.watch(lifecycleLogProvider)
     ..call('stokvelDetail created id=$stokvelId');
   ref.onDispose(() => log('stokvelDetail disposed id=$stokvelId'));
-  final repository = ref.watch(stokvelRepositoryProvider);
-  return (await repository.fetchStokvel(stokvelId)).valueOrThrow;
+  return CacheSync(
+    ref.watch(stokvelCacheProvider(stokvelId)),
+    onStatus: (status) => ref
+        .read(syncStatusesProvider.notifier)
+        .put(stokvelSyncKey(stokvelId), status),
+  ).start();
 }
+
+/// A stokvel's key in [syncStatusesProvider].
+String stokvelSyncKey(String stokvelId) => 'stokvel:$stokvelId';
+
+/// A cycle's key in [syncStatusesProvider].
+String cycleSyncKey(String stokvelId, String cycleId) =>
+    'cycle:$stokvelId:$cycleId';
 
 /// The message for a stokvel that can't be shown. The same words whether it
 /// doesn't exist or the person isn't in it.
@@ -51,14 +67,13 @@ ViewState<StokvelDetail> stokvelDetailViewState(
 ///
 /// Lifetime: autoDispose, like [stokvelDetailProvider].
 @riverpod
-Future<CycleDetail> cycleDetail(
-  Ref ref,
-  String stokvelId,
-  String cycleId,
-) async {
-  final repository = ref.watch(stokvelRepositoryProvider);
-  return (await repository.fetchCycle(stokvelId, cycleId)).valueOrThrow;
-}
+Stream<CycleDetail> cycleDetail(Ref ref, String stokvelId, String cycleId) =>
+    CacheSync(
+      ref.watch(cycleCacheProvider(stokvelId, cycleId)),
+      onStatus: (status) => ref
+          .read(syncStatusesProvider.notifier)
+          .put(cycleSyncKey(stokvelId, cycleId), status),
+    ).start();
 
 /// The message for a cycle that can't be shown. The same words whether it
 /// doesn't exist, belongs to another stokvel, or is in a stokvel the person

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
 import 'package:ronditrack_app/core/money/cents.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final view = homeViewState(ref.watch(homeControllerProvider));
+    final sync = ref.watch(syncStatusesProvider)[homeSyncKey];
     Future<void> refresh() =>
         ref.read(homeControllerProvider.notifier).refresh();
 
@@ -42,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         ViewData(value: final entries, :final refreshing) => _HomeList(
           entries: entries,
-          refreshing: refreshing,
+          refreshing: refreshing || (sync?.refreshing ?? false),
           onRefresh: refresh,
         ),
       },
@@ -156,7 +158,7 @@ class HomeStokvelCard extends StatelessWidget {
                 label: 'Next payout',
                 value: nextPayout == null
                     ? 'No payout scheduled'
-                    : formatInstantAsLocalDate(nextPayout),
+                    : formatInstantAsSastDate(nextPayout),
               ),
             ],
           ),

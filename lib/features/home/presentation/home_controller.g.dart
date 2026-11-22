@@ -19,7 +19,7 @@ final homeControllerProvider = HomeControllerProvider._();
 ///
 /// Lifetime: autoDispose. See README "Provider lifetimes".
 final class HomeControllerProvider
-    extends $AsyncNotifierProvider<HomeController, List<HomeEntry>> {
+    extends $StreamNotifierProvider<HomeController, List<HomeEntry>> {
   /// Home: one entry per stokvel the signed-in person belongs to.
   ///
   /// Lifetime: autoDispose. See README "Provider lifetimes".
@@ -42,14 +42,14 @@ final class HomeControllerProvider
   HomeController create() => HomeController();
 }
 
-String _$homeControllerHash() => r'd1265c09eaf88cc8800357117ca1adbd929557b3';
+String _$homeControllerHash() => r'171464256e1419552c06d7056cadd95f0c32e631';
 
 /// Home: one entry per stokvel the signed-in person belongs to.
 ///
 /// Lifetime: autoDispose. See README "Provider lifetimes".
 
-abstract class _$HomeController extends $AsyncNotifier<List<HomeEntry>> {
-  FutureOr<List<HomeEntry>> build();
+abstract class _$HomeController extends $StreamNotifier<List<HomeEntry>> {
+  Stream<List<HomeEntry>> build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
