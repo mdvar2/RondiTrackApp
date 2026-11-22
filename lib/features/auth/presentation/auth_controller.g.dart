@@ -71,7 +71,7 @@ final class AuthControllerProvider
   }
 }
 
-String _$authControllerHash() => r'bce6a1c8190a17914cc20e72b08c4b59d9f32973';
+String _$authControllerHash() => r'94cdd9bb107e3d1ffa83b269c5401fcb8477039b';
 
 /// Who is signed in. The app starts [Restoring]: one refresh decides.
 ///

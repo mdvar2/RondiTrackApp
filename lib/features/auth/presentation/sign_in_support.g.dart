@@ -56,7 +56,7 @@ final class SignInEmailDraftProvider
   }
 }
 
-String _$signInEmailDraftHash() => r'f2bdbde1c0bdf75f8dc3f7293dae62f8c1b04352';
+String _$signInEmailDraftHash() => r'8872f3bec0739abcd7d5ee1bd9c83367dcf49600';
 
 /// The email the dev build's persona switcher chose, waiting for the
 /// sign-in form to fill it in. Only the email: the password is typed.
