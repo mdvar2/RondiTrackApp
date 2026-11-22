@@ -34,6 +34,7 @@ swagger_parser:
     - /api/v1/stokvels
     - /api/v1/stokvels/{id}
     - /api/v1/stokvels/{stokvelId}/cycles
+    - /api/v1/stokvels/{stokvelId}/members
     - /api/v1/stokvels/{stokvelId}/members/{userId}/contributions
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/contributions

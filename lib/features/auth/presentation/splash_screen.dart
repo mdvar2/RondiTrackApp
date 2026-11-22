@@ -4,6 +4,7 @@ import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
+import 'package:ronditrack_app/features/payments/presentation/sign_out_guard.dart';
 
 /// `/splash`: shown while the one refresh on launch decides who is signed
 /// in, so a signed-in person never sees the sign-in form flash first.
@@ -64,8 +65,7 @@ class SplashScreen extends ConsumerWidget {
                     ),
                     OutlinedButton(
                       key: const Key('splash-sign-out'),
-                      onPressed: () =>
-                          ref.read(authControllerProvider.notifier).signOut(),
+                      onPressed: () => signOutAskingFirst(context, ref),
                       child: const Text('Sign out'),
                     ),
                   ],

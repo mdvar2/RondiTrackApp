@@ -8,6 +8,7 @@ import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
@@ -40,7 +41,11 @@ void main() {
             ScriptedHomeRepository([Completer<List<HomeEntry>>()]),
           ),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
 
@@ -64,7 +69,11 @@ void main() {
             FakeHomeRepository(userId: FakeSeed.thabo.id, delay: Duration.zero),
           ),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -90,7 +99,11 @@ void main() {
             ),
           ),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -144,7 +157,11 @@ void main() {
           homeRepositoryProvider.overrideWithValue(repository),
         ],
         retry: (retryCount, error) => null,
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -174,7 +191,11 @@ void main() {
           fakeDelayProvider.overrideWithValue(Duration.zero),
           homeRepositoryProvider.overrideWithValue(repository),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();

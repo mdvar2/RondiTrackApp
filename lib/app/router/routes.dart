@@ -9,9 +9,12 @@ import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/splash_screen.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
+import 'package:ronditrack_app/features/payments/presentation/pay_screen.dart';
 import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/close_cycle_screen.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/contributions_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/cycle_screen.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/stokvel_forms.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvels_screen.dart';
 
 part 'routes.g.dart';
@@ -38,14 +41,19 @@ part 'routes.g.dart';
         TypedGoRoute<StokvelsRoute>(
           path: '/stokvels',
           routes: <TypedRoute<RouteData>>[
+            // Before ':id', so "new" is never taken for an id.
+            TypedGoRoute<CreateStokvelRoute>(path: 'new'),
             TypedGoRoute<StokvelRoute>(
               path: ':id',
               routes: <TypedRoute<RouteData>>[
+                TypedGoRoute<ContributionsRoute>(path: 'contributions'),
                 TypedGoRoute<CycleRoute>(
                   path: 'cycles/:cycleId',
                   routes: <TypedRoute<RouteData>>[
                     TypedGoRoute<PayoutsRoute>(path: 'payouts'),
                     TypedGoRoute<CloseCycleRoute>(path: 'close'),
+                    TypedGoRoute<PayRoute>(path: 'pay'),
+                    TypedGoRoute<EditCycleRoute>(path: 'edit'),
                   ],
                 ),
               ],
@@ -207,6 +215,64 @@ class CloseCycleRoute extends GoRouteData with $CloseCycleRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       CloseCycleScreen(stokvelId: id, cycleId: cycleId);
+}
+
+/// `/stokvels/new`: create a stokvel (11.3).
+class CreateStokvelRoute extends GoRouteData with $CreateStokvelRoute {
+  /// The form.
+  const new();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CreateStokvelScreen();
+}
+
+/// `/stokvels/:id/contributions`: every contribution, paged and filtered,
+/// on top of the stokvel (11.3).
+class ContributionsRoute extends GoRouteData with $ContributionsRoute {
+  /// The contributions of stokvel [id].
+  const new({required this.id});
+
+  /// The stokvel's id.
+  final String id;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ContributionsScreen(stokvelId: id);
+}
+
+/// `/stokvels/:id/cycles/:cycleId/pay`: the member's own contribution, on
+/// top of the cycle (11.3).
+class PayRoute extends GoRouteData with $PayRoute {
+  /// Paying into cycle [cycleId] of stokvel [id].
+  const new({required this.id, required this.cycleId});
+
+  /// The stokvel's id.
+  final String id;
+
+  /// The cycle's id.
+  final String cycleId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      PayScreen(stokvelId: id, cycleId: cycleId);
+}
+
+/// `/stokvels/:id/cycles/:cycleId/edit`: a treasurer edits the cycle, on
+/// top of it (11.3).
+class EditCycleRoute extends GoRouteData with $EditCycleRoute {
+  /// Editing cycle [cycleId] of stokvel [id].
+  const new({required this.id, required this.cycleId});
+
+  /// The stokvel's id.
+  final String id;
+
+  /// The cycle's id.
+  final String cycleId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      EditCycleScreen(stokvelId: id, cycleId: cycleId);
 }
 
 /// `/activity`: activity across my stokvels.

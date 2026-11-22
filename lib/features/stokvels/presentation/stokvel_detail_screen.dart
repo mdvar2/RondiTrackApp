@@ -9,12 +9,14 @@ import 'package:ronditrack_app/core/time/date_format.dart';
 import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
+import 'package:ronditrack_app/features/payments/presentation/pay_screen.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_actions.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/contribution_row.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// One stokvel: its current cycle, contributions and what I can do here.
 ///
@@ -216,7 +218,33 @@ class _StokvelBody extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          // A payment still in the outbox: beside the server's figures,
+          // marked pending, never added in.
+          PendingPaymentsFor(cycleId: cycle.id),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton.icon(
+                key: const Key('open-contributions'),
+                onPressed: () =>
+                    ContributionsRoute(id: detail.stokvel.id).go(context),
+                icon: const Icon(Icons.list_alt),
+                label: Text(AppLocalizations.of(context).viewContributions),
+              ),
+              if (actions.contains(StokvelAction.closeCycle))
+                TextButton.icon(
+                  key: const Key('open-edit-cycle'),
+                  onPressed: () => EditCycleRoute(
+                    id: detail.stokvel.id,
+                    cycleId: cycle.id,
+                  ).go(context),
+                  icon: const Icon(Icons.edit_calendar),
+                  label: Text(AppLocalizations.of(context).editCycle),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           if (actions.isNotEmpty) ...[
             Text('What you can do', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -234,8 +262,12 @@ class _StokvelBody extends StatelessWidget {
                           id: detail.stokvel.id,
                           cycleId: cycle.id,
                         ).go(context),
-                        // The writes arrive later in Week 11.
-                        StokvelAction.pay ||
+                        // Saved in the outbox, then sent (11.3).
+                        StokvelAction.pay => () => PayRoute(
+                          id: detail.stokvel.id,
+                          cycleId: cycle.id,
+                        ).go(context),
+                        // The other writes arrive later.
                         StokvelAction.uploadProof ||
                         StokvelAction.confirmContributions ||
                         StokvelAction.recordPayout =>

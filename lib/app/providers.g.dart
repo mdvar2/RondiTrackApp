@@ -897,6 +897,261 @@ final class AppDatabaseProvider
 
 String _$appDatabaseHash() => r'742ceb6fe06dae282a737a0b1b2766b29e27599d';
 
+/// Sends a payment to the API, or to the fakes. It follows who is signed
+/// in, like every repository.
+
+@ProviderFor(paymentSender)
+final paymentSenderProvider = PaymentSenderProvider._();
+
+/// Sends a payment to the API, or to the fakes. It follows who is signed
+/// in, like every repository.
+
+final class PaymentSenderProvider
+    extends $FunctionalProvider<PaymentSender, PaymentSender, PaymentSender>
+    with $Provider<PaymentSender> {
+  /// Sends a payment to the API, or to the fakes. It follows who is signed
+  /// in, like every repository.
+  PaymentSenderProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentSenderProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paymentSenderHash();
+
+  @$internal
+  @override
+  $ProviderElement<PaymentSender> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PaymentSender create(Ref ref) {
+    return paymentSender(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PaymentSender value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PaymentSender>(value),
+    );
+  }
+}
+
+String _$paymentSenderHash() => r'bdb1df7ad9312d4f1f0633f71e1f9a0cc9feb69b';
+
+/// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+/// cryptographic random source). Called only when a payment is recorded.
+
+@ProviderFor(idempotencyKeys)
+final idempotencyKeysProvider = IdempotencyKeysProvider._();
+
+/// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+/// cryptographic random source). Called only when a payment is recorded.
+
+final class IdempotencyKeysProvider
+    extends
+        $FunctionalProvider<
+          String Function(),
+          String Function(),
+          String Function()
+        >
+    with $Provider<String Function()> {
+  /// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+  /// cryptographic random source). Called only when a payment is recorded.
+  IdempotencyKeysProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'idempotencyKeysProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$idempotencyKeysHash();
+
+  @$internal
+  @override
+  $ProviderElement<String Function()> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  String Function() create(Ref ref) {
+    return idempotencyKeys(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String Function() value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String Function()>(value),
+    );
+  }
+}
+
+String _$idempotencyKeysHash() => r'bea198af32d3fb489397f820c90a331304bd6f52';
+
+/// The payment outbox, in the database (README "Offline").
+
+@ProviderFor(paymentOutbox)
+final paymentOutboxProvider = PaymentOutboxProvider._();
+
+/// The payment outbox, in the database (README "Offline").
+
+final class PaymentOutboxProvider
+    extends $FunctionalProvider<PaymentOutbox, PaymentOutbox, PaymentOutbox>
+    with $Provider<PaymentOutbox> {
+  /// The payment outbox, in the database (README "Offline").
+  PaymentOutboxProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentOutboxProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paymentOutboxHash();
+
+  @$internal
+  @override
+  $ProviderElement<PaymentOutbox> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PaymentOutbox create(Ref ref) {
+    return paymentOutbox(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PaymentOutbox value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PaymentOutbox>(value),
+    );
+  }
+}
+
+String _$paymentOutboxHash() => r'698f6ca4a07840b5aaea0a00833006cbede130a3';
+
+/// The contributions list's data. Implementation:
+/// [ApiContributionsRepository], or [FakeContributionsRepository].
+
+@ProviderFor(contributionsRepository)
+final contributionsRepositoryProvider = ContributionsRepositoryProvider._();
+
+/// The contributions list's data. Implementation:
+/// [ApiContributionsRepository], or [FakeContributionsRepository].
+
+final class ContributionsRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ContributionsRepository,
+          ContributionsRepository,
+          ContributionsRepository
+        >
+    with $Provider<ContributionsRepository> {
+  /// The contributions list's data. Implementation:
+  /// [ApiContributionsRepository], or [FakeContributionsRepository].
+  ContributionsRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'contributionsRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$contributionsRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ContributionsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ContributionsRepository create(Ref ref) {
+    return contributionsRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ContributionsRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ContributionsRepository>(value),
+    );
+  }
+}
+
+String _$contributionsRepositoryHash() =>
+    r'6c8005f425d93a37dc3320eb6fcbf900a5169a24';
+
+/// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+/// or [FakeStokvelEditor].
+
+@ProviderFor(stokvelEditor)
+final stokvelEditorProvider = StokvelEditorProvider._();
+
+/// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+/// or [FakeStokvelEditor].
+
+final class StokvelEditorProvider
+    extends $FunctionalProvider<StokvelEditor, StokvelEditor, StokvelEditor>
+    with $Provider<StokvelEditor> {
+  /// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+  /// or [FakeStokvelEditor].
+  StokvelEditorProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'stokvelEditorProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$stokvelEditorHash();
+
+  @$internal
+  @override
+  $ProviderElement<StokvelEditor> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  StokvelEditor create(Ref ref) {
+    return stokvelEditor(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(StokvelEditor value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<StokvelEditor>(value),
+    );
+  }
+}
+
+String _$stokvelEditorHash() => r'8c455655ed691c07ca752b967d2409ac8aa6927d';
+
 /// Who was last signed in on this phone, kept with their cached data.
 
 @ProviderFor(lastUser)

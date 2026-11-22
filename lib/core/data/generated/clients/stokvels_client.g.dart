@@ -163,6 +163,52 @@ class _StokvelsClient implements StokvelsClient {
   }
 
   @override
+  Future<HttpResponse<PagedResultOfStokvelMemberResponse>>
+  getApiV1StokvelsStokvelIdMembers({
+    required String stokvelId,
+    String? pageToken,
+    String? role,
+    int? pageSize = 25,
+    String? sortBy = 'joinedAtUtc',
+    String? sortDirection = 'desc',
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'pageToken': pageToken,
+      r'role': role,
+      r'pageSize': pageSize,
+      r'sortBy': sortBy,
+      r'sortDirection': sortDirection,
+    };
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options =
+        _setStreamType<HttpResponse<PagedResultOfStokvelMemberResponse>>(
+          Options(method: 'GET', headers: _headers, extra: _extra)
+              .compose(
+                _dio.options,
+                '/api/v1/stokvels/${stokvelId}/members',
+                queryParameters: queryParameters,
+                data: _data,
+              )
+              .copyWith(
+                baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl),
+              ),
+        );
+    final _result = await _dio.fetch<Map<String, Object?>>(_options);
+    late PagedResultOfStokvelMemberResponse _value;
+    try {
+      _value = PagedResultOfStokvelMemberResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    final httpResponse = HttpResponse(_value, _result);
+    return httpResponse;
+  }
+
+  @override
   Future<HttpResponse<ContributionResponse>>
   postApiV1StokvelsStokvelIdMembersUserIdContributions({
     required String stokvelId,

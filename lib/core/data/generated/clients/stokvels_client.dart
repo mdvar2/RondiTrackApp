@@ -7,6 +7,7 @@ import 'package:retrofit/retrofit.dart';
 
 import '../models/contribution_response.dart';
 import '../models/create_stokvel_request.dart';
+import '../models/paged_result_of_stokvel_member_response.dart';
 import '../models/record_contribution_request.dart';
 import '../models/stokvel_detail_response.dart';
 import '../models/stokvel_response.dart';
@@ -64,6 +65,17 @@ abstract class StokvelsClient {
   @DELETE('/api/v1/stokvels/{id}')
   Future<HttpResponse<void>> deleteApiV1StokvelsId({
     @Path('id') required String id,
+  });
+
+  @GET('/api/v1/stokvels/{stokvelId}/members')
+  Future<HttpResponse<PagedResultOfStokvelMemberResponse>>
+  getApiV1StokvelsStokvelIdMembers({
+    @Path('stokvelId') required String stokvelId,
+    @Query('pageToken') String? pageToken,
+    @Query('role') String? role,
+    @Query('pageSize') int? pageSize = 25,
+    @Query('sortBy') String? sortBy = 'joinedAtUtc',
+    @Query('sortDirection') String? sortDirection = 'desc',
   });
 
   /// Records a contribution for a stokvel member.

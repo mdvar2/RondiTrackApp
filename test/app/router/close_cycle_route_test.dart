@@ -98,6 +98,9 @@ void main() {
 
     final action = find.byKey(const Key('action-closeCycle'));
     await tester.ensureVisible(action);
+    // Clear of the persona switcher, which floats over the bottom edge.
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -150));
+    await tester.pumpAndSettle();
     await tester.tap(action);
     await tester.pumpAndSettle();
 

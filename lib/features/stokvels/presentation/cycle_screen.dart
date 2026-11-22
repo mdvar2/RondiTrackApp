@@ -7,6 +7,7 @@ import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
 import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
+import 'package:ronditrack_app/features/payments/presentation/pay_screen.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/contribution_row.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
@@ -118,6 +119,8 @@ class _CycleBody extends StatelessWidget {
         ),
         if (dueDate != null) Text('Due ${formatCalendarDate(dueDate)}'),
         const SizedBox(height: 16),
+        // Beside the server's figures, marked pending, never added in.
+        PendingPaymentsFor(cycleId: cycle.id),
         Text(
           'Collected ${formatRand(cycle.collected)} of '
           '${formatRand(cycle.target)}',

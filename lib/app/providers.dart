@@ -29,17 +29,25 @@ import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/invites/data/api_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/data/fake_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_repository.dart';
+import 'package:ronditrack_app/features/payments/data/drift_payment_outbox.dart';
+import 'package:ronditrack_app/features/payments/data/payment_senders.dart';
+import 'package:ronditrack_app/features/payments/domain/payment_outbox.dart';
 import 'package:ronditrack_app/features/payouts/data/api_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/data/fake_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/data/flaky_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/api_stokvel_repository.dart';
+import 'package:ronditrack_app/features/stokvels/data/api_stokvel_writes.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
+import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_writes.dart';
 import 'package:ronditrack_app/features/stokvels/data/flaky_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/stokvel_cache.dart';
+import 'package:ronditrack_app/features/stokvels/domain/contributions_list.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
+import 'package:ronditrack_app/features/stokvels/domain/stokvel_editor.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
+import 'package:uuid/uuid.dart';
 
 part 'providers.g.dart';
 
@@ -211,6 +219,60 @@ AppDatabase appDatabase(Ref ref) {
   final db = AppDatabase.onDevice();
   ref.onDispose(db.close);
   return db;
+}
+
+/// Sends a payment to the API, or to the fakes. It follows who is signed
+/// in, like every repository.
+@Riverpod(keepAlive: true)
+PaymentSender paymentSender(Ref ref) {
+  ref.watch(signedInUserIdProvider);
+  return switch (ref.watch(dataSourceProvider)) {
+    DataSource.api => ApiPaymentSender(ref.watch(apiProvider)),
+    DataSource.fakes => FakePaymentSender(
+      stokvels: ref.watch(fakeStokvelsProvider),
+    ),
+  };
+}
+
+/// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+/// cryptographic random source). Called only when a payment is recorded.
+@Riverpod(keepAlive: true)
+String Function() idempotencyKeys(Ref ref) => const Uuid().v4;
+
+/// The payment outbox, in the database (README "Offline").
+@Riverpod(keepAlive: true)
+PaymentOutbox paymentOutbox(Ref ref) => DriftPaymentOutbox(
+  ref.watch(appDatabaseProvider),
+  ref.watch(paymentSenderProvider),
+  newKey: ref.watch(idempotencyKeysProvider),
+);
+
+/// The contributions list's data. Implementation:
+/// [ApiContributionsRepository], or [FakeContributionsRepository].
+@Riverpod(keepAlive: true)
+ContributionsRepository contributionsRepository(Ref ref) {
+  final userId = ref.watch(signedInUserIdProvider);
+  return switch (ref.watch(dataSourceProvider)) {
+    DataSource.api => ApiContributionsRepository(ref.watch(apiProvider)),
+    DataSource.fakes => FakeContributionsRepository(
+      userId: userId,
+      stokvels: ref.watch(fakeStokvelsProvider),
+    ),
+  };
+}
+
+/// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+/// or [FakeStokvelEditor].
+@Riverpod(keepAlive: true)
+StokvelEditor stokvelEditor(Ref ref) {
+  final userId = ref.watch(signedInUserIdProvider);
+  return switch (ref.watch(dataSourceProvider)) {
+    DataSource.api => ApiStokvelEditor(ref.watch(apiClientProvider)),
+    DataSource.fakes => FakeStokvelEditor(
+      userId: userId,
+      stokvels: ref.watch(fakeStokvelsProvider),
+    ),
+  };
 }
 
 /// Who was last signed in on this phone, kept with their cached data.
