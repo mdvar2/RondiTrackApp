@@ -18,8 +18,8 @@ abstract interface class InviteRepository {
   Future<Result<InvitePreview>> fetchInvite(String code);
 
   /// `POST /invites/{code}/join`: the signed-in person becomes a Member.
-  /// Returns the stokvel's id. The API refuses a second join with a `409`
-  /// (a [RuleFailure]); the fake changes nothing instead. The join screen
-  /// only offers Join to someone not in the stokvel.
+  /// Returns the stokvel's id, also for someone already in it (the API's
+  /// `409`; the fake changes nothing), so they land in it. A wrong code is
+  /// a [NotFoundFailure], an expired one a [RuleFailure] with its words.
   Future<Result<String>> join(String code);
 }

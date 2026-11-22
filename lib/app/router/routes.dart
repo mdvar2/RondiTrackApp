@@ -4,7 +4,9 @@ import 'package:ronditrack_app/app/router/app_shell.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/features/activity/presentation/activity_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/profile_screen.dart';
+import 'package:ronditrack_app/features/auth/presentation/register_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
+import 'package:ronditrack_app/features/auth/presentation/splash_screen.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
 import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
@@ -239,5 +241,34 @@ class SignInRoute extends GoRouteData with $SignInRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      const SignInScreen();
+      SignInScreen(from: from);
+}
+
+/// `/register`, with the address to return to in `from`, as for sign-in.
+@TypedGoRoute<RegisterRoute>(path: '/register')
+class RegisterRoute extends GoRouteData with $RegisterRoute {
+  /// Register, returning to [from] afterwards.
+  const new({this.from});
+
+  /// The address to go to once registered and signed in.
+  final String? from;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      RegisterScreen(from: from);
+}
+
+/// `/splash`: the one refresh on launch. While the app is restoring, every
+/// address comes here, and `from` remembers where it was going.
+@TypedGoRoute<SplashRoute>(path: '/splash')
+class SplashRoute extends GoRouteData with $SplashRoute {
+  /// The splash, going on to [from] once restored.
+  const new({this.from});
+
+  /// The address the app was opened at (a link survives the splash).
+  final String? from;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const SplashScreen();
 }

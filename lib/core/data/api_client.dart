@@ -1,7 +1,9 @@
 import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:ronditrack_app/core/data/session_interceptor.dart';
 import 'package:ronditrack_app/core/data/to_failure.dart';
+import 'package:ronditrack_app/core/session/session.dart';
 
 /// How long the app waits on the API (README "Decisions").
 ///
@@ -24,29 +26,10 @@ abstract final class ApiTimeouts {
   static const receive = Duration(seconds: 30);
 }
 
-/// The access token, in memory only: never written to storage, gone when
-/// the app stops or the person signs out. Tomorrow's sign-in replaces this
-/// stand-in.
-class AccessTokenHolder {
-  /// The token for every following request, or `null` when nobody is
-  /// signed in.
-  String? token;
-
-  /// Forgets the token.
-  void clear() => token = null;
-}
-
-/// The one Dio client: its base URL from the flavour's config, the app's
-/// timeouts, and the app's own interceptors, in order: a trace id, the
-/// token, the log line. Never Dio's `LogInterceptor`, which prints request
-/// headers, and so the token.
-Dio createApiClient({
-  required Uri baseUri,
-  required AccessTokenHolder tokens,
-  required void Function() onSessionEnded,
-  required void Function(String line) log,
+Dio _client(
+  Uri baseUri, {
+  required List<Interceptor> interceptors,
   HttpClientAdapter? adapter,
-  Random? random,
 }) {
   final dio = Dio(
     BaseOptions(
@@ -58,13 +41,48 @@ Dio createApiClient({
     ),
   );
   if (adapter != null) dio.httpClientAdapter = adapter;
-  dio.interceptors.addAll([
-    TraceparentInterceptor(random ?? Random.secure()),
-    AuthInterceptor(tokens, onSessionEnded: onSessionEnded),
-    ApiLogInterceptor(log),
-  ]);
+  dio.interceptors.addAll(interceptors);
   return dio;
 }
+
+/// The bare client: a trace id and the log line, and no session. The auth
+/// calls go through it (a refresh through the session interceptor could
+/// wait on itself), and so does the session interceptor's one retry.
+Dio createBareClient({
+  required Uri baseUri,
+  required void Function(String line) log,
+  HttpClientAdapter? adapter,
+  Random? random,
+}) => _client(
+  baseUri,
+  adapter: adapter,
+  interceptors: [
+    TraceparentInterceptor(random ?? Random.secure()),
+    ApiLogInterceptor(log),
+  ],
+);
+
+/// The client every repository uses: its base URL from the flavour's
+/// config, the app's timeouts, and the app's own interceptors, in order: a
+/// trace id, the log line, the session. The log comes before the session
+/// so a `401` is logged before it is refreshed and retried. Never Dio's
+/// `LogInterceptor`, which prints request headers, and so the token.
+Dio createApiClient({
+  required Uri baseUri,
+  required Session session,
+  required Dio retryClient,
+  required void Function(String line) log,
+  HttpClientAdapter? adapter,
+  Random? random,
+}) => _client(
+  baseUri,
+  adapter: adapter,
+  interceptors: [
+    TraceparentInterceptor(random ?? Random.secure()),
+    ApiLogInterceptor(log),
+    SessionInterceptor(session, retryClient: retryClient),
+  ],
+);
 
 /// Sends a W3C `traceparent` with a new trace id on every request. The API
 /// adopts it, so the `correlationId` it logs is this id, and the app knows
@@ -87,39 +105,6 @@ class TraceparentInterceptor extends Interceptor {
     options.extra[traceIdKey] = traceId;
     options.headers['traceparent'] = '00-$traceId-${_hex(8)}-01';
     handler.next(options);
-  }
-}
-
-/// Puts the in-memory access token on every request, and ends the session
-/// when the API says it has ended (`401`).
-///
-/// A `401` from signing in is a refused password, not an ended session, so
-/// `/auth/` calls never end it. A `403` never does: the person is signed
-/// in, and only this stokvel's role is missing.
-class AuthInterceptor extends Interceptor {
-  /// Creates the interceptor.
-  new(this._tokens, {required this.onSessionEnded});
-
-  final AccessTokenHolder _tokens;
-
-  /// Called on a `401` outside `/auth/`.
-  final void Function() onSessionEnded;
-
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final token = _tokens.token;
-    if (token != null) options.headers['Authorization'] = 'Bearer $token';
-    handler.next(options);
-  }
-
-  @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    final signingIn = err.requestOptions.uri.path.contains('/auth/');
-    if (err.response?.statusCode == 401 && !signingIn) {
-      _tokens.clear();
-      onSessionEnded();
-    }
-    handler.next(err);
   }
 }
 

@@ -93,14 +93,14 @@ void main() {
       await pumpApp(tester, size: phone, textScale: 2);
 
       await tester.scrollUntilVisible(
-        find.byKey(const Key('sign-in-submit')),
+        find.byKey(const Key('auth-submit')),
         100,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.ensureVisible(find.byKey(const Key('sign-in-submit')));
+      await tester.ensureVisible(find.byKey(const Key('auth-submit')));
       await tester.pumpAndSettle();
       expect(
-        find.byKey(const Key('sign-in-submit')).hitTestable(),
+        find.byKey(const Key('auth-submit')).hitTestable(),
         findsOneWidget,
       );
     });

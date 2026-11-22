@@ -55,8 +55,8 @@ void main() {
       expect(find.byIcon(Icons.check), findsOneWidget, reason: 'Lerato');
     });
 
-    testWidgets('choosing a persona signs in as them, through the gate, and '
-        'returns to the same address', (tester) async {
+    testWidgets('choosing a persona signs out and fills in their email; '
+        'typing the password returns to the same address', (tester) async {
       final app = await pumpApp(
         tester,
         as: FakeSeed.lerato,
@@ -68,6 +68,18 @@ void main() {
       await tester.tap(find.byKey(const Key('persona-switcher')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(Key('persona-${FakeSeed.sipho.email}')));
+      await tester.pumpAndSettle();
+
+      expect(app.read(authControllerProvider), const SignedOut());
+      final email = find.byKey(const Key('sign-in-email'));
+      expect(
+        tester.widget<TextField>(email).controller!.text,
+        FakeSeed.sipho.email,
+      );
+      final password = find.byKey(const Key('auth-password'));
+      expect(tester.widget<TextField>(password).controller!.text, isEmpty);
+      await tester.enterText(password, typedPassword);
+      await tester.tap(find.byKey(const Key('auth-submit')));
       await tester.pumpAndSettle();
 
       expect(app.read(authControllerProvider), signedInAs(FakeSeed.sipho));
@@ -87,7 +99,7 @@ void main() {
     testWidgets('the sign-in page offers the seed personas', (tester) async {
       await pumpApp(tester);
 
-      expect(find.text('Test accounts'), findsOneWidget);
+      expect(find.textContaining('Test accounts'), findsOneWidget);
     });
   });
 
@@ -143,19 +155,14 @@ void main() {
         await pumpApp(tester, config: config);
 
         expect(find.widgetWithText(AppBar, 'Sign in'), findsOneWidget);
-        expect(find.text('Test accounts'), findsNothing);
+        expect(find.textContaining('Test accounts'), findsNothing);
         expect(find.text(FakeSeed.lerato.name), findsNothing);
       });
 
       testWidgets('signing in by typing an email still works', (tester) async {
         final app = await pumpApp(tester, config: config);
 
-        await tester.enterText(
-          find.byKey(const Key('sign-in-email')),
-          FakeSeed.sipho.email,
-        );
-        await tester.tap(find.byKey(const Key('sign-in-submit')));
-        await tester.pumpAndSettle();
+        await typeSignIn(tester, FakeSeed.sipho.email);
 
         expect(app.read(authControllerProvider), isA<SignedIn>());
         expect(locationOf(app), '/');

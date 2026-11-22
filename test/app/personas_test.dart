@@ -185,14 +185,28 @@ void main() {
 
       var framesAsSipho = 0;
       int? signedOutAt;
+      var typed = false;
       for (var frame = 0; frame < 300; frame++) {
         await tester.pump(const Duration(milliseconds: 16));
         final auth = app.read(authControllerProvider);
         if (auth != signedInAs(FakeSeed.lerato)) signedOutAt ??= frame;
         // Lerato's screen is hers until her sign-out completes. The state
         // changes during that frame's pump, and the gate redirects on the
-        // next one.
+        // next one. The switcher's own list (every persona's email) is
+        // still sliding away meanwhile.
         if (signedOutAt == null || frame == signedOutAt) continue;
+        if (find
+            .byKey(const Key('persona-sheet'), skipOffstage: false)
+            .evaluate()
+            .isNotEmpty) {
+          continue;
+        }
+        // The switcher filled in Sipho's email; the password is typed.
+        if (!typed && _key('auth-password').evaluate().isNotEmpty) {
+          typed = true;
+          await tester.enterText(_key('auth-password'), typedPassword);
+          await tester.tap(_key('auth-submit'));
+        }
 
         // From then on, signed out or signed in as Sipho: nothing that was
         // Lerato's, on screen or offstage.
@@ -232,6 +246,7 @@ void main() {
       await tester.tap(_key('persona-${FakeSeed.thabo.email}'));
 
       var sawSignIn = false;
+      var typed = false;
       int? signedOutAt;
       for (var frame = 0; frame < 300; frame++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -246,6 +261,11 @@ void main() {
           sawSignIn = true;
           expect(find.byKey(const Key('nav-bar')), findsNothing);
           expect(find.text('Nomsa Mabena', skipOffstage: false), findsNothing);
+        }
+        if (!typed && _key('auth-password').evaluate().isNotEmpty) {
+          typed = true;
+          await tester.enterText(_key('auth-password'), typedPassword);
+          await tester.tap(_key('auth-submit'));
         }
       }
 

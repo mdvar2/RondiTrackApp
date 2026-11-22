@@ -1,0 +1,3 @@
+11-22 20:59:27.594 17847 17847 I flutter : API POST /api/v1/auth/refresh 200 in 283 ms [trace ab2f2ddc54406635a64bfa05856db9a0]
+11-22 20:59:27.652 17847 17847 I flutter : API GET /api/v1/me 200 in 29 ms [trace e4ea22171f0778cf192fac2d37869eb4]
+11-22 20:59:28.276 17847 17847 I flutter : API GET /api/v1/me/home 200 in 66 ms [trace 687499cbfcad824e74898e0055c899f8]

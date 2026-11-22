@@ -1,5 +1,6 @@
 {
   "APP_ENV": "dev",
   "APP_NAME": "RondiTrack Dev",
-  "API_BASE_URL": "http://127.0.0.1:8081"
+  "API_BASE_URL": "http://127.0.0.1:8081",
+  "REFRESH_COOKIE_NAME": "__Secure-ronditrack_refresh"
 }

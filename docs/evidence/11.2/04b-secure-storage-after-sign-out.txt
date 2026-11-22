@@ -1,0 +1,3 @@
+$ adb shell run-as za.co.gwinya.ronditrack_app.dev cat shared_prefs/FlutterSecureStorage.xml   # after Sign out
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map />

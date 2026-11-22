@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
@@ -8,12 +10,16 @@ import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_preview.dart';
 import 'package:ronditrack_app/features/invites/presentation/invite_preview_provider.dart';
+import 'package:ronditrack_app/features/invites/presentation/pending_join.dart';
 
 /// `/join/:code`: an invite's preview, then Join.
 ///
-/// Reached signed out, the gate keeps this address across sign-in, so the
-/// person lands here afterwards.
-class JoinScreen extends ConsumerWidget {
+/// Reached signed out, the gate keeps this address across sign-in (and
+/// the splash, from a cold start), and the sign-in form remembers the join
+/// as it is sent ([PendingJoin]). Arriving here with that join waiting,
+/// the screen joins at once, once, and lands in the stokvel; someone
+/// already in it lands there too. A wrong or expired code says so.
+class JoinScreen extends ConsumerStatefulWidget {
   /// Shows the invite with [code].
   const new({required this.code, super.key});
 
@@ -21,8 +27,37 @@ class JoinScreen extends ConsumerWidget {
   final String code;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<JoinScreen> createState() => _JoinScreenState();
+}
+
+class _JoinScreenState extends ConsumerState<JoinScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // After the first frame: a provider can't change while the tree
+    // builds. initState runs once per screen, and `take` is true once per
+    // sign-in, so a rebuild, a rotation or going back never joins again.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ref.read(pendingJoinProvider.notifier).take(widget.code)) {
+        unawaited(_joinNow());
+      }
+    });
+  }
+
+  Future<void> _joinNow() async {
+    final joiner = ref.read(inviteJoinerProvider(widget.code).notifier);
+    final stokvelId = await joiner.join();
+    if (stokvelId != null && mounted) StokvelRoute(id: stokvelId).go(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final code = widget.code;
     final view = inviteViewState(ref.watch(invitePreviewProvider(code)));
+    // Kept alive while this screen shows, so a join started above
+    // finishes here.
+    final joining = ref.watch(inviteJoinerProvider(code));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Invite')),
@@ -48,6 +83,17 @@ class JoinScreen extends ConsumerWidget {
                 onPressed: () => const HomeRoute().go(context),
                 child: const Text('Go to Home'),
               ),
+            ],
+          ),
+        ),
+        ViewData(value: final invite) when joining.isLoading => Center(
+          key: const Key('invite-joining'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text('Joining ${invite.stokvelName}…'),
             ],
           ),
         ),

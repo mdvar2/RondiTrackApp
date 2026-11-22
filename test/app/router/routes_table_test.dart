@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
 import 'package:ronditrack_app/features/activity/presentation/activity_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/profile_screen.dart';
+import 'package:ronditrack_app/features/auth/presentation/register_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
@@ -150,6 +151,24 @@ final List<_Row> _rows = [
   (
     pattern: '/sign-in',
     open: '/sign-in',
+    as: null,
+    lands: '/sign-in',
+    screen: SignInScreen,
+    tab: null,
+  ),
+  (
+    pattern: '/register',
+    open: '/register',
+    as: null,
+    lands: '/register',
+    screen: RegisterScreen,
+    tab: null,
+  ),
+  // Opened by hand, signed out: the restore finds nothing stored, and the
+  // splash passes on to sign-in.
+  (
+    pattern: '/splash',
+    open: '/splash',
     as: null,
     lands: '/sign-in',
     screen: SignInScreen,

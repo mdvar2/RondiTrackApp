@@ -1,31 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
-import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
-import 'package:ronditrack_app/features/auth/presentation/sign_in_notice.dart';
+import 'package:ronditrack_app/features/auth/presentation/sign_in_support.dart';
 
-/// Signs out, then signs in as [email], through the same auth state a
-/// person uses: the gate sends the open screen to sign-in (remembering its
-/// address), the shell and every provider holding the last person's data
-/// are disposed, and signing in brings the new person back to that address.
+/// Signs out, through the same auth state a person uses, with [email]
+/// waiting for the sign-in form: the gate sends the open screen to sign-in
+/// (remembering its address), the shell and every provider holding the
+/// last person's data are disposed, and the form opens with the email
+/// filled in. The password is typed: no build carries one.
 ///
-/// [auth] and [notice] are read before the switch starts: the widget that
-/// asked is disposed with the shell half way through. If the sign-in is
-/// refused (the API allows five sign-ins a minute from one address), the
-/// person is left on sign-in with the failure's words, the wait included.
+/// [auth] and [draft] are read before the switch starts: the widget that
+/// asked is disposed with the shell half way through.
 Future<void> switchPersona(
   AuthController auth,
-  SignInNotice notice,
+  SignInEmailDraft draft,
   String email,
 ) async {
+  draft.fill(email);
   await auth.signOut();
-  try {
-    await auth.signIn(email);
-  } on Failure catch (failure) {
-    notice.show(failure);
-  }
 }
 
 /// The dev build's persona switcher: a small button on the tab shell that
@@ -57,7 +51,7 @@ class _PersonaSheet extends ConsumerWidget {
     final accounts = ref.watch(demoAccountsProvider);
     final current = switch (ref.watch(authControllerProvider)) {
       SignedIn(:final user) => user.email,
-      SignedOut() => null,
+      Restoring() || SignedOut() => null,
     };
 
     return SafeArea(
@@ -71,7 +65,7 @@ class _PersonaSheet extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             subtitle: const Text(
-              'Dev build only. Signs out and in again, as a person would.',
+              'Dev build only. Signs out, fills in the email.',
             ),
           ),
           for (final account in accounts)
@@ -86,9 +80,9 @@ class _PersonaSheet extends ConsumerWidget {
               enabled: account.email != current,
               onTap: () {
                 final auth = ref.read(authControllerProvider.notifier);
-                final notice = ref.read(signInNoticeProvider.notifier);
+                final draft = ref.read(signInEmailDraftProvider.notifier);
                 Navigator.of(context).pop();
-                switchPersona(auth, notice, account.email).ignore();
+                switchPersona(auth, draft, account.email).ignore();
               },
             ),
         ],

@@ -1,0 +1,5 @@
+$ adb shell run-as za.co.gwinya.ronditrack_app.dev cat shared_prefs/FlutterSecureStorage.xml   # signed in as Lerato (value truncated)
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <string name="VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg_session.refresh"><encrypted, truncated></string>
+</map>

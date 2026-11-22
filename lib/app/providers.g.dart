@@ -58,7 +58,7 @@ final class SignedInUserIdProvider
   }
 }
 
-String _$signedInUserIdHash() => r'96c3a33ea3335b74a06427da799eba3dabb47c6b';
+String _$signedInUserIdHash() => r'0cef776003950fafefe8a4a22eacf0484b19ca69';
 
 /// The one switch between the API and the fakes. The app runs on the API;
 /// the Week 10 whole-app tests override this one provider with
@@ -111,58 +111,6 @@ final class DataSourceProvider
 }
 
 String _$dataSourceHash() => r'24466549ff5788bf9df6035fa72b289fb6a3c569';
-
-/// The seed password for the dev build's persona sign-in, passed at run
-/// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
-/// staging and prod, which have no personas.
-
-@ProviderFor(seedPassword)
-final seedPasswordProvider = SeedPasswordProvider._();
-
-/// The seed password for the dev build's persona sign-in, passed at run
-/// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
-/// staging and prod, which have no personas.
-
-final class SeedPasswordProvider
-    extends $FunctionalProvider<String, String, String>
-    with $Provider<String> {
-  /// The seed password for the dev build's persona sign-in, passed at run
-  /// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
-  /// staging and prod, which have no personas.
-  SeedPasswordProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'seedPasswordProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$seedPasswordHash();
-
-  @$internal
-  @override
-  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  String create(Ref ref) {
-    return seedPassword(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String>(value),
-    );
-  }
-}
-
-String _$seedPasswordHash() => r'68efd89162cb575ee56c6ae87a04ddcc2962611a';
 
 /// The flavour's validated configuration. `main` overrides it with the one
 /// it built from `config/<flavour>.json`; nothing has a default address.
@@ -268,74 +216,281 @@ final class ApiLogProvider
 
 String _$apiLogHash() => r'7140338884dd23922c68037ad174ce0e8f31e295';
 
-/// The signed-in person's access token, in memory only.
+/// Where the refresh token is kept: `flutter_secure_storage`. Tests
+/// override it with an [InMemoryRefreshTokenStore].
 
-@ProviderFor(accessToken)
-final accessTokenProvider = AccessTokenProvider._();
+@ProviderFor(refreshTokenStore)
+final refreshTokenStoreProvider = RefreshTokenStoreProvider._();
 
-/// The signed-in person's access token, in memory only.
+/// Where the refresh token is kept: `flutter_secure_storage`. Tests
+/// override it with an [InMemoryRefreshTokenStore].
 
-final class AccessTokenProvider
+final class RefreshTokenStoreProvider
     extends
         $FunctionalProvider<
-          AccessTokenHolder,
-          AccessTokenHolder,
-          AccessTokenHolder
+          RefreshTokenStore,
+          RefreshTokenStore,
+          RefreshTokenStore
         >
-    with $Provider<AccessTokenHolder> {
-  /// The signed-in person's access token, in memory only.
-  AccessTokenProvider._()
+    with $Provider<RefreshTokenStore> {
+  /// Where the refresh token is kept: `flutter_secure_storage`. Tests
+  /// override it with an [InMemoryRefreshTokenStore].
+  RefreshTokenStoreProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'accessTokenProvider',
+        name: r'refreshTokenStoreProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$accessTokenHash();
+  String debugGetCreateSourceHash() => _$refreshTokenStoreHash();
 
   @$internal
   @override
-  $ProviderElement<AccessTokenHolder> $createElement(
+  $ProviderElement<RefreshTokenStore> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  AccessTokenHolder create(Ref ref) {
-    return accessToken(ref);
+  RefreshTokenStore create(Ref ref) {
+    return refreshTokenStore(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AccessTokenHolder value) {
+  Override overrideWithValue(RefreshTokenStore value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AccessTokenHolder>(value),
+      providerOverride: $SyncValueProvider<RefreshTokenStore>(value),
     );
   }
 }
 
-String _$accessTokenHash() => r'76bbd078a7137a2dd44a03982926688eb37e3beb';
+String _$refreshTokenStoreHash() => r'28b9e7947e88cc109dd4b0e520edceff19688e99';
 
-/// The one Dio client, for the app's whole life: its base URL from the
-/// flavour's config, never typed in code. A `401` outside sign-in ends the
-/// session (README "Failures").
+/// What carries the requests: Dio's own (`null`) in the app. Tests put a
+/// fake server here, under both clients.
+
+@ProviderFor(httpAdapter)
+final httpAdapterProvider = HttpAdapterProvider._();
+
+/// What carries the requests: Dio's own (`null`) in the app. Tests put a
+/// fake server here, under both clients.
+
+final class HttpAdapterProvider
+    extends
+        $FunctionalProvider<
+          HttpClientAdapter?,
+          HttpClientAdapter?,
+          HttpClientAdapter?
+        >
+    with $Provider<HttpClientAdapter?> {
+  /// What carries the requests: Dio's own (`null`) in the app. Tests put a
+  /// fake server here, under both clients.
+  HttpAdapterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'httpAdapterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$httpAdapterHash();
+
+  @$internal
+  @override
+  $ProviderElement<HttpClientAdapter?> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  HttpClientAdapter? create(Ref ref) {
+    return httpAdapter(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(HttpClientAdapter? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<HttpClientAdapter?>(value),
+    );
+  }
+}
+
+String _$httpAdapterHash() => r'8a40f9ca9de79fe420fa6db688c592e7b3e855b8';
+
+/// The bare client: no session. The auth calls and the session
+/// interceptor's one retry go through it (README "The session").
+
+@ProviderFor(bareClient)
+final bareClientProvider = BareClientProvider._();
+
+/// The bare client: no session. The auth calls and the session
+/// interceptor's one retry go through it (README "The session").
+
+final class BareClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
+    with $Provider<Dio> {
+  /// The bare client: no session. The auth calls and the session
+  /// interceptor's one retry go through it (README "The session").
+  BareClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'bareClientProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$bareClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<Dio> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Dio create(Ref ref) {
+    return bareClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Dio value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Dio>(value),
+    );
+  }
+}
+
+String _$bareClientHash() => r'49f960276079d9c360a2f4ce937ad43d1a108597';
+
+/// Sign-in, register, refresh and logout, on the bare client, reading the
+/// refresh cookie by the name in the flavour's config.
+
+@ProviderFor(authCalls)
+final authCallsProvider = AuthCallsProvider._();
+
+/// Sign-in, register, refresh and logout, on the bare client, reading the
+/// refresh cookie by the name in the flavour's config.
+
+final class AuthCallsProvider
+    extends $FunctionalProvider<AuthCalls, AuthCalls, AuthCalls>
+    with $Provider<AuthCalls> {
+  /// Sign-in, register, refresh and logout, on the bare client, reading the
+  /// refresh cookie by the name in the flavour's config.
+  AuthCallsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'authCallsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$authCallsHash();
+
+  @$internal
+  @override
+  $ProviderElement<AuthCalls> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AuthCalls create(Ref ref) {
+    return authCalls(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AuthCalls value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AuthCalls>(value),
+    );
+  }
+}
+
+String _$authCallsHash() => r'5e8527851763d859dde5d895f4211e54fc05ebeb';
+
+/// The session: the access token in memory, the refresh token in
+/// [refreshTokenStore], and the one refresh that may be running. Only the
+/// refresh's own `401` ends it.
+
+@ProviderFor(session)
+final sessionProvider = SessionProvider._();
+
+/// The session: the access token in memory, the refresh token in
+/// [refreshTokenStore], and the one refresh that may be running. Only the
+/// refresh's own `401` ends it.
+
+final class SessionProvider
+    extends $FunctionalProvider<Session, Session, Session>
+    with $Provider<Session> {
+  /// The session: the access token in memory, the refresh token in
+  /// [refreshTokenStore], and the one refresh that may be running. Only the
+  /// refresh's own `401` ends it.
+  SessionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionHash();
+
+  @$internal
+  @override
+  $ProviderElement<Session> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Session create(Ref ref) {
+    return session(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Session value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Session>(value),
+    );
+  }
+}
+
+String _$sessionHash() => r'39c94cc477e526cf94da448d912e5016f277bdc9';
+
+/// The client every repository uses, for the app's whole life: its base
+/// URL from the flavour's config, never typed in code, and the session
+/// interceptor, which retries on [bareClient].
 
 @ProviderFor(apiClient)
 final apiClientProvider = ApiClientProvider._();
 
-/// The one Dio client, for the app's whole life: its base URL from the
-/// flavour's config, never typed in code. A `401` outside sign-in ends the
-/// session (README "Failures").
+/// The client every repository uses, for the app's whole life: its base
+/// URL from the flavour's config, never typed in code, and the session
+/// interceptor, which retries on [bareClient].
 
 final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
     with $Provider<Dio> {
-  /// The one Dio client, for the app's whole life: its base URL from the
-  /// flavour's config, never typed in code. A `401` outside sign-in ends the
-  /// session (README "Failures").
+  /// The client every repository uses, for the app's whole life: its base
+  /// URL from the flavour's config, never typed in code, and the session
+  /// interceptor, which retries on [bareClient].
   ApiClientProvider._()
     : super(
         from: null,
@@ -369,7 +524,7 @@ final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
   }
 }
 
-String _$apiClientHash() => r'2f6071b871da9b85260609a905bbede607919372';
+String _$apiClientHash() => r'1fc85823184b91e2fef9c1e5a5b5b27691f4cf34';
 
 /// The client generated from `contract/openapi/v1.json`, over [apiClient].
 /// Only `data/` code reads it.
@@ -580,14 +735,16 @@ String _$fakeStokvelsHash() => r'3ced7d4f7cc494159cec54d89f54a5275f47474f';
 
 /// The accounts the dev build's sign-in screen and persona switcher offer:
 /// the three seed personas, which exist in the fakes and in the API's
-/// Development seed (API PR #16) with the same emails.
+/// Development seed (API PR #16) with the same emails. Choosing one fills
+/// in the email; the password is typed.
 
 @ProviderFor(demoAccounts)
 final demoAccountsProvider = DemoAccountsProvider._();
 
 /// The accounts the dev build's sign-in screen and persona switcher offer:
 /// the three seed personas, which exist in the fakes and in the API's
-/// Development seed (API PR #16) with the same emails.
+/// Development seed (API PR #16) with the same emails. Choosing one fills
+/// in the email; the password is typed.
 
 final class DemoAccountsProvider
     extends
@@ -599,7 +756,8 @@ final class DemoAccountsProvider
     with $Provider<List<({String email, String name})>> {
   /// The accounts the dev build's sign-in screen and persona switcher offer:
   /// the three seed personas, which exist in the fakes and in the API's
-  /// Development seed (API PR #16) with the same emails.
+  /// Development seed (API PR #16) with the same emails. Choosing one fills
+  /// in the email; the password is typed.
   DemoAccountsProvider._()
     : super(
         from: null,
@@ -638,20 +796,20 @@ final class DemoAccountsProvider
 
 String _$demoAccountsHash() => r'4a776dee9d5ef16bd4e397683c8ca9ed282038ba';
 
-/// Signs in and out. Implementation: [ApiAuthRepository], or
-/// [FakeAuthRepository].
+/// Signs in, registers, restores and signs out. Implementation:
+/// [ApiAuthRepository], or [FakeAuthRepository].
 
 @ProviderFor(authRepository)
 final authRepositoryProvider = AuthRepositoryProvider._();
 
-/// Signs in and out. Implementation: [ApiAuthRepository], or
-/// [FakeAuthRepository].
+/// Signs in, registers, restores and signs out. Implementation:
+/// [ApiAuthRepository], or [FakeAuthRepository].
 
 final class AuthRepositoryProvider
     extends $FunctionalProvider<AuthRepository, AuthRepository, AuthRepository>
     with $Provider<AuthRepository> {
-  /// Signs in and out. Implementation: [ApiAuthRepository], or
-  /// [FakeAuthRepository].
+  /// Signs in, registers, restores and signs out. Implementation:
+  /// [ApiAuthRepository], or [FakeAuthRepository].
   AuthRepositoryProvider._()
     : super(
         from: null,
@@ -685,7 +843,7 @@ final class AuthRepositoryProvider
   }
 }
 
-String _$authRepositoryHash() => r'cf339617de056a40afd92b40e2909cf8f6b8df50';
+String _$authRepositoryHash() => r'c61adff5e9584439156c5c1eccb02e37a7fe95c8';
 
 /// Reads Home. Implementation: [ApiHomeRepository]; or
 /// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when

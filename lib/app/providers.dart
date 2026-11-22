@@ -3,7 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 import 'package:ronditrack_app/core/data/api_client.dart';
+import 'package:ronditrack_app/core/data/auth_calls.dart';
 import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';
+import 'package:ronditrack_app/core/session/refresh_token_store.dart';
+import 'package:ronditrack_app/core/session/session.dart';
 import 'package:ronditrack_app/features/activity/data/api_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/data/fake_activity_repository.dart';
 import 'package:ronditrack_app/features/activity/data/flaky_activity_repository.dart';
@@ -42,7 +45,8 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 String? signedInUserId(Ref ref) => switch (ref.watch(authControllerProvider)) {
   SignedIn(:final user) => user.id,
-  SignedOut() => null,
+  // Nobody's data while the restore decides: the splash shows nothing.
+  Restoring() || SignedOut() => null,
 };
 
 /// Where every repository gets its data.
@@ -68,14 +72,6 @@ DataSource dataSourceFor(AppEnvironment environment, String requested) =>
     ? DataSource.fakes
     : DataSource.api;
 
-/// The seed password for the dev build's persona sign-in, passed at run
-/// time with `--dart-define=SEED_PASSWORD=…` and never committed. Empty in
-/// staging and prod, which have no personas.
-@Riverpod(keepAlive: true)
-String seedPassword(Ref ref) => ref.watch(appConfigProvider).hasDevTools
-    ? const String.fromEnvironment('SEED_PASSWORD')
-    : '';
-
 /// The flavour's validated configuration. `main` overrides it with the one
 /// it built from `config/<flavour>.json`; nothing has a default address.
 @Riverpod(keepAlive: true)
@@ -90,21 +86,58 @@ void Function(String line) apiLog(Ref ref) => (line) {
   if (kDebugMode) debugPrint(line);
 };
 
-/// The signed-in person's access token, in memory only.
+/// Where the refresh token is kept: `flutter_secure_storage`. Tests
+/// override it with an [InMemoryRefreshTokenStore].
 @Riverpod(keepAlive: true)
-AccessTokenHolder accessToken(Ref ref) => AccessTokenHolder();
+RefreshTokenStore refreshTokenStore(Ref ref) => SecureRefreshTokenStore();
 
-/// The one Dio client, for the app's whole life: its base URL from the
-/// flavour's config, never typed in code. A `401` outside sign-in ends the
-/// session (README "Failures").
+/// What carries the requests: Dio's own (`null`) in the app. Tests put a
+/// fake server here, under both clients.
+@Riverpod(keepAlive: true)
+HttpClientAdapter? httpAdapter(Ref ref) => null;
+
+/// The bare client: no session. The auth calls and the session
+/// interceptor's one retry go through it (README "The session").
+@Riverpod(keepAlive: true)
+Dio bareClient(Ref ref) {
+  final dio = createBareClient(
+    baseUri: ref.watch(appConfigProvider).apiBaseUri,
+    log: ref.watch(apiLogProvider),
+    adapter: ref.watch(httpAdapterProvider),
+  );
+  ref.onDispose(dio.close);
+  return dio;
+}
+
+/// Sign-in, register, refresh and logout, on the bare client, reading the
+/// refresh cookie by the name in the flavour's config.
+@Riverpod(keepAlive: true)
+AuthCalls authCalls(Ref ref) => AuthCalls(
+  ref.watch(bareClientProvider),
+  cookieName: ref.watch(appConfigProvider).refreshCookieName,
+);
+
+/// The session: the access token in memory, the refresh token in
+/// [refreshTokenStore], and the one refresh that may be running. Only the
+/// refresh's own `401` ends it.
+@Riverpod(keepAlive: true)
+Session session(Ref ref) => Session(
+  calls: ref.watch(authCallsProvider),
+  store: ref.watch(refreshTokenStoreProvider),
+  onEnded: () => ref.read(authControllerProvider.notifier).sessionEnded(),
+);
+
+/// The client every repository uses, for the app's whole life: its base
+/// URL from the flavour's config, never typed in code, and the session
+/// interceptor, which retries on [bareClient].
 @Riverpod(keepAlive: true)
 Dio apiClient(Ref ref) {
   final dio = createApiClient(
     baseUri: ref.watch(appConfigProvider).apiBaseUri,
-    tokens: ref.watch(accessTokenProvider),
-    onSessionEnded: () =>
-        ref.read(authControllerProvider.notifier).sessionEnded(),
+    session: ref.watch(sessionProvider),
+    retryClient: ref.watch(bareClientProvider),
     log: ref.watch(apiLogProvider),
+    adapter: ref.watch(httpAdapterProvider),
   );
   ref.onDispose(dio.close);
   return dio;
@@ -140,23 +173,24 @@ List<FakeStokvel> fakeStokvels(Ref ref) => FakeSeed.fresh();
 
 /// The accounts the dev build's sign-in screen and persona switcher offer:
 /// the three seed personas, which exist in the fakes and in the API's
-/// Development seed (API PR #16) with the same emails.
+/// Development seed (API PR #16) with the same emails. Choosing one fills
+/// in the email; the password is typed.
 @Riverpod(keepAlive: true)
 List<({String name, String email})> demoAccounts(Ref ref) => [
   for (final persona in FakeSeed.personas.values)
     (name: persona.name, email: persona.email),
 ];
 
-/// Signs in and out. Implementation: [ApiAuthRepository], or
-/// [FakeAuthRepository].
+/// Signs in, registers, restores and signs out. Implementation:
+/// [ApiAuthRepository], or [FakeAuthRepository].
 @Riverpod(keepAlive: true)
 AuthRepository authRepository(Ref ref) => switch (ref.watch(
   dataSourceProvider,
 )) {
   DataSource.api => ApiAuthRepository(
+    ref.watch(authCallsProvider),
+    ref.watch(sessionProvider),
     ref.watch(apiProvider),
-    ref.watch(accessTokenProvider),
-    seedPassword: ref.watch(seedPasswordProvider),
   ),
   DataSource.fakes => FakeAuthRepository(delay: ref.watch(fakeDelayProvider)),
 };

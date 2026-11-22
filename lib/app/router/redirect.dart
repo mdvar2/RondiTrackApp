@@ -6,8 +6,9 @@ import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 // `test/app/router/redirect_test.dart` tests it directly. The router calls
 // it on every navigation, and again whenever the auth state changes.
 
-/// The app's addresses, other than sign-in: one per row of README
-/// "Routes". An id or code is letters, digits, `_` or `-`.
+/// The app's addresses, other than sign-in, register and the splash: one
+/// per row of README "Routes". An id or code is letters, digits, `_` or
+/// `-`.
 final List<RegExp> _appAddresses = [
   RegExp(r'^/$'),
   RegExp(r'^/stokvels$'),
@@ -20,7 +21,8 @@ final List<RegExp> _appAddresses = [
   RegExp(r'^/join/[\w-]+$'),
 ];
 
-/// Whether [path] is one of the app's own addresses (sign-in excluded).
+/// Whether [path] is one of the app's own addresses (sign-in, register
+/// and the splash excluded).
 bool isAppAddress(String path) =>
     _appAddresses.any((address) => address.hasMatch(path));
 
@@ -28,7 +30,8 @@ bool isAppAddress(String path) =>
 ///
 /// Only an address inside the app qualifies: a path, with no scheme and no
 /// host, that matches a row of the Routes table. Home isn't remembered
-/// (it's where sign-in lands anyway), and neither is sign-in itself.
+/// (it's where sign-in lands anyway), and neither are sign-in, register
+/// or the splash.
 String? returnAddress(String? from) {
   if (from == null) return null;
   final uri = Uri.tryParse(from);
@@ -40,30 +43,59 @@ String? returnAddress(String? from) {
 
 /// Where to go instead of [location], given [auth]; `null` to stay.
 ///
+/// Restoring (the one refresh on launch):
+/// * at the splash, stay;
+/// * anywhere else, go to the splash, remembering the address (or the
+///   one sign-in or register was remembering), so a link survives.
+///
 /// Signed out:
-/// * at sign-in, stay (dropping a `from` that isn't an app address);
+/// * at sign-in or register, stay (dropping a `from` that isn't an app
+///   address);
+/// * at the splash, go to sign-in, passing on its remembered address;
 /// * anywhere else, go to sign-in, remembering the address if it is one
 ///   of the app's own (so `/join/:code` survives sign-in).
 ///
 /// Signed in:
-/// * at sign-in, go to the remembered address, or Home;
+/// * at sign-in, register or the splash, go to the remembered address, or
+///   Home;
 /// * at an address the app doesn't have, go Home;
 /// * anywhere else, stay.
 String? redirectFor({required AuthState auth, required Uri location}) {
   final path = location.path.isEmpty ? '/' : location.path;
   final atSignIn = path == const SignInRoute().location;
-  final from = atSignIn ? location.queryParameters['from'] : null;
+  final atRegister = path == const RegisterRoute().location;
+  final atSplash = path == const SplashRoute().location;
+  final from = atSignIn || atRegister || atSplash
+      ? location.queryParameters['from']
+      : null;
 
+  // Register opened from a cold start waits on the splash too, and is
+  // where a signed-out person goes after it.
+  final register = const RegisterRoute().location;
   switch (auth) {
-    case SignedOut():
-      if (atSignIn) {
-        return from == null || returnAddress(from) != null
+    case Restoring():
+      if (atSplash) {
+        return from == null || from == register || returnAddress(from) != null
             ? null
-            : const SignInRoute().location;
+            : const SplashRoute().location;
       }
-      return SignInRoute(from: returnAddress(path)).location;
+      if (atRegister && from == null) {
+        return SplashRoute(from: register).location;
+      }
+      final goingTo = atSignIn || atRegister ? from : path;
+      return SplashRoute(from: returnAddress(goingTo)).location;
+    case SignedOut():
+      if (atSignIn || atRegister) {
+        if (from == null || returnAddress(from) != null) return null;
+        return atSignIn ? const SignInRoute().location : register;
+      }
+      if (atSplash && from == register) return register;
+      final goingTo = atSplash ? from : path;
+      return SignInRoute(from: returnAddress(goingTo)).location;
     case SignedIn():
-      if (atSignIn) return returnAddress(from) ?? const HomeRoute().location;
+      if (atSignIn || atRegister || atSplash) {
+        return returnAddress(from) ?? const HomeRoute().location;
+      }
       if (!isAppAddress(path)) return const HomeRoute().location;
       return null;
   }

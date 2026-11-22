@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:ronditrack_app/core/data/api_values.dart';
 import 'package:ronditrack_app/core/data/generated/models/invite_preview_response.dart';
 import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';
@@ -33,12 +34,18 @@ class ApiInviteRepository implements InviteRepository {
   });
 
   /// The join answers `204` with no body, so the stokvel's id comes from
-  /// the preview, read first. A second join is the API's `409`, a
-  /// `RuleFailure` with its words.
+  /// the preview, read first: a wrong code is its `404`, an expired one its
+  /// `410`. The join's only `409` is "You are already a member of this
+  /// stokvel." (README "Contract notes › Auth", question 7), so someone
+  /// already in it gets the stokvel's id too, and lands in it.
   @override
   Future<Result<String>> join(String code) => guard(() async {
     final preview = await _api.invites.getApiV1InvitesCode(code: code);
-    await _api.invites.postApiV1InvitesCodeJoin(code: code);
+    try {
+      await _api.invites.postApiV1InvitesCodeJoin(code: code);
+    } on DioException catch (error) {
+      if (error.response?.statusCode != 409) rethrow;
+    }
     return preview.data.stokvelId;
   });
 }

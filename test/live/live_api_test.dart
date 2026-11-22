@@ -8,7 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/retry.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
+import 'package:ronditrack_app/core/data/to_failure.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
+import 'package:ronditrack_app/core/session/refresh_token_store.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
@@ -18,14 +20,22 @@ import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/close_cycle_provider.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
 
+import '../helpers/flavour_config.dart';
+
 // The app's own providers against the real API on a fresh seed (README
 // "Running against the API"). Skipped unless asked for:
 //
 //   $env:SEED_PASSWORD = '<the seed password>'
 //   flutter test --tags live --run-skipped
 //
-// LIVE_API_BASE_URL overrides the address (default: config/dev.json's).
-// It signs in three times; the API allows five sign-ins a minute per IP.
+// The password is read from the environment of this test run only: no
+// build carries it. LIVE_API_BASE_URL overrides the address (default:
+// config/dev.json's). It signs in four times; the API allows five sign-ins
+// (and registers) a minute per address, so run it once a minute at most.
+//
+// This API has no refresh grace window (README "Contract notes › Auth",
+// question 3): a spent refresh token is always reuse, so these run with
+// it off.
 
 final String _base =
     Platform.environment['LIVE_API_BASE_URL'] ?? 'http://127.0.0.1:8081';
@@ -39,10 +49,13 @@ ProviderContainer _app({String? base}) {
           environment: 'dev',
           appName: 'RondiTrack Dev',
           apiBaseUrl: base ?? _base,
+          refreshCookieName: refreshCookieName,
           nativeFlavor: 'dev',
         ),
       ),
-      seedPasswordProvider.overrideWithValue(_password),
+      // The phone's Keystore isn't here; the refresh token is kept the
+      // same way, in memory.
+      refreshTokenStoreProvider.overrideWithValue(InMemoryRefreshTokenStore()),
       // The app's own log lines, printed for the pull request.
       apiLogProvider.overrideWithValue((line) => stdout.writeln('  $line')),
     ],
@@ -54,17 +67,20 @@ ProviderContainer _app({String? base}) {
 
 Future<ProviderContainer> _signedInAs(FakePersona persona) async {
   final app = _app();
-  await app.read(authControllerProvider.notifier).signIn(persona.email);
+  await app
+      .read(authControllerProvider.notifier)
+      .signIn(email: persona.email, password: _password);
   expect(app.read(authControllerProvider), isA<SignedIn>());
   return app;
 }
 
-/// What [future] failed with: the Failure a provider holds.
+/// What [future] failed with: the Failure a provider holds, or the one a
+/// call's error means.
 Future<Failure> _failureOf(Future<Object?> future) async {
   try {
     await future;
-  } on Failure catch (failure) {
-    return failure;
+  } on Object catch (error) {
+    return toFailure(error);
   }
   fail('Expected a failure');
 }
@@ -169,6 +185,51 @@ void main() {
       ..writeln('  Thabo opening a stokvel that does not exist: $noSuch');
     expect(notMine, isA<NotFoundFailure>());
     expect(noSuch, isA<NotFoundFailure>());
+
+    // After sign-out, the old refresh token is dead.
+    final old = await app.read(refreshTokenStoreProvider).read();
+    await app.read(authControllerProvider.notifier).signOut();
+    expect(await app.read(refreshTokenStoreProvider).read(), isNull);
+    final afterSignOut = await _failureOf(
+      app.read(authCallsProvider).refresh(old!),
+    );
+    stdout.writeln(
+      '  Thabo signed out; his old refresh token sent again: $afterSignOut',
+    );
+    expect(afterSignOut, isA<UnauthorisedFailure>());
+  });
+
+  test('a spoiled access token and three requests at once: three 401s, one '
+      'refresh, three retries; then the spent refresh token is refused and '
+      'kills the newer one', () async {
+    final app = await _signedInAs(FakeSeed.lerato);
+    final session = app.read(sessionProvider);
+    final spent = await app.read(refreshTokenStoreProvider).read();
+    // Nothing is fetched until the token is spoiled.
+    session.spoilAccessToken();
+    stdout.writeln('  Access token spoiled; three requests at once:');
+
+    final api = app.read(apiProvider);
+    await (
+      api.me.getApiV1Me(),
+      api.me.getApiV1MeHome(),
+      api.stokvels.getApiV1StokvelsId(id: FakeSeed.mabenaFamilyId),
+    ).wait;
+
+    stdout.writeln('  Refreshes sent: ${session.refreshes}');
+    expect(session.refreshes, 1);
+    expect(app.read(authControllerProvider), isA<SignedIn>());
+
+    final newer = await app.read(refreshTokenStoreProvider).read();
+    expect(newer, isNot(spent));
+    final calls = app.read(authCallsProvider);
+    final reused = await _failureOf(calls.refresh(spent!));
+    final killed = await _failureOf(calls.refresh(newer!));
+    stdout
+      ..writeln('  The spent refresh token sent again: $reused')
+      ..writeln('  The newer one, after that: $killed');
+    expect(reused, isA<UnauthorisedFailure>());
+    expect(killed, isA<UnauthorisedFailure>());
   });
 
   test('a wrong address is no answer', () async {
@@ -176,7 +237,9 @@ void main() {
     final app = _app(base: 'http://127.0.0.1:9');
 
     final failure = await _failureOf(
-      app.read(authControllerProvider.notifier).signIn(FakeSeed.lerato.email),
+      app
+          .read(authControllerProvider.notifier)
+          .signIn(email: FakeSeed.lerato.email, password: _password),
     );
     stdout.writeln('  Wrong address: $failure: ${failure.message}');
     expect(failure, isA<NoAnswerFailure>());

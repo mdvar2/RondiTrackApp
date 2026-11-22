@@ -2,7 +2,15 @@
     <!-- Every build reaches the API, release builds included. Flutter's
          template grants INTERNET to debug and profile builds only. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Backup off (README "The session"): the refresh token is encrypted
+         with a Keystore key that never leaves this phone, so a restored copy
+         is useless, and on a shared phone it is somebody's session. Android
+         12+ still moves data phone to phone unless the extraction rules
+         exclude it too. -->
     <application
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

@@ -12,6 +12,8 @@ const traceIdKey = 'ronditrack.traceId';
 /// Turns anything a call threw into the one [Failure] it means. The only
 /// place in the app that looks at a status code (README "Failures").
 ///
+/// * A [DioException] carrying a [Failure] (the session interceptor's
+///   refresh failed): that failure.
 /// * A [DioException] with an answer: by its status, with the API's
 ///   `detail`, `errors`, `correlationId` and `Retry-After`, read from the
 ///   raw body and headers. The contract's `ProblemDetails` schema lists
@@ -34,6 +36,9 @@ Failure toFailure(Object error) => switch (error) {
 };
 
 Failure _fromDio(DioException error) {
+  // A failure the app's own interceptor already decided (a refresh that
+  // failed on the way to this request).
+  if (error.error case final Failure failure) return failure;
   final traceId = error.requestOptions.extra[traceIdKey] as String?;
   final response = error.response;
   return switch (error.type) {

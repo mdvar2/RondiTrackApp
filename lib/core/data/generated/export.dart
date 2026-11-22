@@ -26,6 +26,7 @@ export 'models/paged_result_of_contribution_with_member_response.dart';
 export 'models/payout_order_entry_response.dart';
 export 'models/payout_order_response.dart';
 export 'models/payout_response.dart';
+export 'models/register_request.dart';
 export 'models/stokvel_cycle_summary_response.dart';
 export 'models/stokvel_detail_response.dart';
 export 'models/update_contribution_cycle_request.dart';

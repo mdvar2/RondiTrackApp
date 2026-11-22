@@ -63,12 +63,7 @@ void main() {
 
     expect(locationOf(app), SignInRoute(from: _payouts).location);
 
-    await tester.enterText(
-      find.byKey(const Key('sign-in-email')),
-      FakeSeed.lerato.email,
-    );
-    await tester.tap(find.byKey(const Key('sign-in-submit')));
-    await tester.pumpAndSettle();
+    await typeSignIn(tester, FakeSeed.lerato.email);
 
     expect(locationOf(app), _payouts);
     expect(find.byType(PayoutsScreen), findsOneWidget);

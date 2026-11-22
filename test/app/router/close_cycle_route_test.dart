@@ -109,12 +109,7 @@ void main() {
     final app = await pumpApp(tester, coldStart: _close);
 
     expect(locationOf(app), SignInRoute(from: _close).location);
-    await tester.enterText(
-      find.byKey(const Key('sign-in-email')),
-      FakeSeed.lerato.email,
-    );
-    await tester.tap(find.byKey(const Key('sign-in-submit')));
-    await tester.pumpAndSettle();
+    await typeSignIn(tester, FakeSeed.lerato.email);
 
     expect(locationOf(app), _close);
   });

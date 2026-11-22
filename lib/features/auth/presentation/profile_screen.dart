@@ -1,29 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ronditrack_app/app/dev/session_tools.dart';
+import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 
-/// The Profile tab: who is signed in, and Sign out.
-class ProfileScreen extends ConsumerStatefulWidget {
+/// The Profile tab: who is signed in, and Sign out. The dev build adds the
+/// session tools.
+class ProfileScreen extends ConsumerWidget {
   /// Creates the screen.
   const new({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _signingOut = false;
-
-  Future<void> _signOut() async {
-    setState(() => _signingOut = true);
-    // The gate sends the app to sign-in as soon as the state changes, and
-    // this screen goes with the rest of the signed-in history.
-    await ref.read(authControllerProvider.notifier).signOut();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final auth = ref.watch(authControllerProvider);
 
@@ -37,7 +26,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Text(user.name, style: theme.textTheme.headlineSmall),
               Text(user.email),
             ],
-            SignedOut() => [const Text('Signed out')],
+            Restoring() || SignedOut() => [const Text('Signed out')],
           },
           const SizedBox(height: 16),
           const Text(
@@ -49,11 +38,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             alignment: AlignmentDirectional.centerStart,
             child: FilledButton.icon(
               key: const Key('sign-out'),
-              onPressed: _signingOut ? null : _signOut,
+              // Works with no network: the phone is wiped and the gate
+              // moves to sign-in at once; the API is told afterwards.
+              onPressed: () =>
+                  ref.read(authControllerProvider.notifier).signOut(),
               icon: const Icon(Icons.logout),
               label: const Text('Sign out'),
             ),
           ),
+          // Built only in the dev flavour: in staging and prod these
+          // buttons don't exist (the 10.3 test proves it).
+          if (AppConfigScope.of(context).hasDevTools) const SessionTools(),
         ],
       ),
     );
