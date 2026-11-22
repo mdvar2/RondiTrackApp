@@ -6,6 +6,8 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
 
 **Since Assignment 11.1 it does:** every repository runs on the RondiTrack API through a client generated from the contract copy, with every failure turned into one `Failure`. The swap changed no widget. The fakes stay, for the tests, behind one switch. See [Part 10](#part-10-real-data-assignment-111).
 
+**Since Assignment 11.2 it signs people in for real:** register, sign in, stay signed in across a restart, one refresh however many requests need it, and sign-out that leaves nothing of the last person on a shared phone. No password is built into any flavour. See [Part 11](#part-11-sign-in-assignment-112).
+
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
 - API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`da39b16`](https://github.com/mdvar2/RondiTrack/commit/da39b168f78d521fe0fecff751c85862cb64ce40) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `1111c20c…16321`). That commit adds the payout order endpoint ([API PR #15](https://github.com/mdvar2/RondiTrack/pull/15)) on top of the 10.1 contract fixes ([API PR #14](https://github.com/mdvar2/RondiTrack/pull/14)). 10.1 and 10.2 read the contract at `3d04a52` (SHA-256 `7292b744…4a0dc3`).
 
@@ -46,6 +48,7 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
     - [5. The three seed personas](#5-the-three-seed-personas)
     - [Payouts: the five answers (Assignment 10.3)](#payouts-the-five-answers-assignment-103)
     - [Real data: the seven answers (Assignment 11.1)](#real-data-the-seven-answers-assignment-111)
+    - [Auth: the seven answers (Assignment 11.2)](#auth-the-seven-answers-assignment-112)
     - [Gaps found, and backend pull requests](#gaps-found-and-backend-pull-requests)
 - [Part 8: Tests, CI and evidence](#part-8-tests-ci-and-evidence)
   - [Tests and CI](#tests-and-ci)
@@ -62,6 +65,11 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
   - [Failures](#failures)
   - [Decisions](#decisions)
   - [Assignment 11.1: verification](#assignment-111-verification)
+- [Part 11: Sign-in (Assignment 11.2)](#part-11-sign-in-assignment-112)
+  - [The session](#the-session)
+  - [Running against the API: what changed in 11.2](#running-against-the-api-what-changed-in-112)
+  - [Decisions (11.2)](#decisions-112)
+  - [Assignment 11.2: verification](#assignment-112-verification)
 
 ---
 
@@ -135,6 +143,8 @@ Every screen has an address. Four tabs (**Home**, **Stokvels**, **Activity**, **
 | `/profile` | Who is signed in, and **Sign out**. **Profile** tab | Sign-in, then Profile | Not applicable | Home tab (`/`) |
 | `/join/:code` | An invite's preview, then **Join**. **Home** tab | Sign-in, then **this invite's preview** (remembered across sign-in) | Not applicable: an invite is how a non-member joins. An unknown code shows "We couldn't find that invite." | Home (`/`), also after a cold start |
 | `/sign-in` | Fake sign-in by email. No tabs | Shown | Not applicable | Leaves the app. Signing out empties the history, so back can't reach a signed-in screen |
+| `/register` | Create an account: name, email, password; the API's field errors under their fields. Then signed in, and on to the remembered address. No tabs (11.2) | Shown | Not applicable | Leaves the app |
+| `/splash` | The one refresh on launch; if it can't reach the API, **Try again** and **Sign out**. Every address waits here while the app is restoring, and is remembered. No tabs (11.2) | Not shown: signed out goes to sign-in, passing the remembered address on | Not applicable | Leaves the app |
 
 - **Signed in, opening `/sign-in`:** goes to the remembered address if there is one, otherwise Home.
 - **Any other address** (one this table doesn't list): Home when signed in; sign-in, then Home, when signed out. It is never remembered.
@@ -165,6 +175,10 @@ The rules, in order:
 | Signed in | `/sign-in` | The remembered address, or Home |
 | Signed in | an address the Routes table doesn't have | Home |
 | Signed in | anything else | Stays |
+| Restoring (11.2) | `/splash` | Stays, offline included |
+| Restoring (11.2) | anything else | `/splash?from=<that address>` (sign-in and register pass on their own `from`), so a link survives the splash |
+| Signed out (11.2) | `/splash?from=…` | `/sign-in?from=…`, still remembering (`/register` if that was the address) |
+| Signed in (11.2) | `/splash?from=…` or `/register` | The remembered address, or Home |
 
 **What is remembered across sign-in:** only a path that matches a row of the Routes table (`/join/MABENA26`, `/stokvels/<id>/cycles/<id>`, …): no scheme, no host, no query. `https://evil.example/…`, `//evil.example`, `ronditrack-dev://…`, `javascript:…`, `/admin` and `/sign-in` itself all land on Home. So `/join/:code` opened signed out survives sign-in and lands on the invite's preview, and a remembered address can never point outside the app. [`redirect_test.dart`](test/app/router/redirect_test.dart) tests every rule, plus a no-loop check: every redirect lands where the gate then lets it stay.
 
@@ -761,6 +775,30 @@ An empty `items` means the cycle has no payout order: it isn't `Open` and had no
 | 13 | Join answers `204` with no stokvel id, and `409` for a member | The 10.2 interface promised the id and a harmless second join | Open; handled in the app as described above |
 | 14 | `GET …/cycles/{cycleId}` has no `membersPaid`, and its target only as rands (`targetAmount`, a `double`) | The cycle screen shows both | Open. The app takes them from the stokvel's current-cycle summary (`StokvelCycleSummaryResponse`, in cents), which covers every cycle the app links to. For any other cycle it follows the API's own definitions (members with a contribution; collected plus `amountDueCents`). Adding them to the response changes both web clients' types, so it waits for its own pull request |
 
+#### Auth: the seven answers (Assignment 11.2)
+
+> **Why these come first.** Written before any session code, from the API's C# (`AuthController`, `AuthService`, `EfRefreshTokenRepository`, `TokenService`, `RateLimitPolicies`, `InvitesController`, `GlobalExceptionHandler`) and, where those were silent, from `curl -i` against the seeded API on port 8081. The app's auth calls follow this API, not Matric Compass's.
+
+**Read at:** API commit [`6249c4b`](https://github.com/mdvar2/RondiTrack/commit/6249c4b) (branch `fix/mobile-contract-gaps`, after API PR #16). **Gaps fixed in:** [API PR #17](https://github.com/mdvar2/RondiTrack/pull/17) (`1977a2c`, branch `fix/auth-contract-for-mobile`); [`contract/openapi/v1.json`](contract/openapi/v1.json) is that commit's `openapi/v1.json`, byte for byte.
+
+| # | Question | The API's answer | What the app does |
+|---|---|---|---|
+| 1 | What do register, login, refresh and logout take and return? Does register sign in? | `POST /auth/register` `{name, email, password}` → **`201`** `UserResponse` `{id, name, email, version}`, **no token and no cookie**: register does not sign in. `POST /auth/login` `{email, password}` → `200` `{accessToken, expiresAtUtc}` and the refresh cookie. `POST /auth/refresh` (cookie only, no body) → `200`, the same body and a **new** cookie. `POST /auth/logout` (cookie) → `204` and the cookie cleared | Register, then sign in with the same details at once, so the person lands where sign-in would have taken them |
+| 2 | The exact `Set-Cookie`, and the access token's lifetime | `Set-Cookie: __Secure-ronditrack_refresh=<64 random bytes, base64>; expires=<now + 7 days>; path=/api/v1/auth; secure; samesite=strict; httponly`. The access token lasts **5 minutes** (`Jwt:AccessTokenMinutes`); the body's **`expiresAtUtc`** says when, and so does the JWT's `exp` | The name is `REFRESH_COOKIE_NAME` in `config/<flavour>.json`, never in code. The cookie goes back, as a `Cookie` header, only to `/api/v1/auth/refresh` and `/api/v1/auth/logout`. The expiry (the earlier of `expiresAtUtc` and `exp`) drives the early refresh |
+| 3 | Does refresh rotate? A spent token? A grace window? | **Rotates**: each refresh marks the token used and issues its successor in the same family. A **used** token presented again is reuse: **`401`** *"Refresh session is invalid. Please sign in again."* and **the whole family is revoked, the newer token too** (checked with curl: the spent token, then the newer one, both `401`). **There is no grace window** in this API (8.2's isn't in any branch; `Housekeeping:RefreshTokenGraceDays` only keeps expired rows for investigation), so there is nothing to turn off: the tests and the live run are always without one | One refresh at a time ([The session](#the-session)); a `401` for a request sent with an older token is retried with the current one, never refreshed again. The fake server in the tests rotates and detects reuse the same way |
+| 4 | Which claims are in the access token? Where does a stokvel role come from? | `sub` (user id), `jti`, `iat`, `nbf`, `exp`, `iss`, `aud`. **No role**: `platform_role` is added on the server per request, and stokvel roles come only from memberships (`/me/home`, `/stokvels/{id}`) | Claims are read (not checked) for `exp` only. Treasurer buttons come from the membership, as in 11.1, never from the token |
+| 5 | Logout with a good cookie, a spent one, none? | **`204` every time**, with the cookie cleared. A known token (spent or not) revokes **its whole family**; none or an unknown one revokes nothing | Sign-out wipes the phone first, then tells the API with a 5 s timeout, and never depends on the answer |
+| 6 | How are login and register rate limited? | Login: **5 a minute per caller address**, fixed window, **successes counted too**; `429` with **`Retry-After: 60`** (the whole window) and a problem body. **Register was not limited at all** (gap 15, fixed in API PR #17: register now shares login's window) | The form shows the wait from `Retry-After` and keeps the button disabled until it ends, on sign-in and register both. The live test signs in four times, inside the five |
+| 7 | Joining with a code: success, wrong, expired, already a member? Signed in? | `POST /invites/{code}/join` needs a signed-in person (`401` otherwise). Success **`204`**, no body. Unknown code **`404`** *"Invite not found."*; expired **`410`** *"This invite has expired."* (the preview `GET /invites/{code}` answers the same two first); already a member **`409`** *"You are already a member of this stokvel."* (the join's only `409`). Per-account limit 10/min | Opened signed out, `/join/:code` goes to sign-in and joins once afterwards: success and already-a-member land in the stokvel (the id from the preview); a wrong or expired code says so on the invite screen |
+
+**Gaps found in 11.2** (fixed in [API PR #17](https://github.com/mdvar2/RondiTrack/pull/17), with `RateLimitContractTests.Register_SharesLoginWindow_RejectsWithRetryAfter`; `dotnet test` **196 passed**):
+
+| # | Gap | Why it matters to the app | Status |
+|---|---|---|---|
+| 15 | `POST /auth/register` had no rate limit | Account creation could flood or probe without limit; the form's 429 wait had nothing to come from | **Fixed**: the Login policy, shared with sign-in, per address |
+| 16 | Register declared `200`; it answers `201` | A generated client would read the wrong status | **Fixed**: `201` with `UserResponse` |
+| 17 | Register's `400` (with `errors`) and `409`, refresh's `401`, logout's `204` weren't in the contract | The app's contract copy didn't say what the forms must handle | **Fixed**: declared |
+
 #### Gaps found, and backend pull requests
 
 **Backend branch:** [`fix/mobile-contract-gaps`](https://github.com/mdvar2/RondiTrack/compare/assignment-9.3...fix/mobile-contract-gaps) in the API repo, commit `0bb7f92`, based on the contract commit `3d04a52` (branch `assignment-9.3`). **Pull request:** not yet opened; open it at <https://github.com/mdvar2/RondiTrack/pull/new/fix/mobile-contract-gaps> with base `assignment-9.3`, and put its link here.
@@ -1130,3 +1168,91 @@ fail: RondiTrack.Handlers.GlobalExceptionHandler[0]
 The id appears once: the app didn't retry the `500`. The outage log has one other `500` (`0e3d8248…`), Home's `/me/home`, asked for at the same moment by the stokvel screen's picker. The API was then restarted on `ronditrack_mobile` as normal; the development database (`ronditrack`) was never used: it has none of the seed's users or stokvels, and its migrations are unchanged.
 
 What the phone showed that the tests don't: the login limit is per address, and `curl localhost` on Windows goes over IPv6 (`::1`), a different bucket from the phone's `127.0.0.1` through `adb reverse`; spending the limit for the screenshot needed `curl 127.0.0.1`.
+
+---
+
+## Part 11: Sign-in (Assignment 11.2)
+
+*A real session: register, sign in, a restart, one refresh, and a sign-out that leaves nothing behind on a phone a family shares.*
+
+### The session
+
+> **In plain words.** Signing in gives the app two tokens. The **access token** goes on every request and works for 5 minutes. The **refresh token** gets a new access token when the old one runs out, and is itself replaced each time. The app keeps the first only in memory and the second encrypted on the phone, and is careful to swap the second for a new one exactly once, because the API treats a swapped-out token used again as stolen and ends the session.
+
+**Where each token lives**
+
+| Token | Where | Never |
+|---|---|---|
+| Access token, with its expiry | In memory, in [`Session`](lib/core/session/session.dart) ([`AccessToken`](lib/core/session/access_token.dart)) | On disk, in a log line (its `toString` leaves it out), in an error message, in a crash report |
+| Refresh token | `flutter_secure_storage` (Android: encrypted with a Keystore key), behind [`RefreshTokenStore`](lib/core/session/refresh_token_store.dart); tests use `InMemoryRefreshTokenStore` | Sent to anything but `/auth/refresh` and `/auth/logout`, or logged |
+
+The refresh token is read from `Set-Cookie` **by hand**, by the name in the flavour's config (`REFRESH_COOKIE_NAME`; a config without it refuses to start, like a missing base URL), in [`cookieFrom`](lib/core/data/set_cookie.dart). A sign-in answer without it is an error. The app keeps no cookie jar: `HttpOnly`, `Secure` and `SameSite` are a browser's instructions, so keeping the cookie off every other request is the app's own job ([`AuthCalls`](lib/core/data/auth_calls.dart) is the only code that sends it).
+
+**When a refresh happens.** One interceptor owns the session, [`SessionInterceptor`](lib/core/data/session_interceptor.dart):
+
+- **Before a request**, if the token expires within **30 s** (the margin), it refreshes first: no `401` needed. If no token is in memory but one is stored (the app was just opened), it refreshes first too.
+- **On a `401`**, it refreshes once and sends that request again once.
+- **Single flight**: while a refresh runs, every other request that needs one awaits the same one. A `401` for a request sent with a token that has since been replaced is sent again with the new token, and nothing is refreshed: the "was this sent with the current token?" check that a `QueuedInterceptor` alone doesn't give.
+- **The refresh and the retry go through a second client** (`bareClientProvider`: a trace id and the log line, no session interceptor), so neither can wait on the interceptor that is waiting for them, and a retry's own `401` is final.
+
+**What ends a session, and what doesn't.** Only the **refresh endpoint's own `401`** (spent, revoked, expired or unknown token). A `403`, a `429`, a `500` or no answer never signs anyone out: the request fails with that failure, and the session stays.
+
+**On launch: one refresh.** [`AuthController`](lib/features/auth/presentation/auth_controller.dart) starts in `Restoring` (a sealed state with three cases: `SignedOut`, `Restoring`, `SignedIn`; the compiler lists every `switch` that has to decide what restoring means). While restoring, every address waits on [`/splash`](lib/features/auth/presentation/splash_screen.dart), remembering where it was going, so the sign-in form never flashes for a signed-in person and a link survives. A refused refresh is signed out; a good one lands on the remembered screen. **No signal is not signed out**: the splash says so, with **Try again** and **Sign out** (from 11.3, cached stokvels instead).
+
+**What sign-out wipes**, first, before the network: the access token (at once, before any `await`), the stored refresh token, and the auth state. Every user-scoped provider follows the auth state: the repositories watch `signedInUserIdProvider`, and every provider holding stokvels, cycles, contributions or arrears is autoDispose and leaves with the shell, so nothing is cleared by hand one by one. Then `POST /auth/logout` with the old cookie, cut off after **5 s**. A refresh that finishes after sign-out signs nobody back in: every sign-in and sign-out moves the session's epoch on, and a refresh from an older epoch stores nothing (`RefreshOutlived`).
+
+**Signing in.** [Sign-in](lib/features/auth/presentation/sign_in_screen.dart) and [register](lib/features/auth/presentation/register_screen.dart), with the 10.2 theme: the API's field errors under their fields, an address already in use under the email, a refused sign-in only *"That email and password don't match an account."*, and a `429` that says how long to wait and disables the button until then. The dev build's persona switcher only fills in the email; the password is typed. The dev build's Profile adds two **session tools**: *Spoil access token* and *Expire it now*. Staging and prod have neither (tested).
+
+**The join link.** `/join/:code` opened signed out goes (through the splash, from a cold start) to sign-in or register, which remember the join as the form is sent ([`PendingJoin`](lib/features/invites/presentation/pending_join.dart)); the invite screen takes it once and joins. Back, a rotation or a rebuild never join again.
+
+**Android backup is off**: `android:allowBackup="false"`, `fullBackupContent="false"`, and [data extraction rules](android/app/src/main/res/xml/data_extraction_rules.xml) excluding everything from cloud backup and phone-to-phone transfer (Android 12+ ignores `allowBackup` for the latter). A restored copy of the encrypted token would be useless without its Keystore key, and on a shared phone it is somebody's session.
+
+### Running against the API: what changed in 11.2
+
+- **No seed password is passed in, in any flavour.** Step 3 of [Running against the API](#running-against-the-api) is now just `flutter run --flavor dev --dart-define-from-file=config/dev.json`; the app no longer reads `SEED_PASSWORD` (a `--dart-define` of it is ignored). Sign in by typing the password, or choose a test account to fill in the email.
+- `config/<flavour>.json` has **`REFRESH_COOKIE_NAME`**; without it the app refuses to start.
+- **The grace window:** this API has none (Contract notes › Auth, question 3), so there is nothing to turn off. The live test checks reuse detection as it is.
+- **The live test** reads the password from the test run's environment only, and signs in **four** times (login and register share 5 a minute per address); run it once a minute at most:
+
+  ```powershell
+  $env:SEED_PASSWORD = '<seed password>'
+  flutter test --tags live --run-skipped
+  ```
+
+- API: branch `fix/auth-contract-for-mobile` ([API PR #17](https://github.com/mdvar2/RondiTrack/pull/17)) or later.
+
+### Decisions (11.2)
+
+| Decision | What, and why |
+|---|---|
+| **Dio, not the generated client, for the four auth calls** | The generated client does return headers (`HttpResponse`), but its methods take no per-call header, and the refresh token must go out as a `Cookie` on exactly refresh and logout, and the calls must run on the bare client. So [`AuthCalls`](lib/core/data/auth_calls.dart) calls Dio directly, with the **generated models** (`LoginRequest`, `RegisterRequest`, `AccessTokenResponse`, `UserResponse`) for every body |
+| **Backup off, not excluded** | Nothing in the app is worth restoring onto another phone: the token can't be decrypted there, and 11.3's cache belongs to whoever was signed in. Off is simpler to check than a list of exclusions |
+| **Refresh margin: 30 s** | Of the API's 5 minutes: longer than a slow request's round trip on mobile data plus the API's 30 s clock skew allowance is generous, and short enough that a token is used for 90% of its life. A request near the end is refreshed first, with no `401` |
+| **Sign-out timeout: 5 s** | Sign-out never waits for it (the state changes first); it only bounds how long the app keeps trying to tell the API |
+| **Dependency overrides** | `flutter_secure_storage` 11.2.0 (2026-09-16) pulls `path_provider_android`, whose newest `jni` 1.2.1 (2026-11-19) and `jni_flutter` 1.1.0 (2026-11-18) were under two weeks old on 2026-11-22. Held back to **`jni` 1.1.2** (2026-11-03) and **`jni_flutter` 1.0.4+1** (2026-10-06), in `pubspec.yaml`'s `dependency_overrides`. **Remove both on or after 2026-12-03**, once `flutter pub get` without them picks nothing under two weeks old. Every other package in `pubspec.lock` was published by 2026-11-08 |
+
+### Assignment 11.2: verification
+
+- `dart format` clean (hand-written files), `dart analyze --fatal-infos`: **No issues found!**, `flutter test`: **all passing**, the live test skipped.
+- The live test against the seeded API: **5 passed**. The spoiled token: three `401`s, **one** refresh, three retries; the spent refresh token refused, and the newer one after it; after sign-out, the old refresh token refused. Output in the pull request.
+- API: `dotnet test` **196 passed** ([API PR #17](https://github.com/mdvar2/RondiTrack/pull/17)).
+
+**What each new test proves**
+
+| Layer | Test |
+|---|---|
+| Cookie and claims | [`set_cookie_test.dart`](test/core/data/set_cookie_test.dart): the cookie found by its configured name among several `Set-Cookie` lines, a response without it an error, the name in no `lib/` file; claims read from a token whose signature nobody checked |
+| Session | [`session_test.dart`](test/core/session/session_test.dart), over [`FakeAuthServer`](test/helpers/fake_auth_server.dart), which rotates and detects reuse like the API: three requests, one refresh (and the same with a token past its expiry, with no `401`); an old-token `401` retried without a refresh; **the plain interceptor that refreshes per `401` trips reuse detection**; a refused refresh ends the session once; no answer, `403`, `429` and `500` don't; a retry's `401` is final; the cookie only to refresh and logout; a late refresh after sign-out ignored; the log shows `401`s, one refresh, retries and no token |
+| Auth state | [`auth_state_test.dart`](test/features/auth/auth_state_test.dart): restore with a good, a refused, no stored token and no network (then Try again); sign-in stores the refresh token; sign-out with a network, without, and slow; a late restore after sign-out ignored; a sign-in at launch not overruled by the launch's restore |
+| Router and screens | [`redirect_test.dart`](test/app/router/redirect_test.dart) (restoring: every route to the splash, remembered); [`auth_screens_test.dart`](test/features/auth/auth_screens_test.dart): the splash and never the form while restoring, the offline splash, a wrong password, the `429` wait, register's field errors and address in use; no session tools in staging and prod |
+| Whole app | [`family_phone_test.dart`](test/app/family_phone_test.dart): Lerato, her Treasurer stokvel, sign-out, Thabo: none of her providers exist and none of her stokvels are on screen; the join link opened signed out from a cold start joins once (and after register), a member lands in the stokvel, a wrong code says so |
+
+**Three tests seen to fail.** Each break was made, the test run, and the change reverted:
+
+| Broke | Test that went red |
+|---|---|
+| Single flight: `Session.refresh` calls `_refresh()` each time instead of sharing `_refreshing` | "three requests, one refresh against a server that rotates and detects reuse": `Expected: [200, 200, 200]`, `Actual: [DioException … status code of 401 …` (reuse detection revoked the family) |
+| The epoch check before storing a refresh's answer removed | "a refresh that finishes after sign-out signs nobody back in": `Expected: <Instance of 'RefreshOutlived'>`, `Actual: ServerFailure` |
+| `AuthController.signOut` awaits the API before changing the state | "sign-out with a slow network: signed out and wiped before the API answers": `Expected: <Instance of 'SignedOut'>`, `Actual: <Instance of 'SignedIn'>` |
+
+The live run also found one real bug the unit tests had missed, now fixed with a test: a sign-in sent before the launch's restore had run was overruled by it.
