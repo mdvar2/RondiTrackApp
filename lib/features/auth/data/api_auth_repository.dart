@@ -1,59 +1,102 @@
-import 'package:ronditrack_app/core/data/api_client.dart';
+import 'dart:async';
+
 import 'package:ronditrack_app/core/data/api_values.dart';
-import 'package:ronditrack_app/core/data/generated/models/login_request.dart';
+import 'package:ronditrack_app/core/data/auth_calls.dart';
 import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/errors/result.dart';
+import 'package:ronditrack_app/core/session/session.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_repository.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_user.dart';
 
-/// [AuthRepository] on the API: today's stand-in for sign-in.
+/// [AuthRepository] on the API (README "The session").
 ///
-/// It signs in as a seed persona with the seed password given at run time
-/// (`--dart-define=SEED_PASSWORD`, dev flavour only, never committed):
-/// `POST /auth/login`, then `GET /me` for who that is. The access token is
-/// kept in memory only ([AccessTokenHolder]) and lasts the API's 5
-/// minutes; there is no refresh until tomorrow's sign-in, which also reads
-/// the refresh cookie. Signing out tells the API, then forgets the token.
+/// * Sign-in: `POST /auth/login` ([AuthCalls], with the refresh token read
+///   from `Set-Cookie`), the session started, then `GET /me` for who.
+/// * Register: `POST /auth/register`, which doesn't sign anyone in, then
+///   the same sign-in.
+/// * Restore: one refresh with the stored token, then `GET /me`.
+/// * Sign-out: the session wiped first, then `POST /auth/logout` with the
+///   old cookie, cut off after [logoutTimeout].
 class ApiAuthRepository implements AuthRepository {
   /// Creates the repository.
-  new(this._api, this._tokens, {required String seedPassword})
-    : _password = seedPassword;
+  new(this._calls, this._session, this._api);
 
+  final AuthCalls _calls;
+  final Session _session;
   final RondiTrackApi _api;
-  final AccessTokenHolder _tokens;
-  final String _password;
+
+  /// How long sign-out waits for the API before giving up on telling it.
+  static const logoutTimeout = Duration(seconds: 5);
 
   @override
-  Future<Result<AuthUser>> signIn({required String email}) async {
+  Future<Result<AuthUser>> signIn({
+    required String email,
+    required String password,
+  }) async {
     final result = await guard(() async {
-      final login = await _api.auth.postApiV1AuthLogin(
-        body: LoginRequest(email: email.trim(), password: _password),
+      await _session.start(
+        await _calls.login(email: email.trim(), password: password),
       );
-      _tokens.token = login.data.accessToken;
-      final me = (await _api.me.getApiV1Me()).data;
-      return AuthUser(id: me.id, name: me.name, email: me.email);
+      return await _me();
     });
-    return switch (result) {
-      Ok() => result,
-      // Signing in, a 401 is the email and password refused.
-      Err(failure: UnauthorisedFailure()) => _refused(
-        const UnauthorisedFailure(atSignIn: true),
+    switch (result) {
+      case Ok():
+        return result;
+      // Signing in, a 401 is the email and password refused, and nothing
+      // more: never which of them.
+      case Err(failure: UnauthorisedFailure()):
+        await _session.end();
+        return const Err(UnauthorisedFailure(atSignIn: true));
+      case Err(:final failure):
+        await _session.end();
+        return Err(failure);
+    }
+  }
+
+  @override
+  Future<Result<AuthUser>> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final created = await guard(
+      () => _calls.register(
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
       ),
-      Err(:final failure) => _refused(failure),
+    );
+    return switch (created) {
+      Ok() => await signIn(email: email, password: password),
+      Err(:final failure) => Err(failure),
     };
   }
 
-  Result<AuthUser> _refused(Failure failure) {
-    _tokens.clear();
-    return Err(failure);
+  @override
+  Future<Result<AuthUser?>> restore() async {
+    if (!await _session.hasStoredSession()) return const Ok(null);
+    return await guard(() async {
+      await _session.refresh();
+      return await _me();
+    });
   }
 
-  /// The person is signed out on this phone whatever the API answers.
   @override
-  Future<Result<void>> signOut() async {
-    await guard(() => _api.auth.postApiV1AuthLogout());
-    _tokens.clear();
-    return const Ok(null);
+  Future<void> signOut() async {
+    final stored = await _session.end();
+    try {
+      await _calls
+          .logout(stored, timeout: logoutTimeout)
+          .timeout(logoutTimeout);
+    } on Object {
+      // Signed out on this phone already; the API's answer changes
+      // nothing. A token the API never heard about expires by itself.
+    }
+  }
+
+  Future<AuthUser> _me() async {
+    final me = (await _api.me.getApiV1Me()).data;
+    return AuthUser(id: me.id, name: me.name, email: me.email);
   }
 }

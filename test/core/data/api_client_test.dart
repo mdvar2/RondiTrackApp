@@ -4,33 +4,57 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/core/data/api_client.dart';
+import 'package:ronditrack_app/core/data/auth_calls.dart';
 import 'package:ronditrack_app/core/data/to_failure.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
+import 'package:ronditrack_app/core/session/access_token.dart';
+import 'package:ronditrack_app/core/session/refresh_token_store.dart';
+import 'package:ronditrack_app/core/session/session.dart';
 
 import '../../helpers/api_fixtures.dart';
 import '../../helpers/fake_http_adapter.dart';
+import '../../helpers/flavour_config.dart';
 
 const _token = 'eyJhbGciOiJIUzI1NiJ9.secret-token-payload.signature';
 const _cookie =
     '__Secure-ronditrack_refresh=c2VjcmV0LXJlZnJlc2g; path=/api/v1/auth';
 
-/// A client against a fake adapter, counting ended sessions.
-({Dio dio, FakeHttpAdapter adapter, List<String> log, List<int> ended}) _client(
+typedef _Client = ({
+  Dio dio,
+  FakeHttpAdapter adapter,
+  List<String> log,
+  List<int> ended,
+  Session session,
+});
+
+/// A client against a fake adapter, signed in with [_token], counting ended
+/// sessions.
+Future<_Client> _client(
   FakeAnswer Function(RequestOptions request) answer,
-) {
-  final tokens = AccessTokenHolder()..token = _token;
+) async {
   final log = <String>[];
   final ended = <int>[];
   final adapter = FakeHttpAdapter(answer);
+  final base = Uri.parse('http://127.0.0.1:8081');
+  final bare = createBareClient(baseUri: base, log: log.add, adapter: adapter);
+  final session = Session(
+    calls: AuthCalls(bare, cookieName: refreshCookieName),
+    store: InMemoryRefreshTokenStore(),
+    onEnded: () => ended.add(1),
+  );
+  await session.start((
+    access: AccessToken(_token, expiresAt: DateTime.utc(2100)),
+    refreshToken: 'c2VjcmV0LXJlZnJlc2g',
+  ));
   final dio = createApiClient(
-    baseUri: Uri.parse('http://127.0.0.1:8081'),
-    tokens: tokens,
-    onSessionEnded: () => ended.add(1),
+    baseUri: base,
+    session: session,
+    retryClient: bare,
     log: log.add,
     adapter: adapter,
     random: Random(7),
   );
-  return (dio: dio, adapter: adapter, log: log, ended: ended);
+  return (dio: dio, adapter: adapter, log: log, ended: ended, session: session);
 }
 
 Future<Object?> _get(Dio dio, String path) async {
@@ -46,7 +70,7 @@ void main() {
   group('the log line leaves nothing personal in it', () {
     test('a success: method, path, status, time and trace, and nothing of '
         'the token, the cookie, the body or the query', () async {
-      final client = _client(
+      final client = await _client(
         (_) => Answer(
           200,
           apiFixtureText('home_lerato'),
@@ -92,7 +116,7 @@ void main() {
 
     test("a failure: the status and the error's correlationId, never its "
         'detail or a name', () async {
-      final client = _client(
+      final client = await _client(
         (_) => Answer(
           500,
           jsonEncode({
@@ -122,7 +146,7 @@ void main() {
     });
 
     test('no answer says so, with the trace id', () async {
-      final client = _client((_) => const NoAnswer());
+      final client = await _client((_) => const NoAnswer());
 
       final error = await _get(client.dio, '/api/v1/me/home');
 
@@ -141,20 +165,13 @@ void main() {
 
   group('the token', () {
     test('goes on every request, and not after it is cleared', () async {
-      final tokens = AccessTokenHolder()..token = _token;
-      final adapter = FakeHttpAdapter((_) => const Answer(200, '{}'));
-      final dio = createApiClient(
-        baseUri: Uri.parse('http://127.0.0.1:8081'),
-        tokens: tokens,
-        onSessionEnded: () {},
-        log: (_) {},
-        adapter: adapter,
-      );
+      final client = await _client((_) => const Answer(200, '{}'));
+      final (:dio, :adapter, :session, log: _, ended: _) = client;
 
       await dio.get<Object?>('/api/v1/me/home');
       await dio.get<Object?>('/api/v1/stokvels/a');
       await dio.post<Object?>('/api/v1/invites/X/join');
-      tokens.clear();
+      await session.end();
       await dio.get<Object?>('/api/v1/me/home');
 
       expect(
@@ -165,7 +182,7 @@ void main() {
 
     test('every request carries a W3C traceparent whose trace id is kept '
         'for the failure', () async {
-      final client = _client((_) => const Answer(200, '{}'));
+      final client = await _client((_) => const Answer(200, '{}'));
 
       await client.dio.get<Object?>('/api/v1/me/home');
 
@@ -181,7 +198,7 @@ void main() {
 
   group('who is signed out', () {
     test('a 403 signs nobody out, and keeps the token', () async {
-      final client = _client(
+      final client = await _client(
         (_) => Answer(403, apiFixtureText('problem_403_member')),
       );
 
@@ -198,17 +215,24 @@ void main() {
       );
     });
 
-    test('a 401 on any other call ends the session, once per call', () async {
-      final client = _client((_) => Answer(401, apiFixtureText('problem_401')));
+    test("a 401 refreshes; the refresh's own 401 ends the session, "
+        'once', () async {
+      final client = await _client(
+        (_) => Answer(401, apiFixtureText('problem_401')),
+      );
 
       await _get(client.dio, '/api/v1/me/home');
 
+      expect(
+        [for (final r in client.adapter.requests) r.uri.path],
+        ['/api/v1/me/home', '/api/v1/auth/refresh'],
+      );
       expect(client.ended, [1]);
     });
 
     test('a 401 from signing in is a refused password, not an ended '
         'session', () async {
-      final client = _client(
+      final client = await _client(
         (_) => Answer(401, apiFixtureText('problem_401_login')),
       );
 
@@ -221,8 +245,8 @@ void main() {
     });
   });
 
-  test('the timeouts are the decided ones', () {
-    final options = _client((_) => const Answer(200, '{}')).dio.options;
+  test('the timeouts are the decided ones', () async {
+    final options = (await _client((_) => const Answer(200, '{}'))).dio.options;
     expect(options.connectTimeout, const Duration(seconds: 10));
     expect(options.sendTimeout, const Duration(seconds: 10));
     expect(options.receiveTimeout, const Duration(seconds: 30));

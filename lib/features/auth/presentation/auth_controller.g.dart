@@ -8,30 +8,42 @@ part of 'auth_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Who is signed in. The app starts signed out.
+/// Who is signed in. The app starts [Restoring]: one refresh decides.
 ///
 /// Lifetime: keepAlive. It is the session: the router's gate listens to it
 /// for the whole life of the app, and [signedInUserIdProvider] (and through
-/// it every repository) follows it. Week 11 keeps this class and swaps the
-/// repository behind it.
+/// it every repository and every provider holding someone's data) follows
+/// it.
+///
+/// Every sign-in, sign-out and restore moves `_generation` on. An answer
+/// that arrives for an older generation (a restore that finishes after
+/// the person tapped Sign out) changes nothing.
 
 @ProviderFor(AuthController)
 final authControllerProvider = AuthControllerProvider._();
 
-/// Who is signed in. The app starts signed out.
+/// Who is signed in. The app starts [Restoring]: one refresh decides.
 ///
 /// Lifetime: keepAlive. It is the session: the router's gate listens to it
 /// for the whole life of the app, and [signedInUserIdProvider] (and through
-/// it every repository) follows it. Week 11 keeps this class and swaps the
-/// repository behind it.
+/// it every repository and every provider holding someone's data) follows
+/// it.
+///
+/// Every sign-in, sign-out and restore moves `_generation` on. An answer
+/// that arrives for an older generation (a restore that finishes after
+/// the person tapped Sign out) changes nothing.
 final class AuthControllerProvider
     extends $NotifierProvider<AuthController, AuthState> {
-  /// Who is signed in. The app starts signed out.
+  /// Who is signed in. The app starts [Restoring]: one refresh decides.
   ///
   /// Lifetime: keepAlive. It is the session: the router's gate listens to it
   /// for the whole life of the app, and [signedInUserIdProvider] (and through
-  /// it every repository) follows it. Week 11 keeps this class and swaps the
-  /// repository behind it.
+  /// it every repository and every provider holding someone's data) follows
+  /// it.
+  ///
+  /// Every sign-in, sign-out and restore moves `_generation` on. An answer
+  /// that arrives for an older generation (a restore that finishes after
+  /// the person tapped Sign out) changes nothing.
   AuthControllerProvider._()
     : super(
         from: null,
@@ -59,14 +71,18 @@ final class AuthControllerProvider
   }
 }
 
-String _$authControllerHash() => r'3ae6c53f56b1cbb6c65da16d96d4a7bbe9dfcf8b';
+String _$authControllerHash() => r'bce6a1c8190a17914cc20e72b08c4b59d9f32973';
 
-/// Who is signed in. The app starts signed out.
+/// Who is signed in. The app starts [Restoring]: one refresh decides.
 ///
 /// Lifetime: keepAlive. It is the session: the router's gate listens to it
 /// for the whole life of the app, and [signedInUserIdProvider] (and through
-/// it every repository) follows it. Week 11 keeps this class and swaps the
-/// repository behind it.
+/// it every repository and every provider holding someone's data) follows
+/// it.
+///
+/// Every sign-in, sign-out and restore moves `_generation` on. An answer
+/// that arrives for an older generation (a restore that finishes after
+/// the person tapped Sign out) changes nothing.
 
 abstract class _$AuthController extends $Notifier<AuthState> {
   AuthState build();

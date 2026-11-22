@@ -41,6 +41,7 @@ class AppConfig {
     required String environment,
     required String appName,
     required String apiBaseUrl,
+    required String refreshCookieName,
     required String? nativeFlavor,
   }) {
     final parsedEnvironment = switch (environment) {
@@ -94,10 +95,22 @@ class AppConfig {
       throw AppConfigException('API_BASE_URL for $environment must use https.');
     }
 
+    // The refresh cookie's name, as the API's `Set-Cookie` spells it. The
+    // app finds the cookie by this name and never types it in code, so a
+    // config without it can't sign anyone in: refuse to start, as for a
+    // missing address. A cookie name is an RFC 6265 token.
+    if (!_cookieName.hasMatch(refreshCookieName)) {
+      throw AppConfigException(
+        'Invalid or missing REFRESH_COOKIE_NAME for $environment: '
+        '"$refreshCookieName"',
+      );
+    }
+
     return AppConfig._(
       environment: parsedEnvironment,
       appName: appName,
       apiBaseUri: baseUri,
+      refreshCookieName: refreshCookieName,
     );
   }
 
@@ -107,11 +120,13 @@ class AppConfig {
     const environment = String.fromEnvironment('APP_ENV');
     const appName = String.fromEnvironment('APP_NAME');
     const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+    const refreshCookieName = String.fromEnvironment('REFRESH_COOKIE_NAME');
 
     return AppConfig.fromValues(
       environment: environment,
       appName: appName,
       apiBaseUrl: apiBaseUrl,
+      refreshCookieName: refreshCookieName,
       nativeFlavor: nativeFlavor,
     );
   }
@@ -121,6 +136,7 @@ class AppConfig {
     required this.environment,
     required this.appName,
     required this.apiBaseUri,
+    required this.refreshCookieName,
   });
 
   /// The selected deployment environment.
@@ -132,8 +148,14 @@ class AppConfig {
   /// The RondiTrack API this flavour talks to (from Week 11).
   final Uri apiBaseUri;
 
+  /// The name of the API's refresh-token cookie (`REFRESH_COOKIE_NAME`).
+  /// The app reads that cookie from `Set-Cookie` by this name, and sends
+  /// it back only to the refresh and logout endpoints.
+  final String refreshCookieName;
+
   /// Whether this build has developer tools (the persona switcher, the
-  /// sign-in page's test accounts): the dev flavour only.
+  /// sign-in page's test accounts, the session tools on Profile): the dev
+  /// flavour only.
   ///
   /// Check it where a route or button is *built*, so that in staging and
   /// prod the tool is never constructed: not hidden, absent.
@@ -141,4 +163,7 @@ class AppConfig {
     AppEnvironment.dev => true,
     AppEnvironment.staging || AppEnvironment.prod => false,
   };
+
+  /// An RFC 6265 cookie name: one or more token characters.
+  static final _cookieName = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
 }

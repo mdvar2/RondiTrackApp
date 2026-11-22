@@ -1,15 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 
+import '../../helpers/flavour_config.dart';
+
 AppConfig _config({
   String environment = 'dev',
   String appName = 'RondiTrack Dev',
   String apiBaseUrl = 'http://10.0.2.2:5101',
+  String? cookieName,
   String? nativeFlavor = 'dev',
 }) => AppConfig.fromValues(
   environment: environment,
   appName: appName,
   apiBaseUrl: apiBaseUrl,
+  refreshCookieName: cookieName ?? refreshCookieName,
   nativeFlavor: nativeFlavor,
 );
 
@@ -106,6 +110,32 @@ void main() {
 
       test('a build with no native flavour', () {
         expect(() => _config(nativeFlavor: null), throwsConfigError);
+      });
+    });
+
+    group('refuses to start without the refresh cookie name', () {
+      test('when REFRESH_COOKIE_NAME is missing', () {
+        expect(() => _config(cookieName: ''), throwsConfigError);
+      });
+
+      test('when it is not a cookie name', () {
+        expect(() => _config(cookieName: 'refresh token'), throwsConfigError);
+        expect(() => _config(cookieName: 'a=b'), throwsConfigError);
+        expect(() => _config(cookieName: 'a;b'), throwsConfigError);
+      });
+
+      test('and reads it from config/<flavour>.json', () {
+        for (final flavour in ['dev', 'staging', 'prod']) {
+          final file = flavourConfigFile(flavour);
+          final config = AppConfig.fromValues(
+            environment: file['APP_ENV']!,
+            appName: file['APP_NAME']!,
+            apiBaseUrl: file['API_BASE_URL']!,
+            refreshCookieName: file['REFRESH_COOKIE_NAME'] ?? '',
+            nativeFlavor: flavour,
+          );
+          expect(config.refreshCookieName, isNotEmpty, reason: flavour);
+        }
       });
     });
 

@@ -9,6 +9,7 @@ import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
 import 'helpers/app_harness.dart';
+import 'helpers/flavour_config.dart';
 
 void main() {
   for (final (environment, appName, apiBaseUrl) in [
@@ -22,6 +23,7 @@ void main() {
         environment: environment,
         appName: appName,
         apiBaseUrl: apiBaseUrl,
+        refreshCookieName: refreshCookieName,
         nativeFlavor: environment,
       );
 

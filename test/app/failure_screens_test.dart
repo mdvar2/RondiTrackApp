@@ -10,8 +10,8 @@ import 'package:ronditrack_app/features/auth/domain/auth_repository.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_user.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
-import 'package:ronditrack_app/features/auth/presentation/sign_in_notice.dart';
 import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
+import 'package:ronditrack_app/features/auth/presentation/sign_in_support.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
@@ -169,8 +169,8 @@ void main() {
     expect(find.text('Your session ended. Sign in again.'), findsOneWidget);
   });
 
-  testWidgets('a persona switch refused for too many sign-ins says how long '
-      'to wait', (tester) async {
+  testWidgets('a persona switch fills in the email only; a sign-in refused '
+      'for too many attempts says how long to wait', (tester) async {
     final app = await pumpApp(
       tester,
       as: FakeSeed.lerato,
@@ -180,25 +180,52 @@ void main() {
 
     await switchPersona(
       app.read(authControllerProvider.notifier),
-      app.read(signInNoticeProvider.notifier),
+      app.read(signInEmailDraftProvider.notifier),
       FakeSeed.sipho.email,
     );
     await tester.pumpAndSettle();
 
     expect(find.byType(SignInScreen), findsOneWidget);
+    final email = tester.widget<TextField>(
+      find.byKey(const Key('sign-in-email')),
+    );
+    expect(email.controller!.text, FakeSeed.sipho.email);
+    final password = tester.widget<TextField>(
+      find.byKey(const Key('auth-password')),
+    );
+    expect(password.controller!.text, isEmpty);
+
+    await tester.enterText(find.byKey(const Key('auth-password')), 'typed');
+    await tester.tap(find.byKey(const Key('auth-submit')));
+    await tester.pump();
+
     expect(
       find.text('Too many attempts. Wait 60 seconds, then try again.'),
       findsOneWidget,
     );
+    // The countdown ticks out before the test ends.
+    await tester.pump(const Duration(seconds: 61));
   });
 }
 
 /// Signs out fine; every sign-in is the API's login rate limit.
 class _RateLimitedAuth implements AuthRepository {
   @override
-  Future<Result<AuthUser>> signIn({required String email}) async =>
-      const Err(RateLimitedFailure(wait: Duration(seconds: 60)));
+  Future<Result<AuthUser>> signIn({
+    required String email,
+    required String password,
+  }) async => const Err(RateLimitedFailure(wait: Duration(seconds: 60)));
 
   @override
-  Future<Result<void>> signOut() async => const Ok(null);
+  Future<Result<AuthUser>> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async => const Err(RateLimitedFailure(wait: Duration(seconds: 60)));
+
+  @override
+  Future<Result<AuthUser?>> restore() async => const Ok(null);
+
+  @override
+  Future<void> signOut() async {}
 }

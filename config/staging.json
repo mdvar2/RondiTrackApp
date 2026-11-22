@@ -1,5 +1,6 @@
 {
   "APP_ENV": "staging",
   "APP_NAME": "RondiTrack Staging",
-  "API_BASE_URL": "https://staging.api.ronditrack.example"
+  "API_BASE_URL": "https://staging.api.ronditrack.example",
+  "REFRESH_COOKIE_NAME": "__Secure-ronditrack_refresh"
 }

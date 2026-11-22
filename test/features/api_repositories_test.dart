@@ -4,9 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/core/concurrency/concurrency_token.dart';
 import 'package:ronditrack_app/core/data/api_client.dart';
+import 'package:ronditrack_app/core/data/auth_calls.dart';
 import 'package:ronditrack_app/core/data/generated/rondi_track_api.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/money/cents.dart';
+import 'package:ronditrack_app/core/session/access_token.dart';
+import 'package:ronditrack_app/core/session/refresh_token_store.dart';
+import 'package:ronditrack_app/core/session/session.dart';
 import 'package:ronditrack_app/core/time/calendar_date.dart';
 import 'package:ronditrack_app/features/activity/data/api_activity_repository.dart';
 import 'package:ronditrack_app/features/auth/data/api_auth_repository.dart';
@@ -20,31 +24,49 @@ import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 
 import '../helpers/api_fixtures.dart';
 import '../helpers/fake_http_adapter.dart';
+import '../helpers/flavour_config.dart';
 import '../helpers/result_matchers.dart';
 
 const String _mabena = FakeSeed.mabenaFamilyId;
 const String _cycle = FakeSeed.mabenaCycleId;
 const _base = '/api/v1/stokvels/$_mabena';
 
+typedef _Api = ({
+  RondiTrackApi api,
+  FakeHttpAdapter adapter,
+  Session session,
+  InMemoryRefreshTokenStore store,
+  ApiAuthRepository auth,
+});
+
 /// The generated client over a fake adapter that answers [routes] by path
 /// (`METHOD /path`); anything else is a 404 with the API's body.
-({RondiTrackApi api, FakeHttpAdapter adapter, AccessTokenHolder tokens}) _api(
-  Map<String, FakeAnswer Function(RequestOptions request)> routes,
-) {
-  final tokens = AccessTokenHolder();
+_Api _api(Map<String, FakeAnswer Function(RequestOptions request)> routes) {
   final adapter = FakeHttpAdapter((request) {
     final route = routes['${request.method} ${request.uri.path}'];
     return route?.call(request) ??
         Answer(404, apiFixtureText('problem_404_nonmember'));
   });
+  final base = Uri.parse('http://127.0.0.1:8081');
+  final bare = createBareClient(baseUri: base, log: (_) {}, adapter: adapter);
+  final calls = AuthCalls(bare, cookieName: refreshCookieName);
+  final store = InMemoryRefreshTokenStore();
+  final session = Session(calls: calls, store: store, onEnded: () {});
   final dio = createApiClient(
-    baseUri: Uri.parse('http://127.0.0.1:8081'),
-    tokens: tokens,
-    onSessionEnded: () {},
+    baseUri: base,
+    session: session,
+    retryClient: bare,
     log: (_) {},
     adapter: adapter,
   );
-  return (api: RondiTrackApi(dio), adapter: adapter, tokens: tokens);
+  final api = RondiTrackApi(dio);
+  return (
+    api: api,
+    adapter: adapter,
+    session: session,
+    store: store,
+    auth: ApiAuthRepository(calls, session, api),
+  );
 }
 
 /// The fixture [name], answered with status 200 and [headers].
@@ -309,6 +331,53 @@ void main() {
     );
   });
 
+  group('joining with a code (Contract notes › Auth, question 7)', () {
+    test(
+      'someone already a member: the 409 lands them in the stokvel',
+      () async {
+        final client = _api({
+          'GET /api/v1/invites/MABENA26': _ok('invite_mabena'),
+          'POST /api/v1/invites/MABENA26/join': (_) => Answer(
+            409,
+            jsonEncode({
+              'status': 409,
+              'detail': 'You are already a member of this stokvel.',
+            }),
+          ),
+        });
+
+        expect(
+          (await ApiInviteRepository(client.api).join('MABENA26')).valueOrThrow,
+          _mabena,
+        );
+      },
+    );
+
+    test("an expired code: the API's 410, in its words", () async {
+      final client = _api({
+        'GET /api/v1/invites/OLD26': (_) => Answer(
+          410,
+          jsonEncode({'status': 410, 'detail': 'This invite has expired.'}),
+        ),
+      });
+
+      final result = await ApiInviteRepository(client.api).join('OLD26');
+
+      expect(result, failsWith<RuleFailure>());
+      expect(failureIn(result).message, 'This invite has expired.');
+      expect(client.adapter.requests, hasLength(1), reason: 'no join sent');
+    });
+
+    test('a wrong code: not found, and no join sent', () async {
+      final client = _api({});
+
+      final result = await ApiInviteRepository(client.api).join('NOPE');
+
+      expect(result, failsWith<NotFoundFailure>());
+      expect(client.adapter.requests, hasLength(1));
+    });
+  });
+
   test("activity: each stokvel's current-cycle contributions, newest "
       'first', () async {
     final client = _api({
@@ -330,62 +399,91 @@ void main() {
   });
 
   group('sign-in', () {
-    test('signs in with the seed password, keeps the token in memory and '
-        'asks who that is', () async {
-      final client = _api({
-        'POST /api/v1/auth/login': (_) => const Answer(
-          200,
-          '{"accessToken":"t0k3n","expiresAtUtc":"2026-11-18T06:00:00Z"}',
-        ),
-        'GET /api/v1/me': (_) => Answer(
-          200,
-          jsonEncode({
-            'id': FakeSeed.lerato.id,
-            'name': 'Lerato Mokoena',
-            'email': 'lerato@ronditrack.example',
-            'version': 1,
-          }),
-        ),
-      });
+    test(
+      'sends the typed email and password, keeps the refresh cookie in '
+      'the store and the access token in memory, and asks who it is',
+      () async {
+        final client = _api({
+          'POST /api/v1/auth/login': (_) => Answer(
+            200,
+            '{"accessToken":"t0k3n","expiresAtUtc":"2100-01-01T00:00:00Z"}',
+            headers: {
+              'set-cookie': ['$refreshCookieName=r3fr3sh; path=/api/v1/auth'],
+            },
+          ),
+          'GET /api/v1/me': (_) => Answer(
+            200,
+            jsonEncode({
+              'id': FakeSeed.lerato.id,
+              'name': 'Lerato Mokoena',
+              'email': 'lerato@ronditrack.example',
+              'version': 1,
+            }),
+          ),
+        });
 
-      final user = (await ApiAuthRepository(
-        client.api,
-        client.tokens,
-        seedPassword: 'pw-from-dart-define',
-      ).signIn(email: ' lerato@ronditrack.example ')).valueOrThrow;
+        final user = (await client.auth.signIn(
+          email: ' lerato@ronditrack.example ',
+          password: 'typed-by-the-person',
+        )).valueOrThrow;
 
-      expect(user.id, FakeSeed.lerato.id);
-      expect(client.tokens.token, 't0k3n');
-      final login = client.adapter.requests.first;
-      expect(login.data, {
-        'email': 'lerato@ronditrack.example',
-        'password': 'pw-from-dart-define',
-      });
-      expect(
-        client.adapter.requests.last.headers['Authorization'],
-        'Bearer t0k3n',
-      );
-    });
+        expect(user.id, FakeSeed.lerato.id);
+        expect(client.store.token, 'r3fr3sh');
+        expect(client.session.access?.value, 't0k3n');
+        final login = client.adapter.requests.first;
+        expect(login.data, {
+          'email': 'lerato@ronditrack.example',
+          'password': 'typed-by-the-person',
+        });
+        expect(login.headers['Authorization'], isNull);
+        expect(login.headers['Cookie'], isNull);
+        final me = client.adapter.requests.last;
+        expect(me.headers['Authorization'], 'Bearer t0k3n');
+        expect(me.headers['Cookie'], isNull);
+      },
+    );
 
-    test("a refused password is the sign-in's own words, and no token is "
+    test("a refused password is the sign-in's own words, and nothing is "
         'kept', () async {
       final client = _api({
         'POST /api/v1/auth/login': (_) =>
             Answer(401, apiFixtureText('problem_401_login')),
       });
 
-      final result = await ApiAuthRepository(
-        client.api,
-        client.tokens,
-        seedPassword: 'wrong',
-      ).signIn(email: 'lerato@ronditrack.example');
+      final result = await client.auth.signIn(
+        email: 'lerato@ronditrack.example',
+        password: 'wrong',
+      );
 
       expect(result, failsWith<UnauthorisedFailure>());
       expect(
         failureIn(result),
         isA<UnauthorisedFailure>().having((f) => f.atSignIn, 'atSignIn', true),
       );
-      expect(client.tokens.token, isNull);
+      expect(client.session.access, isNull);
+      expect(client.store.token, isNull);
+    });
+
+    test('a sign-in answer without the refresh cookie is an error, and '
+        'nothing is kept', () async {
+      final client = _api({
+        'POST /api/v1/auth/login': (_) => const Answer(
+          200,
+          '{"accessToken":"t0k3n","expiresAtUtc":"2100-01-01T00:00:00Z"}',
+          headers: {
+            'set-cookie': ['someone_else=1; path=/'],
+          },
+        ),
+      });
+
+      final result = await client.auth.signIn(
+        email: 'lerato@ronditrack.example',
+        password: 'typed',
+      );
+
+      expect(result, failsWith<ServerFailure>());
+      expect(client.session.access, isNull);
+      expect(client.store.token, isNull);
     });
 
     test('too many sign-ins: the wait from Retry-After', () async {
@@ -399,11 +497,10 @@ void main() {
         ),
       });
 
-      final result = await ApiAuthRepository(
-        client.api,
-        client.tokens,
-        seedPassword: 'x',
-      ).signIn(email: 'lerato@ronditrack.example');
+      final result = await client.auth.signIn(
+        email: 'lerato@ronditrack.example',
+        password: 'x',
+      );
 
       expect(
         failureIn(result).message,
@@ -411,18 +508,23 @@ void main() {
       );
     });
 
-    test('signing out forgets the token even when the API is '
+    test('signing out wipes the phone even when the API is '
         'unreachable', () async {
-      final client = _api({'POST /api/v1/auth/logout': (_) => const NoAnswer()})
-        ..tokens.token = 't0k3n';
+      final client = _api({
+        'POST /api/v1/auth/logout': (_) => const NoAnswer(),
+      });
+      await client.session.start((
+        access: AccessToken('t0k3n', expiresAt: DateTime.utc(2100)),
+        refreshToken: 'r3fr3sh',
+      ));
 
-      await ApiAuthRepository(
-        client.api,
-        client.tokens,
-        seedPassword: 'x',
-      ).signOut();
+      await client.auth.signOut();
 
-      expect(client.tokens.token, isNull);
+      expect(client.session.access, isNull);
+      expect(client.store.token, isNull);
+      final logout = client.adapter.requests.single;
+      expect(logout.headers['Cookie'], '$refreshCookieName=r3fr3sh');
+      expect(logout.headers['Authorization'], isNull);
     });
   });
 }

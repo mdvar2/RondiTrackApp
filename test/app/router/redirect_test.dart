@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/router/redirect.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
@@ -129,9 +130,74 @@ void main() {
     });
   });
 
+  group('restoring (the one refresh on launch)', () {
+    const restoring = Restoring();
+    const offline = Restoring(failure: NoAnswerFailure());
+
+    test('every route goes to the splash, and remembers where it was '
+        'going', () {
+      for (final auth in [restoring, offline]) {
+        for (final address in [
+          '/stokvels',
+          stokvel,
+          cycle,
+          '$cycle/payouts',
+          '$cycle/close',
+          '/activity',
+          '/profile',
+          '/join/MABENA26',
+        ]) {
+          expect(
+            gate(auth, address),
+            SplashRoute(from: address).location,
+            reason: address,
+          );
+        }
+        expect(gate(auth, '/'), '/splash');
+        expect(gate(auth, '/admin'), '/splash');
+      }
+    });
+
+    test('sign-in and register wait on the splash too, passing on what '
+        'they remembered', () {
+      expect(
+        gate(restoring, '/sign-in?from=%2Fjoin%2FMABENA26'),
+        '/splash?from=%2Fjoin%2FMABENA26',
+      );
+      expect(gate(restoring, '/register'), '/splash?from=%2Fregister');
+    });
+
+    test('the splash stays while restoring, offline included', () {
+      expect(gate(restoring, '/splash?from=%2Fjoin%2FMABENA26'), isNull);
+      expect(gate(offline, '/splash'), isNull);
+    });
+
+    test('a restore that signs in lands where the app was going', () {
+      expect(gate(lerato, '/splash?from=%2Fjoin%2FMABENA26'), '/join/MABENA26');
+      expect(gate(lerato, '/splash?from=${Uri.encodeComponent(cycle)}'), cycle);
+      expect(gate(lerato, '/splash'), '/');
+    });
+
+    test('a refused restore goes to sign-in, still remembering', () {
+      expect(
+        gate(signedOut, '/splash?from=%2Fjoin%2FMABENA26'),
+        '/sign-in?from=%2Fjoin%2FMABENA26',
+      );
+      expect(gate(signedOut, '/splash?from=%2Fregister'), '/register');
+    });
+
+    test('an outside address is never remembered by the splash', () {
+      expect(
+        gate(restoring, '/splash?from=https%3A%2F%2Fevil.example'),
+        '/splash',
+      );
+      expect(gate(lerato, '/splash?from=https%3A%2F%2Fevil.example'), '/');
+    });
+  });
+
   group('no loops', () {
     test('every redirect lands where the gate then lets it stay', () {
-      for (final auth in [signedOut, lerato]) {
+      for (final auth in [signedOut, lerato, const Restoring()]) {
         for (final start in [
           '/',
           '/stokvels',
@@ -140,6 +206,9 @@ void main() {
           '/sign-in',
           '/sign-in?from=%2Fjoin%2FMABENA26',
           '/sign-in?from=https%3A%2F%2Fevil.example',
+          '/register',
+          '/splash',
+          '/splash?from=%2Fjoin%2FMABENA26',
           '/admin',
         ]) {
           final next = gate(auth, start);

@@ -146,26 +146,14 @@ void main() {
   });
 
   group('twist 1: /join/:code survives sign-in', () {
-    testWidgets('opened signed out from cold, then signed in: lands on the '
-        'invite, then joins', (tester) async {
+    testWidgets('opened signed out from cold: through the splash to sign-in, '
+        'then signed in, it joins and lands in the stokvel', (tester) async {
       final app = await pumpApp(tester, coldStart: '/join/MABENA26');
 
       expect(locationOf(app), '/sign-in?from=%2Fjoin%2FMABENA26');
       expect(find.widgetWithText(AppBar, 'Sign in'), findsOneWidget);
 
-      await tester.enterText(
-        find.byKey(const Key('sign-in-email')),
-        FakeSeed.thabo.email,
-      );
-      await tester.tap(find.byKey(const Key('sign-in-submit')));
-      await tester.pumpAndSettle();
-
-      expect(locationOf(app), '/join/MABENA26');
-      expect(find.byKey(const Key('invite-data-MABENA26')), findsOneWidget);
-      expect(find.text('Mabena Family'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('invite-join')));
-      await tester.pumpAndSettle();
+      await typeSignIn(tester, FakeSeed.thabo.email);
 
       expect(locationOf(app), '/stokvels/$_mabena');
       expect(find.text('Your role: Member'), findsOneWidget);
@@ -178,15 +166,10 @@ void main() {
       await openLink(tester, app, '/join/SOWETO26');
       expect(locationOf(app), '/sign-in?from=%2Fjoin%2FSOWETO26');
 
-      await tester.enterText(
-        find.byKey(const Key('sign-in-email')),
-        'THABO@ronditrack.example ',
-      );
-      await tester.tap(find.byKey(const Key('sign-in-submit')));
-      await tester.pumpAndSettle();
+      await typeSignIn(tester, 'THABO@ronditrack.example ');
 
-      expect(locationOf(app), '/join/SOWETO26');
-      expect(find.byKey(const Key('invite-data-SOWETO26')), findsOneWidget);
+      expect(locationOf(app), '/stokvels/${FakeSeed.sowetoTeachersId}');
+      expect(find.text('Your role: Member'), findsOneWidget);
     });
 
     testWidgets('a member opening the invite is offered the stokvel instead', (
@@ -207,14 +190,12 @@ void main() {
     testWidgets('a wrong email stays on sign-in and says so', (tester) async {
       final app = await pumpApp(tester, coldStart: '/join/MABENA26');
 
-      await tester.enterText(
-        find.byKey(const Key('sign-in-email')),
-        'nobody@example.com',
-      );
-      await tester.tap(find.byKey(const Key('sign-in-submit')));
-      await tester.pumpAndSettle();
+      await typeSignIn(tester, 'nobody@example.com');
 
-      expect(find.text('No account uses that email.'), findsOneWidget);
+      expect(
+        find.text("That email and password don't match an account."),
+        findsOneWidget,
+      );
       expect(locationOf(app), '/sign-in?from=%2Fjoin%2FMABENA26');
     });
   });
@@ -391,12 +372,7 @@ void main() {
       // Not awaited: the fake's delay only passes while the test pumps.
       unawaited(app.read(authControllerProvider.notifier).signOut());
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('sign-in-email')),
-        FakeSeed.thabo.email,
-      );
-      await tester.tap(find.byKey(const Key('sign-in-submit')));
-      await tester.pumpAndSettle();
+      await typeSignIn(tester, FakeSeed.thabo.email);
       await tester.tap(_tab('Home'));
       await tester.pumpAndSettle();
 

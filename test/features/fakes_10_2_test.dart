@@ -154,46 +154,55 @@ void main() {
     final auth = FakeAuthRepository(delay: Duration.zero);
 
     test('by email, ignoring case and spaces', () async {
-      final user = (await auth.signIn(email: '  Sipho@RondiTrack.example '))
-          .valueOrThrow;
+      final user = (await auth.signIn(
+        email: '  Sipho@RondiTrack.example ',
+        password: 'typed',
+      )).valueOrThrow;
       expect(user.id, FakeSeed.sipho.id);
       expect(user.name, 'Sipho Dlamini');
     });
 
     test('an unknown email is SignInFailedException', () async {
       expect(
-        await auth.signIn(email: 'someone@example.com'),
+        await auth.signIn(email: 'someone@example.com', password: 'typed'),
         failsWith<SignInFailedException>(),
       );
     });
 
-    test('the app starts signed out; signing in and out moves the user id '
-        'every repository reads', () async {
-      final container = ProviderContainer.test(
-        overrides: [
-          dataSourceProvider.overrideWithValue(DataSource.fakes),
-          fakeDelayProvider.overrideWithValue(Duration.zero),
-        ],
-      );
+    test(
+      'the app starts restoring, then signed out with nothing stored; '
+      'signing in and out moves the user id every repository reads',
+      () async {
+        final container = ProviderContainer.test(
+          overrides: [
+            dataSourceProvider.overrideWithValue(DataSource.fakes),
+            fakeDelayProvider.overrideWithValue(Duration.zero),
+          ],
+        );
 
-      expect(container.read(authControllerProvider), const SignedOut());
-      expect(container.read(signedInUserIdProvider), isNull);
+        expect(container.read(authControllerProvider), const Restoring());
+        // The launch's own restore: nothing is stored.
+        await pumpEventQueue();
+        expect(container.read(authControllerProvider), const SignedOut());
+        expect(container.read(signedInUserIdProvider), isNull);
 
-      await container
-          .read(authControllerProvider.notifier)
-          .signIn(FakeSeed.lerato.email);
-      expect(container.read(signedInUserIdProvider), FakeSeed.lerato.id);
-      final home = (await container.read(homeRepositoryProvider).fetchHome())
-          .valueOrThrow;
-      expect(home, hasLength(2));
+        await container
+            .read(authControllerProvider.notifier)
+            .signIn(email: FakeSeed.lerato.email, password: 'typed');
+        expect(container.read(signedInUserIdProvider), FakeSeed.lerato.id);
+        final home = (await container.read(homeRepositoryProvider).fetchHome())
+            .valueOrThrow;
+        expect(home, hasLength(2));
 
-      await container.read(authControllerProvider.notifier).signOut();
-      expect(container.read(signedInUserIdProvider), isNull);
-      expect(
-        (await container.read(homeRepositoryProvider).fetchHome()).valueOrThrow,
-        isEmpty,
-      );
-    });
+        await container.read(authControllerProvider.notifier).signOut();
+        expect(container.read(signedInUserIdProvider), isNull);
+        expect(
+          (await container.read(homeRepositoryProvider).fetchHome())
+              .valueOrThrow,
+          isEmpty,
+        );
+      },
+    );
 
     test('a failed sign-in stays signed out', () async {
       final container = ProviderContainer.test(
@@ -203,8 +212,13 @@ void main() {
         ],
       );
 
+      // The launch's restore first: nothing is stored.
+      expect(container.read(authControllerProvider), const Restoring());
+      await pumpEventQueue();
       await expectLater(
-        container.read(authControllerProvider.notifier).signIn('x@y.z'),
+        container
+            .read(authControllerProvider.notifier)
+            .signIn(email: 'x@y.z', password: 'typed'),
         throwsA(isA<SignInFailedException>()),
       );
       expect(container.read(authControllerProvider), const SignedOut());

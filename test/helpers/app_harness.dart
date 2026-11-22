@@ -13,11 +13,14 @@ import 'package:ronditrack_app/features/auth/domain/auth_user.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
+import 'flavour_config.dart';
+
 /// The dev flavour's configuration.
 final devConfig = AppConfig.fromValues(
   environment: 'dev',
   appName: 'RondiTrack Dev',
   apiBaseUrl: 'http://10.0.2.2:5101',
+  refreshCookieName: refreshCookieName,
   nativeFlavor: 'dev',
 );
 
@@ -26,6 +29,7 @@ final stagingConfig = AppConfig.fromValues(
   environment: 'staging',
   appName: 'RondiTrack Staging',
   apiBaseUrl: 'https://staging.api.ronditrack.example',
+  refreshCookieName: refreshCookieName,
   nativeFlavor: 'staging',
 );
 
@@ -34,6 +38,7 @@ final prodConfig = AppConfig.fromValues(
   environment: 'prod',
   appName: 'RondiTrack',
   apiBaseUrl: 'https://api.ronditrack.example',
+  refreshCookieName: refreshCookieName,
   nativeFlavor: 'prod',
 );
 
@@ -111,6 +116,9 @@ Future<ProviderContainer> pumpApp(
 
   final container = ProviderContainer(
     overrides: [
+      // As `main` does: providers that read the flavour's config (the API
+      // client, the cookie's name) get the same one the app is built with.
+      appConfigProvider.overrideWithValue(config ?? devConfig),
       // The one switch: the Week 10 whole-app tests run on the fakes.
       dataSourceProvider.overrideWithValue(DataSource.fakes),
       fakeDelayProvider.overrideWithValue(delay),
@@ -159,3 +167,16 @@ Future<void> pressBack(WidgetTester tester) async {
 /// The router, for tests that need its delegate.
 GoRouter routerOf(ProviderContainer container) =>
     container.read(routerProvider);
+
+/// What the whole-app tests type as a password. The fakes take any that
+/// isn't empty; no real account has it.
+const typedPassword = 'typed-in-a-test';
+
+/// Types [email] and [typedPassword] into the sign-in (or register) form,
+/// and sends it.
+Future<void> typeSignIn(WidgetTester tester, String email) async {
+  await tester.enterText(find.byKey(const Key('sign-in-email')), email);
+  await tester.enterText(find.byKey(const Key('auth-password')), typedPassword);
+  await tester.tap(find.byKey(const Key('auth-submit')));
+  await tester.pumpAndSettle();
+}
