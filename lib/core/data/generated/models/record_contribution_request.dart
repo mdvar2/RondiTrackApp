@@ -12,10 +12,9 @@ class RecordContributionRequest {
     required this.amountInCents,
     required this.contributionCycleId,
   });
-
-  factory RecordContributionRequest.fromJson(Map<String, Object?> json) =>
-      _$RecordContributionRequestFromJson(json);
-
+  
+  factory RecordContributionRequest.fromJson(Map<String, Object?> json) => _$RecordContributionRequestFromJson(json);
+  
   final int amountInCents;
   final String contributionCycleId;
 

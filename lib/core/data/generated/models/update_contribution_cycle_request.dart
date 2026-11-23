@@ -13,10 +13,9 @@ class UpdateContributionCycleRequest {
     required this.targetAmount,
     this.endDate,
   });
-
-  factory UpdateContributionCycleRequest.fromJson(Map<String, Object?> json) =>
-      _$UpdateContributionCycleRequestFromJson(json);
-
+  
+  factory UpdateContributionCycleRequest.fromJson(Map<String, Object?> json) => _$UpdateContributionCycleRequestFromJson(json);
+  
   final String period;
   final double targetAmount;
   final DateTime? endDate;

@@ -8,11 +8,12 @@ part 'create_payout_request.g.dart';
 
 @JsonSerializable()
 class CreatePayoutRequest {
-  const CreatePayoutRequest({required this.amount});
-
-  factory CreatePayoutRequest.fromJson(Map<String, Object?> json) =>
-      _$CreatePayoutRequestFromJson(json);
-
+  const CreatePayoutRequest({
+    required this.amount,
+  });
+  
+  factory CreatePayoutRequest.fromJson(Map<String, Object?> json) => _$CreatePayoutRequestFromJson(json);
+  
   final double amount;
 
   Map<String, Object?> toJson() => _$CreatePayoutRequestToJson(this);

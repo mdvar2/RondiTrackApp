@@ -12,10 +12,9 @@ class AccessTokenResponse {
     required this.accessToken,
     required this.expiresAtUtc,
   });
-
-  factory AccessTokenResponse.fromJson(Map<String, Object?> json) =>
-      _$AccessTokenResponseFromJson(json);
-
+  
+  factory AccessTokenResponse.fromJson(Map<String, Object?> json) => _$AccessTokenResponseFromJson(json);
+  
   final String accessToken;
   final DateTime expiresAtUtc;
 

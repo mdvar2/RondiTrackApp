@@ -17,10 +17,9 @@ class StokvelCycleSummaryResponse {
     required this.collectedCents,
     required this.targetCents,
   });
-
-  factory StokvelCycleSummaryResponse.fromJson(Map<String, Object?> json) =>
-      _$StokvelCycleSummaryResponseFromJson(json);
-
+  
+  factory StokvelCycleSummaryResponse.fromJson(Map<String, Object?> json) => _$StokvelCycleSummaryResponseFromJson(json);
+  
   final String id;
   final String period;
   final String status;
