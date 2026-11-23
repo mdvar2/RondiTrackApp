@@ -8,6 +8,8 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
 
 **Since Assignment 11.2 it signs people in for real:** register, sign in, stay signed in across a restart, one refresh however many requests need it, and sign-out that leaves nothing of the last person on a shared phone. No password is built into any flavour. See [Part 11](#part-11-sign-in-assignment-112).
 
+**Since Assignment 11.3 it works with no signal, and for everyone:** Home, a stokvel and its current cycle come from the phone at once, with how old they are; a payment made offline is sent exactly once, however many times the phone retries; the pay and create-stokvel forms take rands and dates properly; the contributions list pages and filters by South African days; the new screens speak English and Afrikaans. See [Part 12](#part-12-offline-forms-and-lists-assignment-113).
+
 - API repository: [mdvar2/RondiTrack](https://github.com/mdvar2/RondiTrack)
 - API contract copy: [`contract/openapi/v1.json`](contract/openapi/v1.json), from API commit [`da39b16`](https://github.com/mdvar2/RondiTrack/commit/da39b168f78d521fe0fecff751c85862cb64ce40) (byte-identical to `openapi/v1.json` at that commit; SHA-256 `1111c20c…16321`). That commit adds the payout order endpoint ([API PR #15](https://github.com/mdvar2/RondiTrack/pull/15)) on top of the 10.1 contract fixes ([API PR #14](https://github.com/mdvar2/RondiTrack/pull/14)). 10.1 and 10.2 read the contract at `3d04a52` (SHA-256 `7292b744…4a0dc3`).
 
@@ -49,6 +51,7 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
     - [Payouts: the five answers (Assignment 10.3)](#payouts-the-five-answers-assignment-103)
     - [Real data: the seven answers (Assignment 11.1)](#real-data-the-seven-answers-assignment-111)
     - [Auth: the seven answers (Assignment 11.2)](#auth-the-seven-answers-assignment-112)
+    - [Offline, forms and lists: the six answers (Assignment 11.3)](#offline-forms-and-lists-the-six-answers-assignment-113)
     - [Gaps found, and backend pull requests](#gaps-found-and-backend-pull-requests)
 - [Part 8: Tests, CI and evidence](#part-8-tests-ci-and-evidence)
   - [Tests and CI](#tests-and-ci)
@@ -70,6 +73,12 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
   - [Running against the API: what changed in 11.2](#running-against-the-api-what-changed-in-112)
   - [Decisions (11.2)](#decisions-112)
   - [Assignment 11.2: verification](#assignment-112-verification)
+- [Part 12: Offline, forms and lists (Assignment 11.3)](#part-12-offline-forms-and-lists-assignment-113)
+  - [Offline](#offline)
+  - [Money and dates](#money-and-dates)
+  - [Languages](#languages)
+  - [Decisions (11.3)](#decisions-113)
+  - [Assignment 11.3: verification](#assignment-113-verification)
 
 ---
 
@@ -803,6 +812,27 @@ An empty `items` means the cycle has no payout order: it isn't `Open` and had no
 | 16 | Register declared `200`; it answers `201` | A generated client would read the wrong status | **Fixed**: `201` with `UserResponse` |
 | 17 | Register's `400` (with `errors`) and `409`, refresh's `401`, logout's `204` weren't in the contract | The app's contract copy didn't say what the forms must handle | **Fixed**: declared |
 
+#### Offline, forms and lists: the six answers (Assignment 11.3)
+
+> **Why these come first.** Written before the outbox, the forms or the list, from the API's C# (`ContributionService`, `PostgresIdempotencyStore`, `HousekeepingOptions`, `StokvelsController`, `ContributionCyclesController`, `ContributionRepository`, the validators and `GlobalExceptionHandler`) and, where those were silent, from requests to a seeded API.
+
+**Read at:** API commit [`e8ce059`](https://github.com/mdvar2/RondiTrack/commit/e8ce059) (branch `fix/mobile-contract-gaps`, after API PR #17). **Gap fixed in:** [API PR #18](https://github.com/mdvar2/RondiTrack/pull/18) (`a84bfcb`, branch `feat/contribution-filters`); [`contract/openapi/v1.json`](contract/openapi/v1.json) is that commit's `openapi/v1.json`.
+
+| # | Question | The API's answer | What the app does |
+|---|---|---|---|
+| 1 | Which writes take an `Idempotency-Key`? A repeat? The same key with another body? How long is a key kept (M)? | Recording a contribution (`POST /stokvels/{stokvelId}/members/{userId}/contributions`) and closing a cycle. Missing key: **`400`**. The same key and body again: the **stored `201`**, word for word, and nothing new recorded (an advisory lock per key makes two at once safe). The same key with another body: **`409`** *"Idempotency-Key was already used with a different request."* Keys are kept **24 hours** (`Housekeeping:IdempotencyRetentionHours`): **M = 1 day** | The key is made once, when Pay is tapped, stored with the payment, and sent with every attempt. The outbox gives up after **20 hours**, before the API could forget the key |
+| 2 | When is a contribution refused? Words? Rate limited? | Already paid: **`409`** *"A contribution already exists for this member and cycle."* Cycle closed: **`409`** *"This contribution cycle is no longer open."* Not a member: **`404`** *"Stokvel not found."* (the authorisation hides the stokvel); paying for someone else as a Member: **`403`**. Amount ≤ 0 or over R1 000 000: **`400`**. Rate limited: **30 a minute per account**, `429` with `Retry-After` | Each removes the payment from the outbox. The two `409`s are told in a member's words ("You've already paid for this cycle…", "This cycle is closed…"); anything else in the API's. A `429` keeps it, and sends it again when `Retry-After` has passed |
+| 3 | Which records can be edited; how is a stale edit refused? | A stokvel (`PUT /stokvels/{id}`) and a cycle (`PUT …/cycles/{cycleId}`: `period`, `targetAmount`, `endDate`), each with **`If-Match`** set to the `ETag` it was read with: stale is **`412`** *"The contribution cycle has changed. Refetch it and retry with the current ETag."* | Editing a cycle sends its ETag. On a `412` the edit is rolled back: the cycle is fetched again, the form shows the latest, and the person reads *"Someone else changed this cycle while you were editing…"*, not the API's words about ETags |
+| 4 | The contributions list: largest page, end marker, filters, a date filter's meaning? | `GET …/cycles/{cycleId}/contributions`: `pageSize` up to **100** (25 by default); the end is **`nextPageToken: ""`** and `hasMore: false`. Filters: the cycle (the path), `userId`, `role`, amounts. **There was no status filter and no date filter** (gap 18). Now: `status` (`Pending`, `Paid`, `Confirmed`), and **`recordedFrom` (inclusive) and `recordedBefore` (exclusive): two instants, ISO 8601 with an offset**, so a day in any zone is `[its midnight, the next midnight)`. A token with other filters: `400` | Pages of 20, one request in flight; a filter change starts again with no token. "1 November" is sent as `recordedFrom=2026-10-31T22:00:00.000Z&recordedBefore=2026-11-01T22:00:00.000Z`: 00:00 SAST to 00:00 SAST |
+| 5 | Paying and creating a stokvel: `errors` field names; money and dates on the wire? | Pay: `{amountInCents, contributionCycleId}`: **cents**, an integer; errors `amountInCents`, `contributionCycleId`. Create: `{name, contributionAmount}`: **rands, a decimal**; errors `name`, `contributionAmount`. A cycle: `{period, targetAmount, endDate}`: `period` `"2026-11"`, `targetAmount` rands, `endDate` a **date** (`"2026-11-30"`); errors `period`, `targetAmount`, `endDate`. All keys camelCase | Rands are parsed to cents (`parseRand`); a rand amount goes out as exact decimal text built from the cents (`500.25`), never through a `double`. Each server error lands under its field: `contributionAmount`/`targetAmount` under the amount, `endDate`/`period` under the date |
+| 6 | Which answers carry personal information a phone shouldn't keep in plain storage? | **Proofs of payment** (`…/contributions/{id}/proof/download`: the file itself). Members' **emails** in contributions and members lists. No ID numbers or bank details anywhere in the API | Proofs are never cached (the app doesn't download them at all). Emails are never stored: the cache keeps names, roles, amounts and statuses |
+
+**Gap found in 11.3** (fixed in [API PR #18](https://github.com/mdvar2/RondiTrack/pull/18), with `ContributionFilterTests`; `dotnet test` **203 passed**; the dev seed records Kagiso's Soweto Teachers contribution at 00:30 SAST on the 1st):
+
+| # | Gap | Why it matters to the app | Status |
+|---|---|---|---|
+| 18 | A cycle's contributions had no status filter and no date filter | The list's status and day filters, and the calendar twist | **Fixed**: `status`, `recordedFrom`, `recordedBefore`, half-open, carried in the page token |
+
 #### Gaps found, and backend pull requests
 
 **Backend branch:** [`fix/mobile-contract-gaps`](https://github.com/mdvar2/RondiTrack/compare/assignment-9.3...fix/mobile-contract-gaps) in the API repo, commit `0bb7f92`, based on the contract commit `3d04a52` (branch `assignment-9.3`). **Pull request:** not yet opened; open it at <https://github.com/mdvar2/RondiTrack/pull/new/fix/mobile-contract-gaps> with base `assignment-9.3`, and put its link here.
@@ -1279,3 +1309,97 @@ The dev flavour, a **debug** build (so the app's log lines reach logcat, the Run
 **Offline, honestly:** the phone reaches the laptop's API through `adb reverse`, so airplane mode would not have cut it. The route was removed instead (`adb reverse --remove tcp:8081`): the same "no answer" the app gets in airplane mode.
 
 **Found on the phone:** register's password error was cut to one line ("The length of '…"); the forms now let an error wrap (`errorMaxLines`), as the screenshot shows.
+
+---
+
+## Part 12: Offline, forms and lists (Assignment 11.3)
+
+*Working in a taxi with no signal, paying exactly once, rands and South African days, a list that pages, and two languages.*
+
+### Offline
+
+> **In plain words.** The phone keeps a copy of what it last saw, so screens open at once with or without signal, and says how old that copy is. A payment made with no signal waits in an *outbox* on the phone, with a key that lets the server recognise a repeat, and is sent later. Signing out empties all of it.
+
+**What is cached, where.** One Drift database ([`AppDatabase`](lib/app/database.dart)), each feature owning its tables and the code that reads them, in its `data/` folder; nothing above `data/` sees a row:
+
+| Table | Feature | Holds |
+|---|---|---|
+| `home_cache` | [home/data](lib/features/home/data/home_table.dart) | Home's cards: names, roles, current cycle, paid/owed/arrears in cents, as the server sent them |
+| `stokvel_cache` | [stokvels/data](lib/features/stokvels/data/stokvel_tables.dart) | Each opened stokvel: its current cycle (with its ETag) and contributions (names, roles, amounts, statuses, times) |
+| `cycle_cache` | stokvels/data | Each opened cycle, likewise |
+| `payment_outbox` | [payments/data](lib/features/payments/data/outbox_table.dart) | Payments tapped and not yet accepted: stokvel, cycle, member, amount in cents, the `Idempotency-Key`, when tapped, attempts, `waitUntil` |
+| `last_user` | [auth/data](lib/features/auth/data/last_user_table.dart) | Who was signed in (id, name, email), so the app can open as them with no signal |
+
+**Stale-while-revalidate.** Each screen's provider ([`CacheSync`](lib/core/cache/cached.dart)) draws from the cache at once and starts one refresh; the server's answer goes into the cache, and from there to the screen, never straight to a widget. When a refresh fails, the cached data stays with [a banner](lib/core/widgets/cache_banner.dart): *"You're offline. Showing what this phone saved 3 hours ago."* (or *"Couldn't refresh…"* for the server's fault), with **Try again**. The banner comes from what happened to the request, never from the connection type (the app has no `connectivity_plus`). A successful payment or edit refreshes Home, the stokvel and the cycle, so the banner goes.
+
+**Opened with no signal**, the app opens as the person last signed in on that phone, on their cached data: the one refresh on launch can't answer, `last_user` says who, and the session comes back by itself with the first request that gets through (the interceptor refreshes first when no access token is in memory but one is stored). With nobody remembered, the 11.2 splash still says offline.
+
+**Never cached:** proofs of payment (not downloaded at all), members' emails, tokens (the refresh token is in secure storage, the access token in memory). **Settings are in SharedPreferences, data never:** only the language choice is there, and it survives a restart and a sign-out.
+
+**What sign-out removes:** every table (one transaction), then the state. If the outbox still holds a payment, sign-out asks first (*"A payment hasn't been sent… Sign out anyway"*). Signing in as someone else than `last_user` also empties the database first.
+
+**The outbox** ([`DriftPaymentOutbox`](lib/features/payments/data/drift_payment_outbox.dart)):
+
+- Pay writes the payment, with an `Idempotency-Key` made **there, once**, then sends it. Every attempt (a timeout, Try again, Send now, the app killed and opened again, a sign-in) sends the stored key. The code that sends never makes a key.
+- While a payment waits for a cycle, its Pay button is disabled: one tap, one payment.
+- Each answer has one outcome:
+
+| The API answers | The outbox | The member sees |
+|---|---|---|
+| `201`, or the stored `201` for a repeat | Removes it | *"Paid. The cycle is up to date."*, and Home, the stokvel and the cycle refreshed |
+| `409` already paid / cycle closed (and any `400`, `403`, `404`) | Removes it | Why, in a member's words |
+| `429` | Keeps it and its key; waits for `Retry-After`, then sends again | *"Too many payments at once. We'll try again in 30 seconds."* |
+| No answer (or a `5xx`, or a session to sign in again) | Keeps it and its key | *"Saved on this phone… it isn't paid yet."*, and **Pending payment: R 500,00. Not paid until the server confirms it.** beside the server's figures, never added in |
+
+- **Maximum age: 20 hours, against the API's M = 24 hours** (key retention). After 20 hours a payment is never sent again: the API could have forgotten its key and would record it twice. The member is told to check the cycle and pay again if they need to.
+- **The phone never computes money:** paid, owed, arrears and totals are the server's cached values.
+
+### Money and dates
+
+**Rands to cents.** Every amount typed goes through [`parseRand`](lib/core/money/rand_parser.dart) (10.1) to whole cents: `500`, `500,50`, `500.50`, `R 1 250,50`, `R1250`, with spaces or no-break spaces grouping threes; anything else is refused with a reason shown under the field (*"Write cents with two digits, like 500,50."*). Writes the API takes in rands (`contributionAmount`, `targetAmount`) are sent as exact decimal text made from the cents ([`randDecimalText`](lib/core/money/rand_decimal.dart): 50025 → `500.25`), written into the JSON as is: no `double` ever carries an amount. Paying sends cents (`amountInCents`).
+
+**South African days.** South Africa is UTC+2 all year, so [`Sast`](lib/core/time/sast.dart) needs no time zone database. A day the person picks is a calendar day; its bounds are `00:00 SAST` that day up to, not including, `00:00 SAST` the day after, sent as UTC instants. A contribution's day is `Sast.dayOf(recordedAt)`: **00:30 SAST on 1 November (22:30 UTC on 31 October) falls on 1 November**. Nothing asks the phone for its zone, so a phone set to London still sees South African days; dates on screen, which followed the phone's zone in 10.x, now do too. Drift hands times back in the machine's zone; the caches turn them back into UTC. CI runs every test twice, under `TZ=UTC` and `TZ=Africa/Johannesburg`, on Linux.
+
+### Languages
+
+- **English and Afrikaans**, through ARB files ([`app_en.arb`](lib/l10n/app_en.arb), [`app_af.arb`](lib/l10n/app_af.arb)) and gen-l10n ([`l10n.yaml`](l10n.yaml)), for every screen of this assignment: the pay form, the create-stokvel form, the cycle edit, the contributions list and its filters, the cache banner, the payment outcomes, the sign-out question and the language choice. Screens from 10.x and 11.1–11.2 are not yet translated.
+- Plurals by ICU plural messages (`{count, plural, =0{…} one{…} other{…}}`), never `n == 1`; Afrikaans follows CLDR's one/other like English (*1 lid, 6 lede; 1 bydrae, 6 bydraes*). Whole sentences with placeholders; layouts wrap.
+- **Reviewed by:** nobody yet. **The Afrikaans is a draft written with an AI assistant, not reviewed by a first-language speaker.** Until someone is named here with what they changed, treat it as unreviewed.
+- The language can be chosen on Profile (the phone's, English, Afrikaans), kept in SharedPreferences.
+- **Usable by everyone:** every field and button on the pay form says what it is; an error is announced; every status is words (Paid, Pending, Confirmed, Late; Betaal, Hangend, Bevestig, Laat), never a colour alone; icon-only buttons have tooltips; decorative icons are excluded from semantics. Tap targets are checked with `androidTapTargetGuideline` on the pay form and the list.
+
+### Decisions (11.3)
+
+| Decision | What, and why |
+|---|---|
+| **Keys: `uuid` 4.6.0, `v4()`** | Its default random source is `CryptoRNG` (checked in the package source). Made only by `PaymentOutbox.enqueue`, at the tap |
+| **Paging by hand** | [`ContributionsList`](lib/features/stokvels/presentation/contributions_list_controller.dart): one request in flight, a generation counter that drops a page answering for a filter no longer shown, and the six states as one enum. A package would have hidden the token handling the twist depends on |
+| **Cache domain types, not API JSON** | The fakes give domain types too, so one cache serves both; codecs in each `data/` folder keep cents and calendar days |
+| **The outbox's maximum age: 20 hours** | Four hours inside the API's 24-hour key retention, so a payment is never sent with a key the API may have forgotten |
+| **Second language: Afrikaans** | Its plural rules match English's, so the ICU messages are exercised without hiding mistakes behind special cases; isiZulu's `one` covering 0 would need a reviewer even more |
+| **Dependency overrides** | `cli_util` **0.6.0** (0.6.1 published 2026-11-20, through `drift_dev`): remove on or after **2026-12-04**. `shared_preferences_android` **2.5.4** (2.5.5 published 2026-11-11): remove on or after **2026-11-25**. Every version in `pubspec.lock` is at least two weeks old |
+| **Running against the API** | Branch `feat/contribution-filters` ([API PR #18](https://github.com/mdvar2/RondiTrack/pull/18)) or later, on a fresh seed |
+
+### Assignment 11.3: verification
+
+- `dart format` clean, `dart analyze --fatal-infos`: **No issues found!**, `flutter test`: **all passing**, live skipped; CI runs them under `TZ=UTC` and `TZ=Africa/Johannesburg`.
+- The live tests ([`live_offline_test.dart`](test/live/live_offline_test.dart)) against the seeded API: **2 passed**: one key sent twice made one contribution; an edit with a stale ETag was refused (`412`); the 00:30 SAST contribution is on the 1st through the date filter.
+- API: `dotnet test` **203 passed** ([API PR #18](https://github.com/mdvar2/RondiTrack/pull/18)).
+
+| Layer | Tests |
+|---|---|
+| Database | [`cache_test.dart`](test/features/offline/cache_test.dart): saved comes back as domain types; a watcher before the first fetch sees it; two stokvels watched at once each see their own; the wipe leaves every table empty |
+| Cache and sync | the same file: offline, the cache stays and the sync says why; a fetch updates it and the banner goes; not found removes the row |
+| Outbox | [`outbox_test.dart`](test/features/payments/outbox_test.dart): one key per tap; the same key on every attempt and after closing and reopening the database file; each row of the outcome table; the maximum age; no total changes while pending |
+| Money and dates | [`sast_test.dart`](test/core/time/sast_test.dart) and the 10.1 [`rand_parser_test.dart`](test/core/money/rand_parser_test.dart): the 00:30 contribution on 1 November in either zone; half-open bounds; rands to cents and back; the decimal text |
+| Forms and list | [`forms_and_list_test.dart`](test/features/forms_and_list_test.dart): field errors under their fields, input kept; the stale edit rolled back; a filter change drops the token; pages to the end marker; the six states |
+| Languages and access | the same file: the pay form in both languages; plurals for 0, 1 and 6 in each; the 48 dp guideline on the pay form and the list; statuses in words in both languages; 200% text |
+| Whole app | [`offline_app_test.dart`](test/app/offline_app_test.dart): opened offline as the last person, on cached Home, with the banner and its age; sign-out asks first while a payment is unsent, then empties every table |
+
+**Three tests seen to fail.** Each break was made, the test run, and the change reverted:
+
+| Broke | Test that went red |
+|---|---|
+| A new key made in the code that sends, on every attempt | "the same key after the app is killed and opened again": `Expected: ['f893e0c7-…']`, `Actual: ['ce8e2e68-…']` |
+| A filter change keeps the last page's token | "a filter change starts again from the first page, with no token": `Expected: null`, `Actual: 'p2'` (the first version of this test changed the filter only at the end of the list, where there is no token, and stayed green; it was rewritten) |
+| No maximum age | "the maximum age…": `Expected: <Instance of 'PaymentExpired'>`, `Actual: <Instance of 'PaymentStillPending'>` |
