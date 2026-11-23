@@ -4,7 +4,7 @@ import 'package:ronditrack_app/core/time/calendar_date.dart';
 import 'package:ronditrack_app/l10n/locale_dates.dart';
 
 void main() {
-  setUpAll(() => initializeDateFormatting());
+  setUpAll(initializeDateFormatting);
 
   // Day, month, year in both languages: never the US order that `yMMMd`
   // gives plain `en` ("Nov 1, 2026"), which the phone showed.
