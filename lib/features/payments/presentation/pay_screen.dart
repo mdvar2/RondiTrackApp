@@ -93,9 +93,30 @@ class _PayScreenState extends ConsumerState<PayScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final view = cycleDetailViewState(
+    var view = cycleDetailViewState(
       ref.watch(cycleDetailProvider(widget.stokvelId, widget.cycleId)),
     );
+    // A cycle never opened isn't saved on the phone, so with no signal it
+    // fails. The saved stokvel holds its current cycle, which is all the
+    // form needs (name, contribution, period): Pay from the stokvel works
+    // offline. Never the cycle edit: this copy has no cycle ETag.
+    if (view is ViewFailure<CycleDetail>) {
+      if (ref.watch(stokvelDetailProvider(widget.stokvelId)).value
+          case StokvelDetail(
+            :final stokvel,
+            currentCycle: final cycle?,
+            :final contributions,
+          )
+          when cycle.id == widget.cycleId) {
+        view = ViewData(
+          CycleDetail(
+            stokvel: stokvel,
+            cycle: cycle,
+            contributions: contributions,
+          ),
+        );
+      }
+    }
     final pending = (ref.watch(pendingPaymentsProvider).value ?? const [])
         .where((p) => p.cycleId == widget.cycleId)
         .toList();

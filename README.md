@@ -1334,6 +1334,8 @@ The dev flavour, a **debug** build (so the app's log lines reach logcat, the Run
 
 **Opened with no signal**, the app opens as the person last signed in on that phone, on their cached data: the one refresh on launch can't answer, `last_user` says who, and the session comes back by itself with the first request that gets through (the interceptor refreshes first when no access token is in memory but one is stored). With nobody remembered, the 11.2 splash still says offline.
 
+**Pay with no signal, from a stokvel opened before.** A cycle is cached only once opened, but Pay is reached from the stokvel. When the cycle isn't saved, [the pay form](lib/features/payments/presentation/pay_screen.dart) uses the saved stokvel's current cycle (name, contribution, period: all the form needs). The cycle edit never does: that copy has no cycle ETag. Found on the phone; test: [`offline_app_test.dart`](test/app/offline_app_test.dart).
+
 **Never cached:** proofs of payment (not downloaded at all), members' emails, tokens (the refresh token is in secure storage, the access token in memory). **Settings are in SharedPreferences, data never:** only the language choice is there, and it survives a restart and a sign-out.
 
 **What sign-out removes:** every table (one transaction), then the state. If the outbox still holds a payment, sign-out asks first (*"A payment hasn't been sent… Sign out anyway"*). Signing in as someone else than `last_user` also empties the database first.

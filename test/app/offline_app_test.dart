@@ -15,12 +15,38 @@ import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/payments/domain/payment_outbox.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
+import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
+import 'package:ronditrack_app/features/stokvels/data/stokvel_cache.dart';
+import 'package:ronditrack_app/features/stokvels/domain/cycle_close_preview.dart';
+import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
+import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
 import '../helpers/app_harness.dart';
 import '../helpers/test_database.dart';
 
 /// No signal: every restore and every Home fetch gets no answer.
-class _Offline implements AuthRepository, HomeRepository, PaymentSender {
+class _Offline
+    implements
+        AuthRepository,
+        HomeRepository,
+        PaymentSender,
+        StokvelRepository {
+  @override
+  Future<Result<StokvelDetail>> fetchStokvel(String stokvelId) async =>
+      const Err(NoAnswerFailure());
+
+  @override
+  Future<Result<CycleDetail>> fetchCycle(
+    String stokvelId,
+    String cycleId,
+  ) async => const Err(NoAnswerFailure());
+
+  @override
+  Future<Result<CycleClosePreview>> fetchClosePreview(
+    String stokvelId,
+    String cycleId,
+  ) async => const Err(NoAnswerFailure());
+
   @override
   Future<Result<AuthUser?>> restore() async => const Err(NoAnswerFailure());
 
@@ -144,5 +170,46 @@ void main() {
       return rows;
     });
     expect(leftOver!.values, everyElement(0), reason: '$leftOver');
+  });
+
+  testWidgets('with no signal, Pay opens from a stokvel opened before, '
+      'though its cycle never was, and the payment waits in the outbox', (
+    tester,
+  ) async {
+    final db = memoryDatabase();
+    addTearDown(db.close);
+    // Soweto Teachers was opened online; its cycle never was.
+    await tester.runAsync(
+      () => StokvelCache(
+        db,
+        FakeStokvelRepository(userId: FakeSeed.sipho.id, delay: Duration.zero),
+        FakeSeed.sowetoTeachersId,
+      ).refresh(),
+    );
+    final offline = _Offline();
+    final app = await pumpApp(
+      tester,
+      as: FakeSeed.sipho,
+      size: phone,
+      coldStart:
+          '/stokvels/${FakeSeed.sowetoTeachersId}/cycles/'
+          '${FakeSeed.sowetoCycleId}/pay',
+      database: db,
+      overrides: [
+        stokvelRepositoryProvider.overrideWithValue(offline),
+        paymentSenderProvider.overrideWithValue(offline),
+      ],
+    );
+
+    expect(find.text('Pay Soweto Teachers'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('pay-submit')));
+    await tester.pumpAndSettle();
+    final waiting = await tester.runAsync(
+      () => app.read(paymentOutboxProvider).waiting(),
+    );
+    expect(waiting, hasLength(1));
+    expect(waiting!.single.cycleId, FakeSeed.sowetoCycleId);
+    await tester.pump(const Duration(seconds: 10));
+    await tester.pumpAndSettle();
   });
 }
