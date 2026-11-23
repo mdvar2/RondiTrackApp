@@ -1338,6 +1338,8 @@ The dev flavour, a **debug** build (so the app's log lines reach logcat, the Run
 
 **After Pay, back to the stokvel**, where Pay was tapped and the pending note shows, not up the address to the cycle (`/stokvels/:id/cycles/:cycleId/pay` pops to the cycle), which with no signal may have nothing saved. Also found on the phone; same test.
 
+**Days are day, month, year in both languages** (*1 Nov 2026*, *1 Nov. 2026*): [`formatDay`](lib/l10n/locale_dates.dart) used `yMMMd`, which for plain `en` is the US *Nov 1, 2026*; seen on the phone's cycle edit, fixed, and tested in [`locale_dates_test.dart`](test/l10n/locale_dates_test.dart).
+
 **Never cached:** proofs of payment (not downloaded at all), members' emails, tokens (the refresh token is in secure storage, the access token in memory). **Settings are in SharedPreferences, data never:** only the language choice is there, and it survives a restart and a sign-out.
 
 **What sign-out removes:** every table (one transaction), then the state. If the outbox still holds a payment, sign-out asks first (*"A payment hasn't been sent… Sign out anyway"*). Signing in as someone else than `last_user` also empties the database first.
