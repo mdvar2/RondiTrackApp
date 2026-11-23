@@ -20,6 +20,7 @@ import 'package:ronditrack_app/features/stokvels/data/stokvel_cache.dart';
 import 'package:ronditrack_app/features/stokvels/domain/cycle_close_preview.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
 
 import '../helpers/app_harness.dart';
 import '../helpers/test_database.dart';
@@ -209,6 +210,16 @@ void main() {
     );
     expect(waiting, hasLength(1));
     expect(waiting!.single.cycleId, FakeSeed.sowetoCycleId);
+    // Back on the stokvel (saved), with the payment marked pending: not
+    // the cycle, which was never saved.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+    expect(find.byType(StokvelDetailScreen), findsOneWidget);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.pump();
+    expect(find.byKey(const Key('pending-payment')), findsOneWidget);
     await tester.pump(const Duration(seconds: 10));
     await tester.pumpAndSettle();
   });

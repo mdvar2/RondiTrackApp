@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ronditrack_app/app/router/routes.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/money/rand_parser.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
@@ -71,7 +72,6 @@ class _PayScreenState extends ConsumerState<PayScreen> {
       _busy = true;
       _amountError = null;
     });
-    final navigator = Navigator.of(context);
     // What it came to is shown by the tab shell, once (README "Offline").
     final outcome = await ref
         .read(paymentsProvider.notifier)
@@ -85,8 +85,11 @@ class _PayScreenState extends ConsumerState<PayScreen> {
       // Refused for a reason the form can fix: stay, input kept.
       case PaymentRefused(reason: PaymentRefusal.other):
         setState(() => _busy = false);
+      // Back to the stokvel, where Pay was tapped and the pending note
+      // shows: not up the address to the cycle, which may never have
+      // been saved on the phone, and so is empty with no signal.
       default:
-        if (navigator.canPop()) navigator.pop();
+        StokvelRoute(id: widget.stokvelId).go(context);
     }
   }
 
