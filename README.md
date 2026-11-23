@@ -1409,3 +1409,28 @@ The dev flavour, a **debug** build (so the app's log lines reach logcat, the Run
 | A new key made in the code that sends, on every attempt | "the same key after the app is killed and opened again": `Expected: ['f893e0c7-…']`, `Actual: ['ce8e2e68-…']` |
 | A filter change keeps the last page's token | "a filter change starts again from the first page, with no token": `Expected: null`, `Actual: 'p2'` (the first version of this test changed the filter only at the end of the list, where there is no token, and stayed green; it was rewritten) |
 | No maximum age | "the maximum age…": `Expected: <Instance of 'PaymentExpired'>`, `Actual: <Instance of 'PaymentStillPending'>` |
+
+### Assignment 11.3: phone evidence
+
+On a Huawei MAO-LX9 (Android), the dev debug build against the API from [API PR #18](https://github.com/mdvar2/RondiTrack/pull/18) on a fresh seed. "No signal" is the USB route to the API removed (`adb reverse --remove`): the app gets no answer, exactly as on a dead network. Files in [`docs/evidence/11.3/`](docs/evidence/11.3/).
+
+| What | Shows | File |
+|---|---|---|
+| Home, no signal | The banner, *"You're offline. Showing what this phone saved just now."*, over the saved cards, with Try again | `01-home-offline.png` |
+| Opened with no signal | After a reinstall, the app opens as Sipho, on his saved Home, *"saved 39 minutes ago"* | `02-opened-offline-as-last-user.png` |
+| A field error, both languages | *Cents have two digits at most.* / *Sente het hoogstens twee syfers.* under the amount, input kept | `03-pay-field-error-en.png`, `04-pay-field-error-af.png` |
+| The twist: paid with no signal, killed, reopened | Sipho pays Soweto Teachers R 1 500 with no signal; the app is killed (reinstalled) and opened again, still offline: **Pending payment: R 1 500,00. Not paid until the server confirms it.**, beside the server's figures (*Collected R 2 250,00*), not added in | `05-pending-after-restart-offline.png` |
+| …back online | The phone's outbox row held key `8939f652-…` (2 attempts). Reconnected, Send now: `POST …/contributions [Idempotency-Key 8939f652-064d-40fd-a08f-fcf09f2658c4] 201`; the stokvel now shows Sipho Paid, 3 of 3 | `06-sent-on-reconnect-paid.png`, `06-reconnect-log.txt` |
+| …in the API's database | **One** contribution (R 1 500, Paid) for Sipho in that cycle, and **one** idempotency record, for that key, `201` | `07-api-database.txt` |
+| A stale edit | Lerato opens Edit cycle (target R 1 500); the same cycle is changed from the PC to R 1 600 (`PUT` with its ETag, `204`); the phone saves R 2 000 with its old ETag: `412`, then *"Someone else changed this cycle while you were editing. Here is the latest; check it and save again."* with R 1 600 | `08-edit-from-the-pc.txt`, `09-stale-edit-refused-latest-shown.png` |
+| The list, filtered to one day | Soweto Teachers' contributions filtered to *1 Nov 2026*: only Kagiso, *Paid on 1 Nov 2026*. The database has him at `2026-10-31 22:30:00+00`: 00:30 SAST on the 1st | `10-list-filtered-1-nov.png`, `10-kagiso-recorded-at.txt` |
+| Screen reader at 200% text | Huawei's ScreenReader (its TalkBack) on, font scale 2.0: Pay with `abc` puts the error under the field, and the reader's focus takes the field with its error, *"Use digits only, like 500 or 1 250,50."* | `11-screenreader-200pct-pay-error.png` |
+| CI in two time zones | The test step run twice, *Running in UTC (UTC+00:00)* and *Running in SAST (UTC+02:00)*: 618 passed in each | `12-ci-time-zones.txt` |
+
+**Found on the phone, fixed, tested** (each test red without its fix):
+
+- With no signal, Pay from a stokvel opened before showed *"You're offline"* instead of the form: it needed the cycle's saved copy, and a cycle is saved only once opened. The form now uses the saved stokvel's current cycle. ([`offline_app_test.dart`](test/app/offline_app_test.dart))
+- After paying, the app went up the address to the cycle, which with no signal had nothing saved; it now goes back to the stokvel, where the pending note is.
+- The cycle edit's due date read *Nov 30, 2026* (the US order `yMMMd` gives plain `en`); every day is now day, month, year. ([`locale_dates_test.dart`](test/l10n/locale_dates_test.dart))
+
+Settings changed for the evidence were put back: ScreenReader off, font scale 1.0, stay-awake off.

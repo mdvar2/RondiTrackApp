@@ -1,0 +1,22 @@
+API database ronditrack_mobile_113 after the reconnect (psql).
+
+Sipho's contributions to the Soweto Teachers cycle 2026-11:
+ Amount | Status |         RecordedAtUtc         
+--------+--------+-------------------------------
+   1500 | Paid   | 2026-11-23 06:43:36.388013+02
+(1 row)
+
+
+Idempotency records for the key the phone stored at the tap:
+ records_with_this_key 
+-----------------------
+                     1
+(1 row)
+
+
+                 Key                  | ResponseStatus |         CreatedAtUtc          
+--------------------------------------+----------------+-------------------------------
+ 8939f652-064d-40fd-a08f-fcf09f2658c4 |            201 | 2026-11-23 06:43:36.395004+02
+(1 row)
+
+
