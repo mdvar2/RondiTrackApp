@@ -177,7 +177,7 @@ void main() {
 
   group('the contributions list', () {
     testWidgets('a filter change starts again from the first page, with no '
-        'token', (tester) async {
+        'token, though the last page had one', (tester) async {
       final pages = _Pages()
         ..answers.addAll([
           Ok(
@@ -185,7 +185,6 @@ void main() {
               for (var i = 0; i < 20; i++) _Pages.row(i),
             ], nextPageToken: 'p2'),
           ),
-          Ok(ContributionPage([_Pages.row(20)])),
           Ok(ContributionPage([_Pages.row(1)])),
         ]);
       await pumpApp(
@@ -195,14 +194,39 @@ void main() {
         coldStart: _list,
         overrides: [contributionsRepositoryProvider.overrideWithValue(pages)],
       );
-      await tester.scrollUntilVisible(find.byKey(const Key('list-end')), 400);
-      expect(pages.asked.map((a) => a.token), [null, 'p2']);
+      // The first page is on screen, and the API sent a token for more.
+      expect(pages.asked.map((a) => a.token), [null]);
 
       await tester.tap(find.byKey(const Key('filter-status-pending')));
       await tester.pumpAndSettle();
 
+      expect(pages.asked, hasLength(2));
       expect(pages.asked.last.token, isNull);
       expect(pages.asked.last.filter.status, ContributionStatus.pending);
+    });
+
+    testWidgets('pages load near the end, and stop at the end marker', (
+      tester,
+    ) async {
+      final pages = _Pages()
+        ..answers.addAll([
+          Ok(
+            ContributionPage([
+              for (var i = 0; i < 20; i++) _Pages.row(i),
+            ], nextPageToken: 'p2'),
+          ),
+          Ok(ContributionPage([_Pages.row(20)])),
+        ]);
+      await pumpApp(
+        tester,
+        as: FakeSeed.lerato,
+        size: phone,
+        coldStart: _list,
+        overrides: [contributionsRepositoryProvider.overrideWithValue(pages)],
+      );
+      await tester.scrollUntilVisible(find.byKey(const Key('list-end')), 400);
+
+      expect(pages.asked.map((a) => a.token), [null, 'p2']);
     });
 
     for (final (name, key, answers) in [
