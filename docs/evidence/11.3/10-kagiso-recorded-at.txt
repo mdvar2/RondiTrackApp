@@ -1,0 +1,11 @@
+Kagiso's Soweto Teachers contribution in the API database (psql, shown in UTC):
+SET
+      Name      | Amount |         RecordedAtUtc         
+----------------+--------+-------------------------------
+ Kagiso Molefe  |   1500 | 2026-10-31 22:30:00+00
+ Lerato Mokoena |    750 | 2026-11-06 12:00:00+00
+ Sipho Dlamini  |   1500 | 2026-11-23 04:43:36.388013+00
+(3 rows)
+
+
+31 Oct 22:30 UTC is 1 Nov 00:30 SAST: the phone, filtered to 1 Nov 2026, shows it (10-list-filtered-1-nov.png).

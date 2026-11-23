@@ -223,9 +223,7 @@ class _PayoutRow extends StatelessWidget {
                   if (paidAt != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Paid on ${formatInstantAsLocalDate(paidAt)}',
-                      ),
+                      child: Text('Paid on ${formatInstantAsSastDate(paidAt)}'),
                     ),
                 ],
               ),

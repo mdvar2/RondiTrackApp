@@ -159,8 +159,14 @@ class ApiLogInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  String _head(RequestOptions request) =>
-      'API ${request.method} ${request.uri.path}';
+  // A payment's Idempotency-Key is a random UUID, made at the tap: not a
+  // secret and not personal. It is logged so the same key can be seen on
+  // every attempt (README "Offline").
+  String _head(RequestOptions request) {
+    final key = request.headers['Idempotency-Key'];
+    final keyed = key is String ? ' [Idempotency-Key $key]' : '';
+    return 'API ${request.method} ${request.uri.path}$keyed';
+  }
 
   int _ms(RequestOptions request) {
     final started = request.extra[_startedKey];

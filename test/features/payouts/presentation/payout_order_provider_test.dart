@@ -11,6 +11,7 @@ import 'package:ronditrack_app/features/payouts/presentation/payout_order_provid
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 const CycleKey _mabena = (
@@ -38,6 +39,7 @@ void main() {
     log = [];
     return ProviderContainer.test(
       overrides: [
+        inMemoryDatabase(),
         payoutRepositoryProvider.overrideWithValue(repository),
         lifecycleLogProvider.overrideWithValue(log.add),
       ],

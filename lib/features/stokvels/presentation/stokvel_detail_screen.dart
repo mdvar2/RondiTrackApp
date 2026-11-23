@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
 import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
+import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
+import 'package:ronditrack_app/features/payments/presentation/pay_screen.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_actions.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/contribution_row.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// One stokvel: its current cycle, contributions and what I can do here.
 ///
@@ -72,53 +76,67 @@ class StokvelDetailScreen extends ConsumerWidget {
                 ),
               ),
       ),
-      body: switch (view) {
-        ViewLoading() => Center(
-          key: Key('stokvel-loading-$stokvelId'),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text('Loading ${pickerEntry?.stokvelName ?? 'stokvel'}…'),
-            ],
+      body: Column(
+        children: [
+          CacheBanner(
+            status: ref.watch(syncStatusesProvider)[stokvelSyncKey(stokvelId)],
+            onRetry: retry,
           ),
-        ),
-        ViewEmpty() => MessagePanel(
-          key: const Key('stokvel-empty'),
-          title: 'No open cycle',
-          body:
-              'This stokvel has no cycle yet. When your treasurer opens '
-              'the next one, it shows here.',
-          action: OutlinedButton(
-            onPressed: retry,
-            child: const Text('Refresh'),
-          ),
-        ),
-        ViewFailure(:final message, :final reference) => MessagePanel(
-          key: const Key('stokvel-failure'),
-          title: message,
-          reference: reference,
-          action: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              FilledButton(onPressed: retry, child: const Text('Try again')),
-              OutlinedButton(
-                onPressed: () => const StokvelsRoute().go(context),
-                child: const Text('Back to my stokvels'),
+          Expanded(
+            child: switch (view) {
+              ViewLoading() => Center(
+                key: Key('stokvel-loading-$stokvelId'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text('Loading ${pickerEntry?.stokvelName ?? 'stokvel'}…'),
+                  ],
+                ),
               ),
-            ],
+              ViewEmpty() => MessagePanel(
+                key: const Key('stokvel-empty'),
+                title: 'No open cycle',
+                body:
+                    'This stokvel has no cycle yet. When your treasurer opens '
+                    'the next one, it shows here.',
+                action: OutlinedButton(
+                  onPressed: retry,
+                  child: const Text('Refresh'),
+                ),
+              ),
+              ViewFailure(:final message, :final reference) => MessagePanel(
+                key: const Key('stokvel-failure'),
+                title: message,
+                reference: reference,
+                action: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    FilledButton(
+                      onPressed: retry,
+                      child: const Text('Try again'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => const StokvelsRoute().go(context),
+                      child: const Text('Back to my stokvels'),
+                    ),
+                  ],
+                ),
+              ),
+              ViewData(value: final detail) => _StokvelBody(
+                key: Key('stokvel-data-${detail.stokvel.id}'),
+                detail: detail,
+                actions: actionsFor(detail, myUserId),
+                onRefresh: () =>
+                    ref.refresh(stokvelDetailProvider(stokvelId).future),
+              ),
+            },
           ),
-        ),
-        ViewData(value: final detail) => _StokvelBody(
-          key: Key('stokvel-data-${detail.stokvel.id}'),
-          detail: detail,
-          actions: actionsFor(detail, myUserId),
-          onRefresh: () => ref.refresh(stokvelDetailProvider(stokvelId).future),
-        ),
-      },
+        ],
+      ),
     );
   }
 }
@@ -200,7 +218,33 @@ class _StokvelBody extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          // A payment still in the outbox: beside the server's figures,
+          // marked pending, never added in.
+          PendingPaymentsFor(cycleId: cycle.id),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton.icon(
+                key: const Key('open-contributions'),
+                onPressed: () =>
+                    ContributionsRoute(id: detail.stokvel.id).go(context),
+                icon: const Icon(Icons.list_alt),
+                label: Text(AppLocalizations.of(context).viewContributions),
+              ),
+              if (actions.contains(StokvelAction.closeCycle))
+                TextButton.icon(
+                  key: const Key('open-edit-cycle'),
+                  onPressed: () => EditCycleRoute(
+                    id: detail.stokvel.id,
+                    cycleId: cycle.id,
+                  ).go(context),
+                  icon: const Icon(Icons.edit_calendar),
+                  label: Text(AppLocalizations.of(context).editCycle),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           if (actions.isNotEmpty) ...[
             Text('What you can do', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -218,8 +262,12 @@ class _StokvelBody extends StatelessWidget {
                           id: detail.stokvel.id,
                           cycleId: cycle.id,
                         ).go(context),
-                        // The writes arrive later in Week 11.
-                        StokvelAction.pay ||
+                        // Saved in the outbox, then sent (11.3).
+                        StokvelAction.pay => () => PayRoute(
+                          id: detail.stokvel.id,
+                          cycleId: cycle.id,
+                        ).go(context),
+                        // The other writes arrive later.
                         StokvelAction.uploadProof ||
                         StokvelAction.confirmContributions ||
                         StokvelAction.recordPayout =>

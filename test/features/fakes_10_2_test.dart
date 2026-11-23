@@ -16,6 +16,7 @@ import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 
 import '../helpers/result_matchers.dart';
+import '../helpers/test_database.dart';
 
 const String _mabena = FakeSeed.mabenaFamilyId;
 const String _soweto = FakeSeed.sowetoTeachersId;
@@ -175,6 +176,7 @@ void main() {
       () async {
         final container = ProviderContainer.test(
           overrides: [
+            inMemoryDatabase(),
             dataSourceProvider.overrideWithValue(DataSource.fakes),
             fakeDelayProvider.overrideWithValue(Duration.zero),
           ],
@@ -207,6 +209,7 @@ void main() {
     test('a failed sign-in stays signed out', () async {
       final container = ProviderContainer.test(
         overrides: [
+          inMemoryDatabase(),
           dataSourceProvider.overrideWithValue(DataSource.fakes),
           fakeDelayProvider.overrideWithValue(Duration.zero),
         ],
@@ -227,10 +230,14 @@ void main() {
 
   test('FAKE_FAIL_EVERY also wraps the activity fake', () {
     final plain = ProviderContainer.test(
-      overrides: [dataSourceProvider.overrideWithValue(DataSource.fakes)],
+      overrides: [
+        inMemoryDatabase(),
+        dataSourceProvider.overrideWithValue(DataSource.fakes),
+      ],
     );
     final flaky = ProviderContainer.test(
       overrides: [
+        inMemoryDatabase(),
         dataSourceProvider.overrideWithValue(DataSource.fakes),
         fakeFailEveryProvider.overrideWithValue(3),
       ],

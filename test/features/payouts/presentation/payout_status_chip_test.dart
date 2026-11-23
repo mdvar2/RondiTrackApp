@@ -4,6 +4,7 @@ import 'package:ronditrack_app/core/theme/app_theme.dart';
 import 'package:ronditrack_app/core/theme/status_colors.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_status.dart';
 import 'package:ronditrack_app/features/payouts/presentation/payout_status_chip.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// The chip's text and fill, pumped with the app's own [theme]: a chip
 /// built on a bare MaterialApp would fall back, and prove nothing.
@@ -14,6 +15,8 @@ Future<(Color text, Color fill)> _pumpChip(
 ) async {
   await tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: theme,
       home: Scaffold(body: Center(child: PayoutStatusChip(status))),
     ),

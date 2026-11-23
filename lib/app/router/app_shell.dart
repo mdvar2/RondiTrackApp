@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ronditrack_app/app/dev/persona_switcher.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/core/layout/window_size.dart';
+import 'package:ronditrack_app/features/payments/presentation/payment_words.dart';
+import 'package:ronditrack_app/features/payments/presentation/payments_controller.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// The four tabs, in branch order.
 const _destinations = <({String label, IconData icon, IconData selected})>[
@@ -78,8 +82,36 @@ class AppShell extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) navigationShell.goBranch(0);
       },
-      child: body,
+      child: _PaymentsOutcomes(child: body),
     );
+  }
+}
+
+/// Keeps the payments controller alive while someone is signed in (it
+/// sends what is waiting when they do), and shows what each payment came
+/// to.
+class _PaymentsOutcomes extends ConsumerWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref
+      ..watch(paymentsProvider)
+      ..listen(paymentNoticesProvider, (_, outcome) {
+        if (outcome == null) return;
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              paymentOutcomeMessage(l10n, l10n.localeName, outcome),
+            ),
+          ),
+        );
+        ref.read(paymentNoticesProvider.notifier).clear();
+      });
+    return child;
   }
 }
 

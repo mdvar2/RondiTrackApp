@@ -1,0 +1,9 @@
+login 200
+GET cycle 200 target 1500.0 end 2026-11-30 ETag "2448"
+PUT cycle (from the PC) 204 target now 1600.0 new ETag None
+
+Then on the phone, saving R 2 000 with the ETag it read before the PC's edit:
+  API PUT /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201 412 in 67 ms [correlationId d9888f1c1a7266d7ee4170e474476d5b]
+  API GET /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101 200 in 67 ms [trace 003d0e45eb4c698b73290dbeb02c88fe]
+  API GET /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201 200 in 68 ms [trace fb2581bbc1022b7cda8fd32e67d4f552]
+  API GET /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0101/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0201/contributions 200 in 69 ms [trace 220d5f065d2e4e506e3d2c05e37ae007]

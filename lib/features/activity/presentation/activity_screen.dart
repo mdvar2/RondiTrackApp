@@ -102,7 +102,7 @@ class _ActivityTile extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 ContributionStatusChip(item.status),
-                Text(formatInstantAsLocalDate(item.occurredAt)),
+                Text(formatInstantAsSastDate(item.occurredAt)),
               ],
             ),
           ],

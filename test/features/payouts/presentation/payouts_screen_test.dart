@@ -15,8 +15,10 @@ import 'package:ronditrack_app/features/payouts/presentation/payout_status_chip.
 import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 import '../../../helpers/app_harness.dart';
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 const String _mabena = FakeSeed.mabenaFamilyId;
@@ -36,6 +38,7 @@ Future<void> _pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        inMemoryDatabase(),
         signedInUserIdProvider.overrideWithValue(persona.id),
         stokvelRepositoryProvider.overrideWithValue(
           FakeStokvelRepository(userId: persona.id, delay: Duration.zero),
@@ -47,6 +50,8 @@ Future<void> _pumpScreen(
       ],
       retry: (retryCount, error) => null,
       child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         home: PayoutsScreen(stokvelId: stokvelId, cycleId: cycleId),

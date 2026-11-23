@@ -10,6 +10,7 @@ import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 
 import '../../helpers/app_harness.dart';
 import '../../helpers/fake_auth_server.dart';
+import '../../helpers/test_database.dart';
 
 /// The app's providers on the API, over [server], with [store] as the
 /// phone's secure storage.
@@ -17,6 +18,7 @@ ProviderContainer _app(FakeAuthServer server, InMemoryRefreshTokenStore store) {
   // The auth state is listened to, as the router does.
   return ProviderContainer.test(
     overrides: [
+      inMemoryDatabase(),
       appConfigProvider.overrideWithValue(devConfig),
       httpAdapterProvider.overrideWithValue(server),
       refreshTokenStoreProvider.overrideWithValue(store),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
@@ -14,6 +15,7 @@ import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_provider.dart';
 
+import '../../helpers/test_database.dart';
 import '../../helpers/test_repositories.dart';
 
 void main() {
@@ -40,7 +42,8 @@ void main() {
       );
     });
 
-    test('a refresh keeps the old data on screen, marked refreshing', () async {
+    test('a refresh keeps the old data on screen, and its sync says it is '
+        'refreshing', () async {
       final entries = (await FakeHomeRepository(
         userId: FakeSeed.lerato.id,
         delay: Duration.zero,
@@ -48,6 +51,9 @@ void main() {
       final reload = Completer<List<HomeEntry>>();
       final container = ProviderContainer.test(
         overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
           homeRepositoryProvider.overrideWithValue(
             ScriptedHomeRepository([entries, reload]),
           ),
@@ -59,9 +65,15 @@ void main() {
 
       expect(
         homeViewState(container.read(homeControllerProvider)),
-        isA<ViewData<List<HomeEntry>>>()
-            .having((view) => view.value, 'value', entries)
-            .having((view) => view.refreshing, 'refreshing', isTrue),
+        isA<ViewData<List<HomeEntry>>>().having(
+          (view) => view.value,
+          'value',
+          entries,
+        ),
+      );
+      expect(
+        container.read(syncStatusesProvider)[homeSyncKey]?.refreshing,
+        isTrue,
       );
       reload.complete(entries);
     });

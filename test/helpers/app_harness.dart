@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ronditrack_app/app/app.dart';
+import 'package:ronditrack_app/app/database.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/retry.dart';
 import 'package:ronditrack_app/app/router/router.dart';
@@ -14,6 +15,7 @@ import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 
 import 'flavour_config.dart';
+import 'test_database.dart';
 
 /// The dev flavour's configuration.
 final devConfig = AppConfig.fromValues(
@@ -76,6 +78,7 @@ const tabletPortrait = Size(800, 1280);
 /// stopped app: as the platform's initial route. [size] and [textScale]
 /// set the window and the text size. [config] is the dev flavour's unless
 /// given. [delay] is the fakes' pretend network time (none by default).
+/// [database] is the phone's database (a new in-memory one by default).
 /// [settle] false returns after the first frame, for a test that
 /// watches what each frame shows.
 ///
@@ -94,6 +97,7 @@ Future<ProviderContainer> pumpApp(
   bool settle = true,
   Duration delay = Duration.zero,
   Duration? Function(int retryCount, Object error) retry = appRetry,
+  AppDatabase? database,
 }) async {
   if (size != null) {
     tester.view
@@ -116,6 +120,7 @@ Future<ProviderContainer> pumpApp(
 
   final container = ProviderContainer(
     overrides: [
+      inMemoryDatabase(database),
       // As `main` does: providers that read the flavour's config (the API
       // client, the cookie's name) get the same one the app is built with.
       appConfigProvider.overrideWithValue(config ?? devConfig),

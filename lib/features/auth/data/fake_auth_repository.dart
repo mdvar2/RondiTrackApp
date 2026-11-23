@@ -21,6 +21,12 @@ class FakeAuthRepository implements AuthRepository {
   /// Who is signed in on this pretend phone.
   String? storedEmail;
 
+  // No timer at all when there is no delay: a widget test that ends at
+  // once leaves none pending.
+  Future<void> _pretendNetwork() async {
+    if (delay > Duration.zero) await Future<void>.delayed(delay);
+  }
+
   /// Accounts registered since the app started.
   final Map<String, AuthUser> _registered = {};
 
@@ -43,7 +49,7 @@ class FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await Future<void>.delayed(delay);
+    await _pretendNetwork();
     final user = _find(email);
     if (user == null || password.isEmpty) {
       return const Err(SignInFailedException());
@@ -58,7 +64,7 @@ class FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await Future<void>.delayed(delay);
+    await _pretendNetwork();
     final wanted = email.trim().toLowerCase();
     if (_find(wanted) != null) {
       return const Err(
@@ -75,7 +81,7 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<Result<AuthUser?>> restore() async {
-    await Future<void>.delayed(delay);
+    await _pretendNetwork();
     final email = storedEmail;
     return Ok(email == null ? null : _find(email));
   }
@@ -83,6 +89,6 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<void> signOut() async {
     storedEmail = null;
-    await Future<void>.delayed(delay);
+    await _pretendNetwork();
   }
 }

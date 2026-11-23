@@ -8,7 +8,9 @@ import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
 import 'package:ronditrack_app/features/home/domain/home_entry.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 /// Loads a persona's Home on the real clock. Inside testWidgets the fake
@@ -32,16 +34,26 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
           homeRepositoryProvider.overrideWithValue(
             ScriptedHomeRepository([Completer<List<HomeEntry>>()]),
           ),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
 
     expect(find.byKey(const Key('home-loading')), findsOneWidget);
     expect(find.byType(HomeStokvelCard), findsNothing);
+    // Lets the launch's restore (a fake with no delay) finish.
+    await tester.pump();
+    await tester.pump();
   });
 
   testWidgets('empty: Thabo, in no stokvel, is told so and what to do next', (
@@ -50,11 +62,18 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: FakeSeed.thabo.id, delay: Duration.zero),
           ),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -70,6 +89,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(
               userId: FakeSeed.lerato.id,
@@ -77,7 +99,11 @@ void main() {
             ),
           ),
         ],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -124,9 +150,18 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [homeRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
+          homeRepositoryProvider.overrideWithValue(repository),
+        ],
         retry: (retryCount, error) => null,
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -150,8 +185,17 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [homeRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: HomeScreen(title: 'RondiTrack Dev')),
+        overrides: [
+          inMemoryDatabase(),
+          dataSourceProvider.overrideWithValue(DataSource.fakes),
+          fakeDelayProvider.overrideWithValue(Duration.zero),
+          homeRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(title: 'RondiTrack Dev'),
+        ),
       ),
     );
     await tester.pumpAndSettle();

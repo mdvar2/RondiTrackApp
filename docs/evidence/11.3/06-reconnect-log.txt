@@ -1,0 +1,9 @@
+Outbox row on the phone before reconnecting (ronditrack.sqlite, payment_outbox):
+  id=1 idempotency_key=8939f652-064d-40fd-a08f-fcf09f2658c4 amount_cents=150000 attempts=2
+
+App log after reconnecting (adb logcat, flutter):
+  API POST /api/v1/auth/refresh 200 in 418 ms [trace a822b97dc670a8fb6a5bf2577e641528]
+  API POST /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102/members/0b6f1a52-6a0e-4b7e-9a51-1c2f6c3e0002/contributions [Idempotency-Key 8939f652-064d-40fd-a08f-fcf09f2658c4] 201 in 530 ms [trace 5dcf1e2354ca32e8f41483c228e7eff6]
+  API GET /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102 200 in 72 ms [trace 60a2af5134b852375222b1a0cbe94cb5]
+  API GET /api/v1/stokvels/5d0c9a4e-2b1f-4c8a-8e7d-3a6b9f2e0102/cycles/9e8f7a6b-5c4d-4e3f-8a2b-1c0d9e8f0202/contributions 200 in 20 ms [trace 85a16e5cff38f173c5dc34476e4eef9f]
+  API GET /api/v1/me/home 200 in 144 ms [trace 4abd14bd6308af69bf0ffb8a321502c8]

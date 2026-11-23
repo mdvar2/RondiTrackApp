@@ -9,6 +9,7 @@ import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
 import 'package:ronditrack_app/features/stokvels/domain/status_labels.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// The Stokvels tab's screen for `/stokvels` and `/stokvels/:id`.
 ///
@@ -71,6 +72,14 @@ class StokvelListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('My stokvels'),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            key: const Key('new-stokvel'),
+            tooltip: AppLocalizations.of(context).newStokvel,
+            onPressed: () => const CreateStokvelRoute().go(context),
+            icon: const Icon(Icons.add),
+          ),
+        ],
       ),
       body: switch (view) {
         ViewLoading() => const Center(

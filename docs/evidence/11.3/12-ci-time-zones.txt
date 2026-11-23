@@ -1,0 +1,6 @@
+CI run https://github.com/mdvar2/RondiTrackApp/actions/runs/45114546786 (job 'Format, generate, analyse, test': success), commit 3a91c7c.
+
+Test (TZ=UTC): Running in UTC (UTC+00:00)
+Test (TZ=UTC): 618 tests passed, 2 skipped.
+Test (TZ=Africa/Johannesburg): Running in SAST (UTC+02:00)
+Test (TZ=Africa/Johannesburg): 618 tests passed, 2 skipped.

@@ -845,6 +845,606 @@ final class AuthRepositoryProvider
 
 String _$authRepositoryHash() => r'c61adff5e9584439156c5c1eccb02e37a7fe95c8';
 
+/// The phone's database: Home, stokvels and cycles as last seen, who was
+/// signed in, and the payment outbox. Tests override it with an in-memory
+/// one.
+
+@ProviderFor(appDatabase)
+final appDatabaseProvider = AppDatabaseProvider._();
+
+/// The phone's database: Home, stokvels and cycles as last seen, who was
+/// signed in, and the payment outbox. Tests override it with an in-memory
+/// one.
+
+final class AppDatabaseProvider
+    extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
+    with $Provider<AppDatabase> {
+  /// The phone's database: Home, stokvels and cycles as last seen, who was
+  /// signed in, and the payment outbox. Tests override it with an in-memory
+  /// one.
+  AppDatabaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appDatabaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appDatabaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppDatabase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppDatabase create(Ref ref) {
+    return appDatabase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppDatabase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppDatabase>(value),
+    );
+  }
+}
+
+String _$appDatabaseHash() => r'742ceb6fe06dae282a737a0b1b2766b29e27599d';
+
+/// Sends a payment to the API, or to the fakes. It follows who is signed
+/// in, like every repository.
+
+@ProviderFor(paymentSender)
+final paymentSenderProvider = PaymentSenderProvider._();
+
+/// Sends a payment to the API, or to the fakes. It follows who is signed
+/// in, like every repository.
+
+final class PaymentSenderProvider
+    extends $FunctionalProvider<PaymentSender, PaymentSender, PaymentSender>
+    with $Provider<PaymentSender> {
+  /// Sends a payment to the API, or to the fakes. It follows who is signed
+  /// in, like every repository.
+  PaymentSenderProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentSenderProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paymentSenderHash();
+
+  @$internal
+  @override
+  $ProviderElement<PaymentSender> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PaymentSender create(Ref ref) {
+    return paymentSender(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PaymentSender value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PaymentSender>(value),
+    );
+  }
+}
+
+String _$paymentSenderHash() => r'bdb1df7ad9312d4f1f0633f71e1f9a0cc9feb69b';
+
+/// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+/// cryptographic random source). Called only when a payment is recorded.
+
+@ProviderFor(idempotencyKeys)
+final idempotencyKeysProvider = IdempotencyKeysProvider._();
+
+/// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+/// cryptographic random source). Called only when a payment is recorded.
+
+final class IdempotencyKeysProvider
+    extends
+        $FunctionalProvider<
+          String Function(),
+          String Function(),
+          String Function()
+        >
+    with $Provider<String Function()> {
+  /// Makes an `Idempotency-Key`: a v4 UUID from the `uuid` package (a
+  /// cryptographic random source). Called only when a payment is recorded.
+  IdempotencyKeysProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'idempotencyKeysProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$idempotencyKeysHash();
+
+  @$internal
+  @override
+  $ProviderElement<String Function()> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  String Function() create(Ref ref) {
+    return idempotencyKeys(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String Function() value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String Function()>(value),
+    );
+  }
+}
+
+String _$idempotencyKeysHash() => r'bea198af32d3fb489397f820c90a331304bd6f52';
+
+/// The payment outbox, in the database (README "Offline").
+
+@ProviderFor(paymentOutbox)
+final paymentOutboxProvider = PaymentOutboxProvider._();
+
+/// The payment outbox, in the database (README "Offline").
+
+final class PaymentOutboxProvider
+    extends $FunctionalProvider<PaymentOutbox, PaymentOutbox, PaymentOutbox>
+    with $Provider<PaymentOutbox> {
+  /// The payment outbox, in the database (README "Offline").
+  PaymentOutboxProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentOutboxProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$paymentOutboxHash();
+
+  @$internal
+  @override
+  $ProviderElement<PaymentOutbox> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PaymentOutbox create(Ref ref) {
+    return paymentOutbox(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PaymentOutbox value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PaymentOutbox>(value),
+    );
+  }
+}
+
+String _$paymentOutboxHash() => r'698f6ca4a07840b5aaea0a00833006cbede130a3';
+
+/// The contributions list's data. Implementation:
+/// [ApiContributionsRepository], or [FakeContributionsRepository].
+
+@ProviderFor(contributionsRepository)
+final contributionsRepositoryProvider = ContributionsRepositoryProvider._();
+
+/// The contributions list's data. Implementation:
+/// [ApiContributionsRepository], or [FakeContributionsRepository].
+
+final class ContributionsRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ContributionsRepository,
+          ContributionsRepository,
+          ContributionsRepository
+        >
+    with $Provider<ContributionsRepository> {
+  /// The contributions list's data. Implementation:
+  /// [ApiContributionsRepository], or [FakeContributionsRepository].
+  ContributionsRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'contributionsRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$contributionsRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ContributionsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ContributionsRepository create(Ref ref) {
+    return contributionsRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ContributionsRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ContributionsRepository>(value),
+    );
+  }
+}
+
+String _$contributionsRepositoryHash() =>
+    r'6c8005f425d93a37dc3320eb6fcbf900a5169a24';
+
+/// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+/// or [FakeStokvelEditor].
+
+@ProviderFor(stokvelEditor)
+final stokvelEditorProvider = StokvelEditorProvider._();
+
+/// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+/// or [FakeStokvelEditor].
+
+final class StokvelEditorProvider
+    extends $FunctionalProvider<StokvelEditor, StokvelEditor, StokvelEditor>
+    with $Provider<StokvelEditor> {
+  /// Creates stokvels and edits cycles. Implementation: [ApiStokvelEditor],
+  /// or [FakeStokvelEditor].
+  StokvelEditorProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'stokvelEditorProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$stokvelEditorHash();
+
+  @$internal
+  @override
+  $ProviderElement<StokvelEditor> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  StokvelEditor create(Ref ref) {
+    return stokvelEditor(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(StokvelEditor value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<StokvelEditor>(value),
+    );
+  }
+}
+
+String _$stokvelEditorHash() => r'8c455655ed691c07ca752b967d2409ac8aa6927d';
+
+/// Who was last signed in on this phone, kept with their cached data.
+
+@ProviderFor(lastUser)
+final lastUserProvider = LastUserProvider._();
+
+/// Who was last signed in on this phone, kept with their cached data.
+
+final class LastUserProvider
+    extends $FunctionalProvider<LastUser, LastUser, LastUser>
+    with $Provider<LastUser> {
+  /// Who was last signed in on this phone, kept with their cached data.
+  LastUserProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lastUserProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lastUserHash();
+
+  @$internal
+  @override
+  $ProviderElement<LastUser> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LastUser create(Ref ref) {
+    return lastUser(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LastUser value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LastUser>(value),
+    );
+  }
+}
+
+String _$lastUserHash() => r'48970d2675838c7190ba2ebebb69a7d8403903d9';
+
+/// Home as the phone last saw it, refreshed from [homeRepository]. It
+/// follows who is signed in, like the repository.
+
+@ProviderFor(homeCache)
+final homeCacheProvider = HomeCacheProvider._();
+
+/// Home as the phone last saw it, refreshed from [homeRepository]. It
+/// follows who is signed in, like the repository.
+
+final class HomeCacheProvider
+    extends
+        $FunctionalProvider<
+          CachedSource<List<HomeEntry>>,
+          CachedSource<List<HomeEntry>>,
+          CachedSource<List<HomeEntry>>
+        >
+    with $Provider<CachedSource<List<HomeEntry>>> {
+  /// Home as the phone last saw it, refreshed from [homeRepository]. It
+  /// follows who is signed in, like the repository.
+  HomeCacheProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeCacheProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeCacheHash();
+
+  @$internal
+  @override
+  $ProviderElement<CachedSource<List<HomeEntry>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CachedSource<List<HomeEntry>> create(Ref ref) {
+    return homeCache(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CachedSource<List<HomeEntry>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CachedSource<List<HomeEntry>>>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$homeCacheHash() => r'cfb8d61b8b1592d20e5760f698c6cb1c6a6b77df';
+
+/// One stokvel as the phone last saw it, refreshed from
+/// [stokvelRepository].
+
+@ProviderFor(stokvelCache)
+final stokvelCacheProvider = StokvelCacheFamily._();
+
+/// One stokvel as the phone last saw it, refreshed from
+/// [stokvelRepository].
+
+final class StokvelCacheProvider
+    extends
+        $FunctionalProvider<
+          CachedSource<StokvelDetail>,
+          CachedSource<StokvelDetail>,
+          CachedSource<StokvelDetail>
+        >
+    with $Provider<CachedSource<StokvelDetail>> {
+  /// One stokvel as the phone last saw it, refreshed from
+  /// [stokvelRepository].
+  StokvelCacheProvider._({
+    required StokvelCacheFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'stokvelCacheProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$stokvelCacheHash();
+
+  @override
+  String toString() {
+    return r'stokvelCacheProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<CachedSource<StokvelDetail>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CachedSource<StokvelDetail> create(Ref ref) {
+    final argument = this.argument as String;
+    return stokvelCache(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CachedSource<StokvelDetail> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CachedSource<StokvelDetail>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is StokvelCacheProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$stokvelCacheHash() => r'1c49556c996ee5d1206598c489e95fa5daad7356';
+
+/// One stokvel as the phone last saw it, refreshed from
+/// [stokvelRepository].
+
+final class StokvelCacheFamily extends $Family
+    with $FunctionalFamilyOverride<CachedSource<StokvelDetail>, String> {
+  StokvelCacheFamily._()
+    : super(
+        retry: null,
+        name: r'stokvelCacheProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One stokvel as the phone last saw it, refreshed from
+  /// [stokvelRepository].
+
+  StokvelCacheProvider call(String stokvelId) =>
+      StokvelCacheProvider._(argument: stokvelId, from: this);
+
+  @override
+  String toString() => r'stokvelCacheProvider';
+}
+
+/// One cycle as the phone last saw it, refreshed from [stokvelRepository].
+
+@ProviderFor(cycleCache)
+final cycleCacheProvider = CycleCacheFamily._();
+
+/// One cycle as the phone last saw it, refreshed from [stokvelRepository].
+
+final class CycleCacheProvider
+    extends
+        $FunctionalProvider<
+          CachedSource<CycleDetail>,
+          CachedSource<CycleDetail>,
+          CachedSource<CycleDetail>
+        >
+    with $Provider<CachedSource<CycleDetail>> {
+  /// One cycle as the phone last saw it, refreshed from [stokvelRepository].
+  CycleCacheProvider._({
+    required CycleCacheFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'cycleCacheProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$cycleCacheHash();
+
+  @override
+  String toString() {
+    return r'cycleCacheProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<CachedSource<CycleDetail>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CachedSource<CycleDetail> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return cycleCache(ref, argument.$1, argument.$2);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CachedSource<CycleDetail> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CachedSource<CycleDetail>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CycleCacheProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$cycleCacheHash() => r'4349d833a732a47a6fca59b2ecb323fcdfe5a434';
+
+/// One cycle as the phone last saw it, refreshed from [stokvelRepository].
+
+final class CycleCacheFamily extends $Family
+    with
+        $FunctionalFamilyOverride<CachedSource<CycleDetail>, (String, String)> {
+  CycleCacheFamily._()
+    : super(
+        retry: null,
+        name: r'cycleCacheProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One cycle as the phone last saw it, refreshed from [stokvelRepository].
+
+  CycleCacheProvider call(String stokvelId, String cycleId) =>
+      CycleCacheProvider._(argument: (stokvelId, cycleId), from: this);
+
+  @override
+  String toString() => r'cycleCacheProvider';
+}
+
 /// Reads Home. Implementation: [ApiHomeRepository]; or
 /// [FakeHomeRepository], wrapped in [FlakyHomeRepository] when
 /// [fakeFailEvery] is set.

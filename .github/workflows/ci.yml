@@ -104,8 +104,22 @@ jobs:
             exit 1
           fi
 
-      - name: Test
-        run: flutter test
+      # Twice, in two zones (README "Money and dates"): a South African
+      # day must not follow the machine's zone. TZ is how Linux chooses a
+      # process's zone; each run prints the zone it ran in.
+      - name: Test (TZ=UTC)
+        env:
+          TZ: UTC
+        run: |
+          date +'Running in %Z (UTC%:z)'
+          flutter test
+
+      - name: Test (TZ=Africa/Johannesburg)
+        env:
+          TZ: Africa/Johannesburg
+        run: |
+          date +'Running in %Z (UTC%:z)'
+          flutter test
 
   contract:
     name: Contract copy matches the API

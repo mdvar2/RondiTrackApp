@@ -40,10 +40,20 @@ RouteBase get $appShellRoute => StatefulShellRouteData.$route(
           factory: $StokvelsRoute._fromState,
           routes: [
             GoRouteData.$route(
+              path: 'new',
+              hasOverriddenOnExit: false,
+              factory: $CreateStokvelRoute._fromState,
+            ),
+            GoRouteData.$route(
               path: ':id',
               hasOverriddenOnExit: false,
               factory: $StokvelRoute._fromState,
               routes: [
+                GoRouteData.$route(
+                  path: 'contributions',
+                  hasOverriddenOnExit: false,
+                  factory: $ContributionsRoute._fromState,
+                ),
                 GoRouteData.$route(
                   path: 'cycles/:cycleId',
                   hasOverriddenOnExit: false,
@@ -58,6 +68,16 @@ RouteBase get $appShellRoute => StatefulShellRouteData.$route(
                       path: 'close',
                       hasOverriddenOnExit: false,
                       factory: $CloseCycleRoute._fromState,
+                    ),
+                    GoRouteData.$route(
+                      path: 'pay',
+                      hasOverriddenOnExit: false,
+                      factory: $PayRoute._fromState,
+                    ),
+                    GoRouteData.$route(
+                      path: 'edit',
+                      hasOverriddenOnExit: false,
+                      factory: $EditCycleRoute._fromState,
                     ),
                   ],
                 ),
@@ -156,6 +176,27 @@ mixin $StokvelsRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
+mixin $CreateStokvelRoute on GoRouteData {
+  static CreateStokvelRoute _fromState(GoRouterState state) =>
+      const CreateStokvelRoute();
+
+  @override
+  String get location => GoRouteData.$location('/stokvels/new');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
 mixin $StokvelRoute on GoRouteData {
   static StokvelRoute _fromState(GoRouterState state) =>
       StokvelRoute(id: state.pathParameters['id']!);
@@ -165,6 +206,31 @@ mixin $StokvelRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/stokvels/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ContributionsRoute on GoRouteData {
+  static ContributionsRoute _fromState(GoRouterState state) =>
+      ContributionsRoute(id: state.pathParameters['id']!);
+
+  ContributionsRoute get _self => this as ContributionsRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/stokvels/${Uri.encodeComponent(_self.id)}/contributions',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -245,6 +311,60 @@ mixin $CloseCycleRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
     '/stokvels/${Uri.encodeComponent(_self.id)}/cycles/${Uri.encodeComponent(_self.cycleId)}/close',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $PayRoute on GoRouteData {
+  static PayRoute _fromState(GoRouterState state) => PayRoute(
+    id: state.pathParameters['id']!,
+    cycleId: state.pathParameters['cycleId']!,
+  );
+
+  PayRoute get _self => this as PayRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/stokvels/${Uri.encodeComponent(_self.id)}/cycles/${Uri.encodeComponent(_self.cycleId)}/pay',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $EditCycleRoute on GoRouteData {
+  static EditCycleRoute _fromState(GoRouterState state) => EditCycleRoute(
+    id: state.pathParameters['id']!,
+    cycleId: state.pathParameters['cycleId']!,
+  );
+
+  EditCycleRoute get _self => this as EditCycleRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/stokvels/${Uri.encodeComponent(_self.id)}/cycles/${Uri.encodeComponent(_self.cycleId)}/edit',
   );
 
   @override

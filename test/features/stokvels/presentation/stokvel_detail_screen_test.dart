@@ -6,7 +6,9 @@ import 'package:ronditrack_app/features/home/data/fake_home_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
+import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
 const _treasurerActionKeys = [
@@ -22,6 +24,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -31,6 +34,8 @@ void main() {
           ),
         ],
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
@@ -52,6 +57,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -61,6 +67,8 @@ void main() {
           ),
         ],
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
@@ -68,6 +76,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Your role: Treasurer'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Nomsa Mabena'), 200);
     expect(find.text('Nomsa Mabena'), findsOneWidget);
     expect(find.text('Confirmed'), findsOneWidget);
     for (final key in _treasurerActionKeys) {
@@ -82,6 +91,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -91,6 +101,8 @@ void main() {
           ),
         ],
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: StokvelDetailScreen(stokvelId: FakeSeed.sowetoTeachersId),
         ),
       ),
@@ -120,6 +132,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -133,6 +146,8 @@ void main() {
           ),
         ],
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
@@ -152,6 +167,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          inMemoryDatabase(),
           signedInUserIdProvider.overrideWithValue(lerato.id),
           homeRepositoryProvider.overrideWithValue(
             FakeHomeRepository(userId: lerato.id, delay: Duration.zero),
@@ -160,6 +176,8 @@ void main() {
         ],
         retry: (retryCount, error) => null,
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: StokvelDetailScreen(stokvelId: FakeSeed.mabenaFamilyId),
         ),
       ),
@@ -185,6 +203,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            inMemoryDatabase(),
             signedInUserIdProvider.overrideWithValue(thabo),
             homeRepositoryProvider.overrideWithValue(
               FakeHomeRepository(userId: thabo, delay: Duration.zero),
@@ -194,7 +213,11 @@ void main() {
             ),
           ],
           retry: (retryCount, error) => null,
-          child: MaterialApp(home: StokvelDetailScreen(stokvelId: stokvelId)),
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: StokvelDetailScreen(stokvelId: stokvelId),
+          ),
         ),
       );
       await tester.pumpAndSettle();

@@ -10,11 +10,14 @@ import 'package:ronditrack_app/features/auth/presentation/register_screen.dart';
 import 'package:ronditrack_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/invites/presentation/join_screen.dart';
+import 'package:ronditrack_app/features/payments/presentation/pay_screen.dart';
 import 'package:ronditrack_app/features/payouts/presentation/payouts_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/close_cycle_screen.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/contributions_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/cycle_screen.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvel_detail_screen.dart';
+import 'package:ronditrack_app/features/stokvels/presentation/stokvel_forms.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/stokvels_screen.dart';
 
 import '../../helpers/app_harness.dart';
@@ -122,6 +125,38 @@ final List<_Row> _rows = [
     as: FakeSeed.lerato,
     lands: '$_cycle/close',
     screen: CloseCycleScreen,
+    tab: 1,
+  ),
+  (
+    pattern: '/stokvels/:id/cycles/:cycleId/pay',
+    open: '$_cycle/pay',
+    as: FakeSeed.sipho,
+    lands: '$_cycle/pay',
+    screen: PayScreen,
+    tab: 1,
+  ),
+  (
+    pattern: '/stokvels/:id/cycles/:cycleId/edit',
+    open: '$_cycle/edit',
+    as: FakeSeed.lerato,
+    lands: '$_cycle/edit',
+    screen: EditCycleScreen,
+    tab: 1,
+  ),
+  (
+    pattern: '/stokvels/:id/contributions',
+    open: '/stokvels/${FakeSeed.mabenaFamilyId}/contributions',
+    as: FakeSeed.lerato,
+    lands: '/stokvels/${FakeSeed.mabenaFamilyId}/contributions',
+    screen: ContributionsScreen,
+    tab: 1,
+  ),
+  (
+    pattern: '/stokvels/new',
+    open: '/stokvels/new',
+    as: FakeSeed.thabo,
+    lands: '/stokvels/new',
+    screen: CreateStokvelScreen,
     tab: 1,
   ),
   (

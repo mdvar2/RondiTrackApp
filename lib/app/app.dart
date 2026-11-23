@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/router/router.dart';
+import 'package:ronditrack_app/app/settings.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/core/theme/app_theme.dart';
+import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// The root widget for the RondiTrack mobile application.
 class RondiTrackApp extends ConsumerWidget {
@@ -25,6 +27,11 @@ class RondiTrackApp extends ConsumerWidget {
         // No themeMode: the default, ThemeMode.system, follows the phone's
         // light or dark setting.
         routerConfig: ref.watch(routerProvider),
+        // English and Afrikaans (README "Languages"): the person's choice,
+        // or the phone's language when they haven't chosen.
+        locale: ref.watch(languageChoiceProvider),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
       ),
     );
   }
