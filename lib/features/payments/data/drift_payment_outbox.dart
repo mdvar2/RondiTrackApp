@@ -36,9 +36,9 @@ class DriftPaymentOutbox implements PaymentOutbox {
     cycleId: row.cycleId,
     userId: row.userId,
     amount: Cents(row.amountCents),
-    createdAt: row.createdAt,
+    createdAt: row.createdAt.toUtc(),
     attempts: row.attempts,
-    waitUntil: row.waitUntil,
+    waitUntil: row.waitUntil?.toUtc(),
   );
 
   @override

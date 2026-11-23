@@ -30,7 +30,7 @@ class StokvelCache implements CachedSource<StokvelDetail> {
                 ? null
                 : Cached(
                     StokvelCodec.decodeDetail(row.detail),
-                    fetchedAt: row.fetchedAt,
+                    fetchedAt: row.fetchedAt.toUtc(),
                   ),
           );
 
@@ -96,7 +96,7 @@ class CycleCache implements CachedSource<CycleDetail> {
                 ? null
                 : Cached(
                     StokvelCodec.decodeCycle(row.detail),
-                    fetchedAt: row.fetchedAt,
+                    fetchedAt: row.fetchedAt.toUtc(),
                   ),
           );
 

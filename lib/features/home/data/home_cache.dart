@@ -25,7 +25,10 @@ class HomeCache implements CachedSource<List<HomeEntry>> {
       .map(
         (row) => row == null
             ? null
-            : Cached(HomeCodec.decode(row.entries), fetchedAt: row.fetchedAt),
+            : Cached(
+                HomeCodec.decode(row.entries),
+                fetchedAt: row.fetchedAt.toUtc(),
+              ),
       );
 
   @override

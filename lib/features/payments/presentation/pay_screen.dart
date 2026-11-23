@@ -71,9 +71,8 @@ class _PayScreenState extends ConsumerState<PayScreen> {
       _busy = true;
       _amountError = null;
     });
-    final localeName = l10n.localeName;
-    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    // What it came to is shown by the tab shell, once (README "Offline").
     final outcome = await ref
         .read(paymentsProvider.notifier)
         .pay(
@@ -82,10 +81,6 @@ class _PayScreenState extends ConsumerState<PayScreen> {
           amount: parsed.cents,
         );
     if (!mounted) return;
-    ref.read(paymentNoticesProvider.notifier).clear();
-    messenger.showSnackBar(
-      SnackBar(content: Text(paymentOutcomeMessage(l10n, localeName, outcome))),
-    );
     switch (outcome) {
       // Refused for a reason the form can fix: stay, input kept.
       case PaymentRefused(reason: PaymentRefusal.other):

@@ -81,6 +81,7 @@ class CacheSync<T> {
   StreamSubscription<Cached<T>?>? _cached;
   SyncStatus _status = const SyncStatus();
   bool _closed = false;
+  final _firstSeen = Completer<void>();
 
   /// How the data stands now.
   SyncStatus get status => _status;
@@ -95,6 +96,7 @@ class CacheSync<T> {
   /// change another provider while it builds).
   Stream<T> start() {
     _cached = source.watch().listen((cached) {
+      if (!_firstSeen.isCompleted) _firstSeen.complete();
       if (cached == null) return;
       _out.add(cached.value);
       _set(
@@ -128,6 +130,12 @@ class CacheSync<T> {
       failure = failureOf(error);
     }
     if (_closed) return;
+    // A refresh that fails fast can finish before the cache's first
+    // emission arrives: wait for it before calling the cache empty.
+    if (failure != null && !_firstSeen.isCompleted) {
+      await _firstSeen.future;
+      if (_closed) return;
+    }
     _set(SyncStatus(fetchedAt: _status.fetchedAt, failure: failure));
     if (failure != null &&
         (_status.fetchedAt == null || failure is NotFoundFailure)) {
