@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/core/money/cents.dart';
+import 'package:ronditrack_app/core/observability/analytics.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/home/presentation/home_controller.dart';
@@ -102,7 +103,18 @@ class Payments extends _$Payments {
     final outcome = await outbox.send(payment);
     if (!ref.mounted) return outcome;
     switch (outcome) {
-      case PaymentAccepted() || PaymentRefused() || PaymentExpired():
+      case PaymentAccepted():
+        ref
+            .read(analyticsProvider)
+            .contributionRecorded(
+              stokvelId: payment.stokvelId,
+              memberId: payment.userId,
+            );
+        ref
+          ..invalidate(homeControllerProvider)
+          ..invalidate(stokvelDetailProvider(payment.stokvelId))
+          ..invalidate(cycleDetailProvider(payment.stokvelId, payment.cycleId));
+      case PaymentRefused() || PaymentExpired():
         ref
           ..invalidate(homeControllerProvider)
           ..invalidate(stokvelDetailProvider(payment.stokvelId))

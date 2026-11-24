@@ -6,6 +6,9 @@ import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/retry.dart';
 import 'package:ronditrack_app/app/settings.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
+import 'package:ronditrack_app/core/observability/sentry_event_scrubber.dart';
+import 'package:ronditrack_app/core/observability/sentry_provider_observer.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,10 +37,23 @@ Future<void> main() async {
   // never draws in one language and then another.
   final settings = await PreferencesSettingsStore.open();
 
+  if (config.sentryDsn.isNotEmpty) {
+    await SentryFlutter.init((options) {
+      options
+        ..dsn = config.sentryDsn
+        ..environment = config.environment.name
+        ..sendDefaultPii = false
+        ..enableAutoSessionTracking = true
+        ..beforeSend = (event, _) =>
+            scrubSentryEvent(event, memberName: SentryMemberIdentity.name);
+    });
+  }
+
   runApp(
     ProviderScope(
       // Never retry "not found" (README "State with Riverpod").
       retry: appRetry,
+      observers: [if (config.sentryDsn.isNotEmpty) SentryProviderObserver()],
       overrides: [
         appConfigProvider.overrideWithValue(config),
         settingsStoreProvider.overrideWithValue(settings),

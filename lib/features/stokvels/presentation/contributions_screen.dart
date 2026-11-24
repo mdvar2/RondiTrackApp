@@ -37,7 +37,7 @@ String contributionStatusWords(
 /// `/stokvels/:id/contributions`: every contribution to one of the
 /// stokvel's cycles, newest first, a page at a time, filtered by cycle,
 /// status, member and South African days.
-class ContributionsScreen extends ConsumerWidget {
+class ContributionsScreen extends StatelessWidget {
   /// Creates the screen for [stokvelId].
   const new({required this.stokvelId, super.key});
 
@@ -45,91 +45,109 @@ class ContributionsScreen extends ConsumerWidget {
   final String stokvelId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final provider = contributionsListProvider(stokvelId);
-    final list = ref.watch(provider);
-    final controller = ref.read(provider.notifier);
-    final cycles = ref.watch(contributionCyclesProvider(stokvelId)).value;
-    final filter = list.filter;
-    final dueDate = cycles
-        ?.where((c) => c.id == filter?.cycleId)
-        .firstOrNull
-        ?.dueDate;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.contributionsTitle)),
       body: Column(
         children: [
-          if (filter != null)
-            _Filters(stokvelId: stokvelId, filter: filter, cycles: cycles),
-          Expanded(
-            child: switch (list.phase) {
-              ListPhase.firstLoading => Center(
-                key: const Key('list-first-loading'),
-                child: CircularProgressIndicator(
-                  semanticsLabel: l10n.listLoading,
-                ),
-              ),
-              ListPhase.nothingAtAll => MessagePanel(
-                key: const Key('list-nothing'),
-                title: l10n.listEmpty,
-                action: OutlinedButton(
-                  onPressed: controller.refresh,
-                  child: Text(l10n.tryAgain),
-                ),
-              ),
-              ListPhase.nothingForFilters => MessagePanel(
-                key: const Key('list-nothing-for-filters'),
-                title: l10n.listEmptyFiltered,
-                action: FilledButton(
-                  key: const Key('list-clear-filters'),
-                  onPressed: () => controller.setFilter(filter!.cleared()),
-                  child: Text(l10n.filterClear),
-                ),
-              ),
-              ListPhase.firstFailed => MessagePanel(
-                key: const Key('list-first-failed'),
-                title: l10n.listFailed,
-                body: list.failure?.message,
-                reference: list.failure?.reference,
-                action: FilledButton(
-                  onPressed: controller.retry,
-                  child: Text(l10n.tryAgain),
-                ),
-              ),
-              ListPhase.rows ||
-              ListPhase.end ||
-              ListPhase.moreFailed => RefreshIndicator(
-                onRefresh: controller.refresh,
-                child: ListView.builder(
-                  key: const Key('list-rows'),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: list.rows.length + 1,
-                  itemBuilder: (context, index) => index < list.rows.length
-                      ? _Row(contribution: list.rows[index], dueDate: dueDate)
-                      : _Footer(state: list, onMore: controller.loadMore),
-                ),
-              ),
-            },
-          ),
+          _Filters(stokvelId: stokvelId),
+          Expanded(child: _ContributionBody(stokvelId: stokvelId)),
         ],
       ),
     );
   }
 }
 
-class _Filters extends ConsumerWidget {
-  const new({required this.stokvelId, required this.filter, this.cycles});
+class _ContributionBody extends ConsumerWidget {
+  const new({required this.stokvelId});
 
   final String stokvelId;
-  final ContributionFilter filter;
-  final List<CycleOption>? cycles;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final controller = ref.read(contributionsListProvider(stokvelId).notifier);
+    final provider = contributionsListProvider(stokvelId);
+    final list = ref.watch(
+      provider.select(
+        (state) => (
+          phase: state.phase,
+          rows: state.rows,
+          filter: state.filter,
+          failure: state.failure,
+        ),
+      ),
+    );
+    final controller = ref.read(provider.notifier);
+    final cycles = ref.watch(contributionCyclesProvider(stokvelId)).value;
+    final dueDate = cycles
+        ?.where((cycle) => cycle.id == list.filter?.cycleId)
+        .firstOrNull
+        ?.dueDate;
+
+    return switch (list.phase) {
+      ListPhase.firstLoading => Center(
+        key: const Key('list-first-loading'),
+        child: CircularProgressIndicator(semanticsLabel: l10n.listLoading),
+      ),
+      ListPhase.nothingAtAll => MessagePanel(
+        key: const Key('list-nothing'),
+        title: l10n.listEmpty,
+        action: OutlinedButton(
+          onPressed: controller.refresh,
+          child: Text(l10n.tryAgain),
+        ),
+      ),
+      ListPhase.nothingForFilters => MessagePanel(
+        key: const Key('list-nothing-for-filters'),
+        title: l10n.listEmptyFiltered,
+        action: FilledButton(
+          key: const Key('list-clear-filters'),
+          onPressed: () => controller.setFilter(list.filter!.cleared()),
+          child: Text(l10n.filterClear),
+        ),
+      ),
+      ListPhase.firstFailed => MessagePanel(
+        key: const Key('list-first-failed'),
+        title: l10n.listFailed,
+        body: list.failure?.message,
+        reference: list.failure?.reference,
+        action: FilledButton(
+          onPressed: controller.retry,
+          child: Text(l10n.tryAgain),
+        ),
+      ),
+      ListPhase.rows ||
+      ListPhase.end ||
+      ListPhase.moreFailed => RefreshIndicator(
+        onRefresh: controller.refresh,
+        child: ListView.builder(
+          key: const Key('list-rows'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: list.rows.length + 1,
+          itemBuilder: (context, index) => index < list.rows.length
+              ? _Row(contribution: list.rows[index], dueDate: dueDate)
+              : _Footer(stokvelId: stokvelId),
+        ),
+      ),
+    };
+  }
+}
+
+class _Filters extends ConsumerWidget {
+  const new({required this.stokvelId});
+
+  final String stokvelId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final provider = contributionsListProvider(stokvelId);
+    final filter = ref.watch(provider.select((state) => state.filter));
+    if (filter == null) return const SizedBox.shrink();
+    final controller = ref.read(provider.notifier);
+    final cycles = ref.watch(contributionCyclesProvider(stokvelId)).value;
     final members = ref.watch(contributionMembersProvider(stokvelId)).value;
     final first = filter.firstDay;
     final last = filter.lastDay ?? first;
@@ -293,17 +311,16 @@ class _Row extends StatelessWidget {
   }
 }
 
-class _Footer extends StatefulWidget {
-  const new({required this.state, required this.onMore});
+class _Footer extends ConsumerStatefulWidget {
+  const new({required this.stokvelId});
 
-  final ContributionsListState state;
-  final Future<void> Function() onMore;
+  final String stokvelId;
 
   @override
-  State<_Footer> createState() => _FooterState();
+  ConsumerState<_Footer> createState() => _FooterState();
 }
 
-class _FooterState extends State<_Footer> {
+class _FooterState extends ConsumerState<_Footer> {
   @override
   void initState() {
     super.initState();
@@ -316,19 +333,38 @@ class _FooterState extends State<_Footer> {
     _askIfNear();
   }
 
-  // The footer is built only when the list nears its end: that is when
-  // the next page is asked for.
   void _askIfNear() {
-    if (widget.state.phase != ListPhase.rows || widget.state.loading) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(widget.onMore());
+      if (!mounted) return;
+      final state = ref.read(contributionsListProvider(widget.stokvelId));
+      if (state.phase == ListPhase.rows && !state.loading) {
+        unawaited(
+          ref
+              .read(contributionsListProvider(widget.stokvelId).notifier)
+              .loadMore(),
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = widget.state;
+    final state = ref.watch(
+      contributionsListProvider(widget.stokvelId).select(
+        (state) => (
+          phase: state.phase,
+          loading: state.loading,
+          failure: state.failure,
+          rowCount: state.rows.length,
+        ),
+      ),
+    );
+    ref.listen(
+      contributionsListProvider(widget.stokvelId)
+          .select((state) => (state.phase, state.loading)),
+      (_, _) => _askIfNear(),
+    );
     return Padding(
       padding: const EdgeInsets.all(16),
       child: switch (state.phase) {
@@ -339,11 +375,16 @@ class _FooterState extends State<_Footer> {
             if (state.failure case final Failure failure)
               Text(failure.message, textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            FilledButton(onPressed: widget.onMore, child: Text(l10n.tryAgain)),
+            FilledButton(
+              onPressed: ref
+                  .read(contributionsListProvider(widget.stokvelId).notifier)
+                  .retry,
+              child: Text(l10n.tryAgain),
+            ),
           ],
         ),
         ListPhase.end => Text(
-          l10n.listEnd(state.rows.length),
+          l10n.listEnd(state.rowCount),
           key: const Key('list-end'),
           textAlign: TextAlign.center,
         ),

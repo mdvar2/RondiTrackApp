@@ -112,7 +112,8 @@ jobs:
           TZ: UTC
         run: |
           date +'Running in %Z (UTC%:z)'
-          flutter test
+          flutter test --coverage
+          dart run tool/check_coverage.dart
 
       - name: Test (TZ=Africa/Johannesburg)
         env:
@@ -120,6 +121,32 @@ jobs:
         run: |
           date +'Running in %Z (UTC%:z)'
           flutter test
+
+  integration:
+    name: Assignment journey on Android
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - name: Install the locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Sign in, open contributions, then view the cycle
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          script: flutter test integration_test/assignment_journey_test.dart --flavor dev -d emulator-5554 --no-pub
 
   contract:
     name: Contract copy matches the API

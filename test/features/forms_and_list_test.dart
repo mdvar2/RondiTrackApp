@@ -229,6 +229,47 @@ void main() {
       expect(pages.asked.map((a) => a.token), [null, 'p2']);
     });
 
+    testWidgets('loading another page does not rebuild existing rows', (
+      tester,
+    ) async {
+      final pages = _Pages()
+        ..answers.add(
+          Ok(
+            ContributionPage([
+              for (var i = 0; i < 20; i++) _Pages.row(i),
+            ], nextPageToken: 'p2'),
+          ),
+        );
+      await pumpApp(
+        tester,
+        as: FakeSeed.lerato,
+        size: phone,
+        coldStart: _list,
+        overrides: [contributionsRepositoryProvider.overrideWithValue(pages)],
+      );
+      final rebuilds = <String, int>{};
+      final previousCallback = debugOnRebuildDirtyWidget;
+      debugOnRebuildDirtyWidget = (element, builtOnce) {
+        final key = element.widget.key;
+        if (builtOnce &&
+            key is ValueKey<String> &&
+            key.value.startsWith('contribution-')) {
+          rebuilds.update(key.value, (count) => count + 1, ifAbsent: () => 1);
+        }
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = previousCallback);
+
+      pages.gate = Completer<void>();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('list-more-loading')),
+        400,
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(pages.asked.map((answer) => answer.token), [null, 'p2']);
+      expect(rebuilds['contribution-c19'] ?? 0, 0);
+    });
+
     for (final (name, key, answers) in [
       ('nothing at all', 'list-nothing', [const Ok(ContributionPage([]))]),
       (
