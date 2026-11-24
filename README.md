@@ -79,6 +79,11 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
   - [Languages](#languages)
   - [Decisions (11.3)](#decisions-113)
   - [Assignment 11.3: verification](#assignment-113-verification)
+- [Part 13: Tests, speed and privacy (Assignment 12.1)](#part-13-tests-speed-and-privacy-assignment-121)
+  - [Rules, accessibility and visual tests](#rules-accessibility-and-visual-tests)
+  - [Contribution-list performance](#contribution-list-performance)
+  - [Privacy and observability](#privacy-and-observability)
+  - [Assignment 12.1: verification](#assignment-121-verification)
 
 ---
 
@@ -89,7 +94,8 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
 | **Assignment 10.1**: foundations and state | Three flavours with validated config;<br>the domain (money in cents, date-only due dates, statuses with an `unknown` fallback, roles per stokvel);<br>three seed personas on fake repositories;<br>Riverpod state with deliberate lifetimes;<br>strict lints and CI | [Part 2](#part-2-getting-started),<br>[Part 3](#part-3-how-the-code-is-organised),<br>[Part 4](#part-4-state-and-provider-lifetimes),<br>[Part 6](#part-6-domain-rules),<br>[Part 7](#part-7-the-api-contract) |
 | **Assignment 10.2**: every screen has an address | Four tabs that keep their place;<br>typed routes for every screen;<br>a fake sign-in and one testable gate;<br>deep links per flavour;<br>a Material 3 light and dark design system with measured contrast;<br>phone and tablet layouts | [Part 1](#part-1-navigation-every-screen-has-an-address),<br>[Part 5](#part-5-look-and-layout) |
 | **Assignment 10.3**: the foundations capstone | The rotation and payouts view, built layer by layer (domain, fake, provider, theme, route, screen), each with its tests;<br>a backend fix so the API says who is next;<br>three personas, each seeing exactly their own world;<br>a persona switcher in the dev build only;<br>"not found" never retried;<br>architecture rules and the Routes table checked by CI;<br>one Dart 3 refactor | [Personas](#personas-three-people-one-phone),<br>[Architecture rules](#architecture-rules),<br>[Payouts contract](#payouts-the-five-answers-assignment-103),<br>[10.3 verification](#assignment-103-verification) |
-| **Checks** | 415 tests passing (268 of them from 10.1 and 10.2);<br>`dart analyze --fatal-infos` clean;<br>CI green on `main` | [Part 8](#part-8-tests-ci-and-evidence) |
+| **Assignment 12.1**: tests, speed and privacy | Focused rule and accessibility tests;<br>CI and Windows goldens;<br>measured list rebuild regression test;<br>opt-in Sentry with PII scrubbing and IDs-only analytics;<br>coverage threshold and Android journey CI | [Part 13](#part-13-tests-speed-and-privacy-assignment-121) |
+| **Checks** | 629 tests passing, 2 live tests skipped;<br>84.36% hand-written Dart line coverage (66% required);<br>`dart analyze --fatal-infos` clean | [Part 8](#part-8-tests-ci-and-evidence),<br>[Part 13](#part-13-tests-speed-and-privacy-assignment-121) |
 
 ---
 
@@ -1434,3 +1440,51 @@ On a Huawei MAO-LX9 (Android), the dev debug build against the API from [API PR 
 - The cycle edit's due date read *Nov 30, 2026* (the US order `yMMMd` gives plain `en`); every day is now day, month, year. ([`locale_dates_test.dart`](test/l10n/locale_dates_test.dart))
 
 Settings changed for the evidence were put back: ScreenReader off, font scale 1.0, stay-awake off.
+
+## Part 13: Tests, speed and privacy (Assignment 12.1)
+
+*The important rules are exercised directly, the contribution list avoids work it does not need to do, and observability is opt-in and scrubbed before any event can leave the phone.*
+
+### Rules, accessibility and visual tests
+
+The existing API-failure and payment-outbox suites remain the source of truth for status mapping, retries, correlation IDs, durable idempotency, and offline behavior. This assignment adds focused checks rather than duplicating those scenarios:
+
+| Area | Test and assertion |
+|---|---|
+| Accessibility | [`home_screen_test.dart`](test/features/home/presentation/home_screen_test.dart): Home meets Android tap-target, labelled-target and text-contrast guidelines in light and dark mode. |
+| Visual states | [`home_stokvel_card_golden_test.dart`](test/features/home/presentation/home_stokvel_card_golden_test.dart): Treasurer in arrears, Member up to date, and an unknown role/status each have a golden. CI uses Alchemist's platform-independent text blocks; readable platform goldens are restricted to Windows by [`flutter_test_config.dart`](test/flutter_test_config.dart). |
+| Pagination performance | [`forms_and_list_test.dart`](test/features/forms_and_list_test.dart): while the second page is held pending, Flutter's `debugOnRebuildDirtyWidget` observes an existing row; its rebuild count must remain zero. |
+| Journey | [`assignment_journey_test.dart`](integration_test/assignment_journey_test.dart): sign in, open a stokvel's contributions, return, then open its cycle using the app's routes and fake repositories. It runs on Android in CI and on the connected phone for local evidence. |
+| Privacy | [`sentry_event_scrubber_test.dart`](test/core/observability/sentry_event_scrubber_test.dart) checks nested messages, breadcrumbs, tags and request metadata for member name, email, money, tokens, proof filenames, IDs and query data; the API correlation ID remains. [`sentry_provider_observer_test.dart`](test/core/observability/sentry_provider_observer_test.dart) checks which provider failures are reported. |
+| Analytics | [`payments_analytics_test.dart`](test/features/payments/payments_analytics_test.dart): only a confirmed payment emits an event, containing stokvel/member IDs and no amount or name. |
+
+CI measures hand-written `lib/` line coverage, excluding generated files, with [`check_coverage.dart`](tool/check_coverage.dart). The minimum is **66%**, slightly below the pre-assignment baseline of **68.71%**; the coverage run and check are part of the UTC test job. The Android journey has its own API 31 emulator job.
+
+Run the checks locally:
+
+```powershell
+flutter test --coverage
+dart run tool/check_coverage.dart
+flutter test --tags golden
+flutter test integration_test/assignment_journey_test.dart --flavor dev -d <device-id>
+```
+
+### Contribution-list performance
+
+The list body now selects only its phase, rows, filter and first-page failure. The footer independently selects its loading flag and row count. Starting another-page request changes only the footer; the already displayed `ListTile`s are not rebuilt. This preserves the current rows and avoids repeating their date, status, amount and layout work while a request is in flight.
+
+The regression measurement is deliberately deterministic: with a 20-row first page and the second page held pending, the visible existing row's rebuild count is **0**. This verifies the optimization itself without claiming a device frame-time improvement that has not been measured. The integration journey checks that the actual Android app still navigates through the list and cycle.
+
+### Privacy and observability
+
+- Sentry is initialized only when a non-empty `SENTRY_DSN` Dart define is supplied. The checked-in flavour files leave it empty, so local/default builds do not send events.
+- `sendDefaultPii` is disabled. A `beforeSend` scrubber removes the Sentry user, request body, headers, cookies, query and fragment fields; recursively removes sensitive fields and scrubs names, emails, currency amounts, bearer/JWT tokens and proof filenames from strings. Opaque IDs in URLs are normalized. API correlation IDs are retained for support.
+- A provider observer reports only unexpected `ServerFailure`s; expected validation, authorization and offline failures are not sent as exceptions. The signed-in name is held in memory only to scrub it and is not attached to an event.
+- Payment analytics is a no-op unless a platform implementation is supplied. The event is emitted only after server confirmation and carries IDs only; it never includes a member name or amount.
+- Android `minSdk` is 26 (Android 8), required by the selected Sentry Flutter SDK.
+
+No Sentry DSN/account was supplied, so this repository cannot demonstrate a real event arriving in a Sentry project. The scrubber and reporting policy are tested locally; production delivery remains an environment-configuration step, not a claimed test result.
+
+### Assignment 12.1: verification
+
+The connected device is the Huawei MAO-LX9 (Android 12 / API 31). The dev-flavour integration journey, using fake repositories, passed **three consecutive runs** on that phone (one journey test passed in each run). CI is configured to run the same journey on an Android 12 emulator. No Sentry delivery or frame-time benchmark is claimed; the measurable performance result is the zero-rebuild pagination regression test.

@@ -43,6 +43,7 @@ class AppConfig {
     required String apiBaseUrl,
     required String refreshCookieName,
     required String? nativeFlavor,
+    String? sentryDsn,
   }) {
     final parsedEnvironment = switch (environment) {
       'dev' => AppEnvironment.dev,
@@ -111,6 +112,7 @@ class AppConfig {
       appName: appName,
       apiBaseUri: baseUri,
       refreshCookieName: refreshCookieName,
+      sentryDsn: sentryDsn ?? '',
     );
   }
 
@@ -121,6 +123,7 @@ class AppConfig {
     const appName = String.fromEnvironment('APP_NAME');
     const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
     const refreshCookieName = String.fromEnvironment('REFRESH_COOKIE_NAME');
+    const sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
     return AppConfig.fromValues(
       environment: environment,
@@ -128,6 +131,7 @@ class AppConfig {
       apiBaseUrl: apiBaseUrl,
       refreshCookieName: refreshCookieName,
       nativeFlavor: nativeFlavor,
+      sentryDsn: sentryDsn,
     );
   }
 
@@ -137,6 +141,7 @@ class AppConfig {
     required this.appName,
     required this.apiBaseUri,
     required this.refreshCookieName,
+    required this.sentryDsn,
   });
 
   /// The selected deployment environment.
@@ -152,6 +157,10 @@ class AppConfig {
   /// The app reads that cookie from `Set-Cookie` by this name, and sends
   /// it back only to the refresh and logout endpoints.
   final String refreshCookieName;
+
+  /// Optional Sentry endpoint supplied per developer/environment, never
+  /// committed to the repository.
+  final String sentryDsn;
 
   /// Whether this build has developer tools (the persona switcher, the
   /// sign-in page's test accounts, the session tools on Profile): the dev

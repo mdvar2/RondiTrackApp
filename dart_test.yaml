@@ -3,5 +3,6 @@
 # against the API"):
 #   flutter test --tags live --run-skipped
 tags:
+  golden: {}
   live:
     skip: "Calls the real API: flutter test --tags live --run-skipped"

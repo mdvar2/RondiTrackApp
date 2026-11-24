@@ -10,6 +10,7 @@ import 'package:ronditrack_app/features/home/presentation/home_screen.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
 import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
+import '../../../helpers/app_harness.dart';
 import '../../../helpers/test_database.dart';
 import '../../../helpers/test_repositories.dart';
 
@@ -143,6 +144,25 @@ void main() {
       findsOneWidget,
     );
   });
+
+  for (final brightness in [Brightness.light, Brightness.dark]) {
+    testWidgets('Home meets accessibility guidelines in $brightness mode', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await pumpApp(
+        tester,
+        as: FakeSeed.lerato,
+        size: phone,
+        brightness: brightness,
+      );
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      semantics.dispose();
+    });
+  }
 
   testWidgets('failure: a message and a retry that works', (tester) async {
     final entries = await _homeOf(tester, FakeSeed.lerato);
