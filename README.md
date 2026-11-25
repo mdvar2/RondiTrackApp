@@ -1604,7 +1604,7 @@ dart run tool/check_coverage.dart
 TZ=UTC flutter test
 TZ=Africa/Johannesburg flutter test
 
-# Goldens only, and updating them (look at every changed picture before committing)
+# Goldens only, and updating the Windows ones (look at every changed picture before committing)
 flutter test --tags golden
 flutter test --tags golden --update-goldens
 
@@ -1615,7 +1615,7 @@ flutter test integration_test/assignment_journey_test.dart --flavor dev --dart-d
 $env:SEED_PASSWORD = '<the seed password>'; flutter test --tags live --run-skipped
 ```
 
-The CI goldens draw text as blocks so every platform renders the same pixels; the Windows goldens have real text and are made and compared on Windows only ([`flutter_test_config.dart`](test/flutter_test_config.dart)). alchemist's `failures/` folders are git-ignored.
+The CI goldens draw text as blocks. Even so, Windows and Linux anti-alias rounded corners differently (0.16% of pixels), so the CI goldens are made **on Linux** and compared on Linux only: run *Actions > CI > Run workflow* with `update_goldens`, download the `ci-goldens` artifact, look at every picture, and commit it. The Windows goldens have real text, and are made (`flutter test --tags golden --update-goldens`) and compared on Windows only ([`flutter_test_config.dart`](test/flutter_test_config.dart)). alchemist's `failures/` folders are git-ignored.
 
 ### Performance
 
