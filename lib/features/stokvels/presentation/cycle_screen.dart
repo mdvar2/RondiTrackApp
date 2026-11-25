@@ -7,7 +7,11 @@ import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/time/date_format.dart';
 import 'package:ronditrack_app/core/widgets/cache_banner.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
+import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
+import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
 import 'package:ronditrack_app/features/payments/presentation/pay_screen.dart';
+import 'package:ronditrack_app/features/proofs/presentation/proof_actions.dart';
+import 'package:ronditrack_app/features/stokvels/domain/statuses.dart';
 import 'package:ronditrack_app/features/stokvels/domain/stokvel_detail.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/contribution_row.dart';
 import 'package:ronditrack_app/features/stokvels/presentation/status_chips.dart';
@@ -86,13 +90,25 @@ class CycleScreen extends ConsumerWidget {
   }
 }
 
-class _CycleBody extends StatelessWidget {
+class _CycleBody extends ConsumerWidget {
   const new({required this.detail, super.key});
 
   final CycleDetail detail;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = switch (ref.watch(authControllerProvider)) {
+      SignedIn(:final user) => user.id,
+      _ => null,
+    };
+    final role = ref
+        .watch(stokvelDetailProvider(detail.stokvel.id))
+        .value
+        ?.membership
+        .role;
+    final treasurer =
+        role == StokvelRole.treasurer || role == StokvelRole.chairperson;
+    final open = detail.cycle.status == CycleStatus.open;
     final theme = Theme.of(context);
     final cycle = detail.cycle;
     final dueDate = cycle.dueDate;
@@ -155,8 +171,19 @@ class _CycleBody extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text('Nobody has paid in this cycle yet.'),
           ),
-        for (final contribution in detail.contributions)
+        for (final contribution in detail.contributions) ...[
           ContributionRow(contribution: contribution),
+          // The member's own: proof, while the cycle is open. A treasurer
+          // or chairperson: confirm a paid one (README "Notifications").
+          if (open && contribution.userId == me)
+            ProofButton(contributionId: contribution.id),
+          if (treasurer && contribution.status == ContributionStatus.paid)
+            ConfirmButton(
+              stokvelId: detail.stokvel.id,
+              cycleId: detail.cycle.id,
+              contributionId: contribution.id,
+            ),
+        ],
       ],
     );
   }

@@ -91,6 +91,7 @@ void main() {
     expect(find.text('Paid. The cycle is up to date.'), findsOneWidget);
 
     await openLink(tester, app, '/profile');
+    await tester.scrollUntilVisible(find.text('Notifications'), 200);
     expect(
       find.text(
         "Off. To get them, allow notifications for RondiTrack in Android's "
@@ -116,6 +117,10 @@ void main() {
     expect(settings.notificationsAsked, isFalse);
 
     await openLink(tester, app, '/profile');
+    await tester.scrollUntilVisible(
+      find.text('Not available in this build.'),
+      200,
+    );
     expect(find.text('Not available in this build.'), findsOneWidget);
   });
 

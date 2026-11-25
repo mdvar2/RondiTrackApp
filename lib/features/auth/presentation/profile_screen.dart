@@ -40,9 +40,6 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           const _LanguageChoice(),
-          const SizedBox(height: 16),
-          // Refused is an answer: the status is on the screen.
-          const NotificationStatusTile(),
           const SizedBox(height: 24),
           Align(
             alignment: AlignmentDirectional.centerStart,
@@ -60,6 +57,9 @@ class ProfileScreen extends ConsumerWidget {
           // buttons don't exist (the 10.3 test proves it).
           if (AppConfigScope.of(context).hasDevTools) const SessionTools(),
           const SizedBox(height: 24),
+          // Refused is an answer: the status is on the screen.
+          const NotificationStatusTile(),
+          const SizedBox(height: 8),
           const VersionLabel(),
         ],
       ),
