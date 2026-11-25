@@ -1583,6 +1583,8 @@ The API puts its correlation id in the ProblemDetails body as `correlationId`. T
 
 No screen reports on its own. Tests see what would have been reported through the `FailureReporter` interface, with no Sentry account ([`sentry_provider_observer_test.dart`](test/core/observability/sentry_provider_observer_test.dart)). Without a DSN, `SentryFlutter.init` is never called and the observer isn't added: the app starts exactly as before, and tests never send.
 
+**Sentry end to end, with no account:** [`sentry_end_to_end_test.dart`](test/core/observability/sentry_end_to_end_test.dart) starts the real Sentry SDK with the app's options, scrubber and reporter, and a transport that keeps each event instead of sending it. A server failure leaves as exactly one event, tagged `correlationId`, with environment `dev`, no user, and no name, email or query string, though the scope held all three; no signal and a rule send nothing. Without the scrubber it goes red.
+
 To send to your own Sentry project (never committed):
 
 ```powershell
