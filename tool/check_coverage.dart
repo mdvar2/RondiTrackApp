@@ -1,6 +1,12 @@
+/// Fails the build when hand-written lib/ line coverage drops below
+/// [minimumCoverage]. Run after `flutter test --coverage`.
+library;
+
 import 'dart:io';
 
-const minimumCoverage = 66.0;
+/// A little under today's number (README "Coverage"): 84.4% on
+/// 2026-11-25. Raise it when coverage rises; never lower it to pass.
+const minimumCoverage = 83.0;
 
 void main() {
   final report = File('coverage/lcov.info');

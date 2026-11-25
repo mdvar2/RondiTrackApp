@@ -187,7 +187,7 @@ final class PaymentsProvider extends $NotifierProvider<Payments, void> {
   }
 }
 
-String _$paymentsHash() => r'e431480e51fe4ebed72b1b8f8e9eb1274ba633e4';
+String _$paymentsHash() => r'b0fd8920bfc04bfe9dc888453a073f1068ff0452';
 
 /// Pays, and sends what is waiting.
 ///
