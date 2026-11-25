@@ -589,6 +589,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Afrikaans'**
   String get languageAfrikaans;
+
+  /// The app's own question, after a payment, before Android's dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Know when it\'s confirmed?'**
+  String get notifyAskTitle;
+
+  /// No description provided for @notifyAskBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We can tell you when your treasurer confirms a payment. The notification only says there\'s an update on your stokvel; the details stay in the app.'**
+  String get notifyAskBody;
+
+  /// No description provided for @notifyAskYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, tell me'**
+  String get notifyAskYes;
+
+  /// No description provided for @notifyAskNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notifyAskNotNow;
+
+  /// No description provided for @notifyStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifyStatusTitle;
+
+  /// No description provided for @notifyStatusOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On: you\'ll hear when a payment is confirmed.'**
+  String get notifyStatusOn;
+
+  /// No description provided for @notifyStatusOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off. To get them, allow notifications for RondiTrack in Android\'s settings.'**
+  String get notifyStatusOff;
+
+  /// No description provided for @notifyStatusNotAsked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set up yet. We\'ll ask after your next payment.'**
+  String get notifyStatusNotAsked;
+
+  /// No description provided for @notifyStatusUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available in this build.'**
+  String get notifyStatusUnavailable;
+
+  /// The installed build, for a tester to quote.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} ({build}) · {flavour}'**
+  String versionLabel(String version, String build, String flavour);
 }
 
 class _AppLocalizationsDelegate

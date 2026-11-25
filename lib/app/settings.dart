@@ -12,6 +12,14 @@ abstract interface class SettingsStore {
 
   /// Keeps [code], or forgets it with `null`.
   Future<void> setLanguage(String? code);
+
+  /// Whether this phone was already asked about notifications, whatever
+  /// the answer (README "Notifications", question 4). Survives sign-out:
+  /// it belongs to the phone, not the member.
+  bool get notificationsAsked;
+
+  /// Remembers that this phone was asked.
+  Future<void> setNotificationsAsked();
 }
 
 /// [SettingsStore] in SharedPreferences: survives a restart and a
@@ -24,7 +32,7 @@ class PreferencesSettingsStore implements SettingsStore {
       PreferencesSettingsStore._(
         await SharedPreferencesWithCache.create(
           cacheOptions: const SharedPreferencesWithCacheOptions(
-            allowList: {_languageKey},
+            allowList: {_languageKey, _notificationsAskedKey},
           ),
         ),
       );
@@ -32,6 +40,15 @@ class PreferencesSettingsStore implements SettingsStore {
   final SharedPreferencesWithCache _prefs;
 
   static const _languageKey = 'settings.language';
+  static const _notificationsAskedKey = 'settings.notificationsAsked';
+
+  @override
+  bool get notificationsAsked =>
+      _prefs.getBool(_notificationsAskedKey) ?? false;
+
+  @override
+  Future<void> setNotificationsAsked() =>
+      _prefs.setBool(_notificationsAskedKey, true);
 
   @override
   String? get language => _prefs.getString(_languageKey);
@@ -46,13 +63,19 @@ class PreferencesSettingsStore implements SettingsStore {
 /// real one.
 class InMemorySettingsStore implements SettingsStore {
   /// Creates the store with [language].
-  new({this.language});
+  new({this.language, this.notificationsAsked = false});
 
   @override
   String? language;
 
   @override
   Future<void> setLanguage(String? code) async => language = code;
+
+  @override
+  bool notificationsAsked;
+
+  @override
+  Future<void> setNotificationsAsked() async => notificationsAsked = true;
 }
 
 /// Where settings are kept. `main` overrides it with

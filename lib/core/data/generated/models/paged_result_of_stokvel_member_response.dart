@@ -16,13 +16,16 @@ class PagedResultOfStokvelMemberResponse {
     required this.pageSize,
     this.hasMore,
   });
-  
-  factory PagedResultOfStokvelMemberResponse.fromJson(Map<String, Object?> json) => _$PagedResultOfStokvelMemberResponseFromJson(json);
-  
+
+  factory PagedResultOfStokvelMemberResponse.fromJson(
+    Map<String, Object?> json,
+  ) => _$PagedResultOfStokvelMemberResponseFromJson(json);
+
   final List<StokvelMemberResponse> items;
   final String nextPageToken;
   final int pageSize;
   final bool? hasMore;
 
-  Map<String, Object?> toJson() => _$PagedResultOfStokvelMemberResponseToJson(this);
+  Map<String, Object?> toJson() =>
+      _$PagedResultOfStokvelMemberResponseToJson(this);
 }

@@ -17,9 +17,10 @@ class StokvelMemberResponse {
     required this.joinedAtUtc,
     required this.version,
   });
-  
-  factory StokvelMemberResponse.fromJson(Map<String, Object?> json) => _$StokvelMemberResponseFromJson(json);
-  
+
+  factory StokvelMemberResponse.fromJson(Map<String, Object?> json) =>
+      _$StokvelMemberResponseFromJson(json);
+
   final String stokvelId;
   final String userId;
   final String userName;

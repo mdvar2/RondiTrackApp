@@ -14,7 +14,8 @@ part 'contribution_cycles_client.g.dart';
 
 @RestApi()
 abstract class ContributionCyclesClient {
-  factory ContributionCyclesClient(Dio dio, {String? baseUrl}) = _ContributionCyclesClient;
+  factory ContributionCyclesClient(Dio dio, {String? baseUrl}) =
+      _ContributionCyclesClient;
 
   /// Gets all contribution cycles for a stokvel.
   ///
@@ -22,7 +23,8 @@ abstract class ContributionCyclesClient {
   /// An empty collection is returned when the stokvel exists but has no cycles.
   /// Returns 404 when the stokvel does not exist.
   @GET('/api/v1/stokvels/{stokvelId}/cycles')
-  Future<HttpResponse<List<ContributionCycleResponse>>> getApiV1StokvelsStokvelIdCycles({
+  Future<HttpResponse<List<ContributionCycleResponse>>>
+  getApiV1StokvelsStokvelIdCycles({
     @Path('stokvelId') required String stokvelId,
   });
 
@@ -32,7 +34,8 @@ abstract class ContributionCyclesClient {
   /// Returns 400 when the request fails validation.
   /// Returns 404 when the stokvel does not exist.
   @POST('/api/v1/stokvels/{stokvelId}/cycles')
-  Future<HttpResponse<ContributionCycleResponse>> postApiV1StokvelsStokvelIdCycles({
+  Future<HttpResponse<ContributionCycleResponse>>
+  postApiV1StokvelsStokvelIdCycles({
     @Path('stokvelId') required String stokvelId,
     @Body() required CreateContributionCycleRequest body,
   });
@@ -43,7 +46,8 @@ abstract class ContributionCyclesClient {
   /// Returns 404 when the stokvel does not exist, the cycle does not exist,.
   /// or the cycle does not belong to the specified stokvel.
   @GET('/api/v1/stokvels/{stokvelId}/cycles/{cycleId}')
-  Future<HttpResponse<ContributionCycleResponse>> getApiV1StokvelsStokvelIdCyclesCycleId({
+  Future<HttpResponse<ContributionCycleResponse>>
+  getApiV1StokvelsStokvelIdCyclesCycleId({
     @Path('stokvelId') required String stokvelId,
     @Path('cycleId') required String cycleId,
   });
@@ -85,7 +89,8 @@ abstract class ContributionCyclesClient {
   /// [its midnight, the next midnight). A page token works only with the.
   /// sort and filters that made it (400 otherwise).
   @GET('/api/v1/stokvels/{stokvelId}/cycles/{cycleId}/contributions')
-  Future<HttpResponse<PagedResultOfContributionWithMemberResponse>> getApiV1StokvelsStokvelIdCyclesCycleIdContributions({
+  Future<HttpResponse<PagedResultOfContributionWithMemberResponse>>
+  getApiV1StokvelsStokvelIdCyclesCycleIdContributions({
     @Path('stokvelId') required String stokvelId,
     @Path('cycleId') required String cycleId,
     @Query('pageToken') String? pageToken,

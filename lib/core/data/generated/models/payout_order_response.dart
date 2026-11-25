@@ -15,9 +15,10 @@ class PayoutOrderResponse {
     required this.cycleId,
     required this.items,
   });
-  
-  factory PayoutOrderResponse.fromJson(Map<String, Object?> json) => _$PayoutOrderResponseFromJson(json);
-  
+
+  factory PayoutOrderResponse.fromJson(Map<String, Object?> json) =>
+      _$PayoutOrderResponseFromJson(json);
+
   final String stokvelId;
   final String cycleId;
   final List<PayoutOrderEntryResponse> items;

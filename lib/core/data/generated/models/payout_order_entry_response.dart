@@ -16,9 +16,10 @@ class PayoutOrderEntryResponse {
     required this.paidAtUtc,
     required this.status,
   });
-  
-  factory PayoutOrderEntryResponse.fromJson(Map<String, Object?> json) => _$PayoutOrderEntryResponseFromJson(json);
-  
+
+  factory PayoutOrderEntryResponse.fromJson(Map<String, Object?> json) =>
+      _$PayoutOrderEntryResponseFromJson(json);
+
   final int position;
   final String userId;
   final String memberName;

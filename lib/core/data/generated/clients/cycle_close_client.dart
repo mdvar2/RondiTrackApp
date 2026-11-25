@@ -14,7 +14,8 @@ abstract class CycleCloseClient {
   factory CycleCloseClient(Dio dio, {String? baseUrl}) = _CycleCloseClient;
 
   @GET('/api/v1/stokvels/{stokvelId}/cycles/{cycleId}/close/preview')
-  Future<HttpResponse<CycleClosePreviewResponse>> getApiV1StokvelsStokvelIdCyclesCycleIdClosePreview({
+  Future<HttpResponse<CycleClosePreviewResponse>>
+  getApiV1StokvelsStokvelIdCyclesCycleIdClosePreview({
     @Path('stokvelId') required String stokvelId,
     @Path('cycleId') required String cycleId,
   });

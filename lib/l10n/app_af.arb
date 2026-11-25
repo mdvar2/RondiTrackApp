@@ -1,27 +1,22 @@
 {
   "@@locale": "af",
-
   "tryAgain": "Probeer weer",
   "cancel": "Kanselleer",
   "save": "Stoor",
-
   "ageJustNow": "sopas",
   "ageMinutes": "{count, plural, one{1 minuut gelede} other{{count} minute gelede}}",
   "ageHours": "{count, plural, one{1 uur gelede} other{{count} uur gelede}}",
   "ageDays": "{count, plural, one{1 dag gelede} other{{count} dae gelede}}",
   "bannerOffline": "Jy is vanlyn. Ons wys wat hierdie foon {age} gestoor het.",
   "bannerCouldNotRefresh": "Kon nie verfris nie. Ons wys wat hierdie foon {age} gestoor het.",
-
   "memberCount": "{count, plural, =0{Geen lede nie} one{1 lid} other{{count} lede}}",
   "contributionCount": "{count, plural, =0{Geen bydraes nie} one{1 bydrae} other{{count} bydraes}}",
-
   "statusPaid": "Betaal",
   "statusPending": "Hangend",
   "statusConfirmed": "Bevestig",
   "statusLate": "Laat",
   "statusUnknown": "Status nie herken nie",
   "statusNotSent": "Nog nie gestuur nie",
-
   "payTitle": "Betaal aan {stokvel}",
   "payCycle": "Siklus {period}",
   "payAmountLabel": "Bedrag in rand",
@@ -38,7 +33,6 @@
   "payExpired": "'n Betaling wat op {day} gestoor is, kon nie betyds bevestig word nie en sal nie gestuur word nie. Kyk na hierdie siklus en betaal weer as dit nodig is.",
   "pendingPayment": "Hangende betaling: {amount}. Nie betaal voordat die bediener dit bevestig nie.",
   "sendNow": "Stuur nou",
-
   "amountRequired": "Voer 'n bedrag in.",
   "amountInvalid": "Gebruik net syfers, soos 500 of 1 250,50.",
   "amountGroups": "Groepeer die rand in drieë, soos 1 250.",
@@ -46,11 +40,9 @@
   "amountTooManyCents": "Sente het hoogstens twee syfers.",
   "amountTooLarge": "Daardie bedrag is te groot.",
   "amountZero": "Voer meer as R 0,00 in.",
-
   "signOutWithPendingTitle": "'n Betaling is nog nie gestuur nie",
   "signOutWithPendingBody": "{count, plural, one{'n Betaling op hierdie foon het nog nie die bediener bereik nie. As jy afmeld, word dit uitgevee en dit sal nie betaal word nie.} other{{count} betalings op hierdie foon het nog nie die bediener bereik nie. As jy afmeld, word hulle uitgevee en sal hulle nie betaal word nie.}}",
   "signOutAnyway": "Meld tog af",
-
   "createTitle": "Nuwe stokvel",
   "createName": "Naam van die stokvel",
   "createAmount": "Maandelikse bydrae, in rand",
@@ -61,14 +53,12 @@
   "createButton": "Skep stokvel",
   "createBusy": "Skep tans…",
   "newStokvel": "Nuwe stokvel",
-
   "editCycleTitle": "Wysig siklus {period}",
   "editCycleTarget": "Teiken, in rand",
   "editCycleDueDate": "Betaaldatum",
   "editCycleStale": "Iemand anders het hierdie siklus verander terwyl jy dit gewysig het. Hier is die nuutste weergawe; kyk daarna en stoor weer.",
   "editCycleSaved": "Gestoor.",
   "editCycle": "Wysig siklus",
-
   "contributionsTitle": "Bydraes",
   "filterCycle": "Siklus",
   "filterStatus": "Status",
@@ -88,9 +78,18 @@
   "listEnd": "{count, plural, =0{Dis alles.} one{Dis alles: 1 bydrae.} other{Dis alles: {count} bydraes.}}",
   "recordedOn": "Betaal op {day}",
   "viewContributions": "Alle bydraes",
-
   "settingsLanguage": "Taal",
   "languageSystem": "Volg die foon",
   "languageEnglish": "English",
-  "languageAfrikaans": "Afrikaans"
+  "languageAfrikaans": "Afrikaans",
+  "notifyAskTitle": "Wil jy weet wanneer dit bevestig is?",
+  "notifyAskBody": "Ons kan jou laat weet wanneer jou tesourier 'n betaling bevestig. Die kennisgewing sê net daar is 'n opdatering oor jou stokvel; die besonderhede bly in die toep.",
+  "notifyAskYes": "Ja, laat weet my",
+  "notifyAskNotNow": "Nie nou nie",
+  "notifyStatusTitle": "Kennisgewings",
+  "notifyStatusOn": "Aan: jy sal hoor wanneer 'n betaling bevestig is.",
+  "notifyStatusOff": "Af. Om dit te kry, laat kennisgewings vir RondiTrack toe in Android se instellings.",
+  "notifyStatusNotAsked": "Nog nie opgestel nie. Ons sal ná jou volgende betaling vra.",
+  "notifyStatusUnavailable": "Nie beskikbaar in hierdie weergawe nie.",
+  "versionLabel": "Weergawe {version} ({build}) · {flavour}"
 }

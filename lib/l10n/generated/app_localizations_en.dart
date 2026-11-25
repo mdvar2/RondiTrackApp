@@ -348,4 +348,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageAfrikaans => 'Afrikaans';
+
+  @override
+  String get notifyAskTitle => 'Know when it\'s confirmed?';
+
+  @override
+  String get notifyAskBody =>
+      'We can tell you when your treasurer confirms a payment. The notification only says there\'s an update on your stokvel; the details stay in the app.';
+
+  @override
+  String get notifyAskYes => 'Yes, tell me';
+
+  @override
+  String get notifyAskNotNow => 'Not now';
+
+  @override
+  String get notifyStatusTitle => 'Notifications';
+
+  @override
+  String get notifyStatusOn => 'On: you\'ll hear when a payment is confirmed.';
+
+  @override
+  String get notifyStatusOff =>
+      'Off. To get them, allow notifications for RondiTrack in Android\'s settings.';
+
+  @override
+  String get notifyStatusNotAsked =>
+      'Not set up yet. We\'ll ask after your next payment.';
+
+  @override
+  String get notifyStatusUnavailable => 'Not available in this build.';
+
+  @override
+  String versionLabel(String version, String build, String flavour) {
+    return 'Version $version ($build) · $flavour';
+  }
 }

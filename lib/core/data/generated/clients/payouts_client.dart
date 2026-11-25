@@ -25,7 +25,8 @@ abstract class PayoutsClient {
   /// payout. Any member may read it. Returns 404 when the caller isn't a.
   /// member, and when the cycle doesn't exist or belongs to another stokvel.
   @GET('/api/v1/stokvels/{stokvelId}/cycles/{cycleId}/payouts')
-  Future<HttpResponse<PayoutOrderResponse>> getApiV1StokvelsStokvelIdCyclesCycleIdPayouts({
+  Future<HttpResponse<PayoutOrderResponse>>
+  getApiV1StokvelsStokvelIdCyclesCycleIdPayouts({
     @Path('stokvelId') required String stokvelId,
     @Path('cycleId') required String cycleId,
   });
@@ -36,7 +37,8 @@ abstract class PayoutsClient {
   /// payout rotation and creates the payout inside an explicit.
   /// database transaction.
   @POST('/api/v1/stokvels/{stokvelId}/cycles/{cycleId}/payouts')
-  Future<HttpResponse<PayoutResponse>> postApiV1StokvelsStokvelIdCyclesCycleIdPayouts({
+  Future<HttpResponse<PayoutResponse>>
+  postApiV1StokvelsStokvelIdCyclesCycleIdPayouts({
     @Path('stokvelId') required String stokvelId,
     @Path('cycleId') required String cycleId,
     @Body() required CreatePayoutRequest body,
