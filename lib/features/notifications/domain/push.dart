@@ -101,6 +101,7 @@ class PushRegistration {
 
   StreamSubscription<String>? _registered;
   String? _installationId;
+  String? _sent;
   bool _signedIn = false;
 
   /// This phone's installation id, once Firebase has given one.
@@ -114,10 +115,10 @@ class PushRegistration {
     if (client == null) return;
     _registered ??= client.onRegistered.listen((id) {
       _installationId = id;
-      if (_signedIn) unawaited(_quietly(() => devices.register(id)));
+      if (_signedIn) unawaited(_send(id));
     });
     final known = _installationId;
-    if (known != null) await _quietly(() => devices.register(known));
+    if (known != null) await _send(known);
     await _quietly(() async {
       await client.register();
       return const Ok(null);
@@ -128,9 +129,17 @@ class PushRegistration {
   /// can still prove who is asking. At most [timeout].
   Future<void> signingOut() async {
     _signedIn = false;
+    _sent = null;
     final id = _installationId;
     if (client == null || id == null) return;
     await _quietly(() => devices.forget(id));
+  }
+
+  /// Sends [id] once per sign-in: Firebase may announce the same id again.
+  Future<void> _send(String id) async {
+    if (_sent == id) return;
+    _sent = id;
+    await _quietly(() => devices.register(id));
   }
 
   /// Stops listening (tests, and the provider's disposal).
