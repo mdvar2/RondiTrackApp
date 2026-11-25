@@ -12,6 +12,10 @@ on:
         description: API repository branch, tag or commit to compare the contract copy with
         required: false
         default: ""
+      update_goldens:
+        description: Make the CI goldens on Linux and upload them, to look at before committing
+        type: boolean
+        default: false
   # Nightly, so a contract change merged in the API turns this red within a
   # day, not at the next app pull request.
   schedule:
@@ -121,6 +125,35 @@ jobs:
         run: |
           date +'Running in %Z (UTC%:z)'
           flutter test
+
+  # The CI goldens are compared on Linux, so they are made on Linux: run by
+  # hand (Actions > CI > Run workflow, "update_goldens"), download the
+  # artifact, look at every picture, and commit them (README "Running the
+  # tests"). The Windows goldens are made and compared on Windows only.
+  goldens:
+    name: Make the CI goldens on Linux
+    if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - name: Install the locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Make the CI goldens
+        run: flutter test --tags golden --update-goldens
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-goldens
+          path: test/**/goldens/ci/*.png
 
   # The one journey on a real Android (README "Test plan"): slow, so it
   # runs only after the fast job passes.
