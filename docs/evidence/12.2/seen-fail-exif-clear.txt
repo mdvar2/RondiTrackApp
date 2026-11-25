@@ -1,0 +1,18 @@
+00:00 +0: loading C:/Users/gwiny/RondiTrackApp-122/test/features/proofs/prepare_proof_test.dart
+00:00 +0: the test photo really carries a location
+00:00 +1: the location is cleared, and every other bit of metadata
+00:00 +1 -1: the location is cleared, and every other bit of metadata [E]
+  Expected: true
+    Actual: <false>
+  GPS
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\features\proofs\prepare_proof_test.dart 49:5   main.<fn>
+00:00 +1 -1: turned upright: a sideways photo (orientation 6) comes out tall
+00:00 +2 -1: no side over the longest side, keeping its shape
+00:13 +3 -1: falling quality until it fits under the limit
+00:13 +4 -1: never under the limit: says so, and sends nothing
+00:14 +5 -1: not an image at all: unreadable
+00:14 +6 -1: Some tests failed.
+Failing tests:
+  C:/Users/gwiny/RondiTrackApp-122/test/features/proofs/prepare_proof_test.dart: the location is cleared, and every other bit of metadata

@@ -2,6 +2,9 @@
     <!-- Every build reaches the API, release builds included. Flutter's
          template grants INTERNET to debug and profile builds only. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+: asked for only after the member says yes in the app's
+         own words, after a payment (README "Notifications"). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Backup off (README "The session"): the refresh token is encrypted
          with a Keystore key that never leaves this phone, so a restored copy
          is useless, and on a shared phone it is somebody's session. Android
@@ -49,6 +52,12 @@
                 <data android:scheme="${deepLinkScheme}" android:host="app" />
             </intent-filter>
         </activity>
+        <!-- A push that names no channel lands on the app's own channel,
+             private on the lock screen, not in "Miscellaneous". -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="stokvel_updates" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
