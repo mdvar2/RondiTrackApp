@@ -1,0 +1,12 @@
+00:00 +0: loading c:/Users/gwiny/RondiTrackApp/test/core/observability/sentry_event_scrubber_test.dart
+00:00 +0: scrubs personal fields throughout a realistic event and keeps the API correlation id
+00:00 +0 -1: scrubs personal fields throughout a realistic event and keeps the API correlation id [E]
+  Expected: not contains 'thandi.nkosi@example.test'
+    Actual: '{"event_id":"4b58250354934341979d026f4b200079","timestamp":"2026-11-25T20:30:08.698Z","tags":{"correlationId":"c0ffee00c0ffee00c0ffee00c0ffee00"},"breadcrumbs":[{"timestamp":"2026-11-25T20:30:08.692Z","message":"GET /contributions","data":{"url":"https://api.example.test/contributions"},"level":"info"}],"message":{"formatted":"Payment for [member]: [amount] (thandi.nkosi@example.test), token [token], [file]"},"request":{"url":"https://api.example.test/contributions/:id"},"exception":{"values":[{"type":"Exception","value":"Could not save [member], thandi.nkosi@example.test, [amount], [token], [file]"}]}}'
+  thandi.nkosi@example.test
+  package:matcher                                               expect
+  package:flutter_test/src/widget_tester.dart 473:18            expect
+  test\core\observability\sentry_event_scrubber_test.dart 78:7  main.<fn>
+00:00 +0 -1: Some tests failed.
+Failing tests:
+  c:/Users/gwiny/RondiTrackApp/test/core/observability/sentry_event_scrubber_test.dart: scrubs personal fields throughout a realistic event and keeps the API correlation id

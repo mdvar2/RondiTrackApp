@@ -1,0 +1,7 @@
+Device: Huawei MAO-LX9, Android 12 (API 31); flutter test integration_test/assignment_journey_test.dart --flavor dev --dart-define-from-file=config/dev.json
+--- run 1 (2026-11-25T22:44:01+02:00)
+00:08 +1: All tests passed!
+--- run 2 (2026-11-25T22:48:02+02:00)
+00:08 +1: All tests passed!
+--- run 3 (2026-11-25T22:49:55+02:00)
+00:08 +1: All tests passed!

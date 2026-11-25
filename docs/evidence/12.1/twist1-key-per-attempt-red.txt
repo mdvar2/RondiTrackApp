@@ -1,0 +1,90 @@
+00:00 +0: loading c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart
+00:00 +0: keys one key per tap, made at the tap: two taps, two keys
+00:00 +1: keys every attempt sends the same key: a timeout, then Try again
+00:00 +1 -1: keys every attempt sends the same key: a timeout, then Try again [E]
+  Expected: [
+              'affe9e87-d2e5-4c5d-a9d8-aeb39bfdc531',
+              'affe9e87-d2e5-4c5d-a9d8-aeb39bfdc531',
+              'affe9e87-d2e5-4c5d-a9d8-aeb39bfdc531'
+            ]
+    Actual: [
+              '85ec2a32-83ca-4721-bfa8-ab23a2fa7b05',
+              '40884d59-faf1-4a8a-aeb5-f92a203a06e9',
+              'edf5831c-cc01-4485-8a86-01775c56bdfb'
+            ]
+     Which: at location [0] is '85ec2a32-83ca-4721-bfa8-ab23a2fa7b05' instead of 'affe9e87-d2e5-4c5d-a9d8-aeb39bfdc531'
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\features\payments\outbox_test.dart 115:9       main.<fn>.<fn>
+00:00 +1 -1: keys a retry after a lost answer: the same key, and the server stores one contribution
+00:00 +1 -2: keys a retry after a lost answer: the same key, and the server stores one contribution [E]
+  Expected: ['3b96e552-bfa7-4798-9d7e-6b55b10fba65', '3b96e552-bfa7-4798-9d7e-6b55b10fba65']
+    Actual: ['d58c42ca-2c8b-423b-9838-668369757bcc', '33929977-6327-4508-819e-72347a70de16']
+     Which: at location [0] is 'd58c42ca-2c8b-423b-9838-668369757bcc' instead of '3b96e552-bfa7-4798-9d7e-6b55b10fba65'
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\features\payments\outbox_test.dart 133:7       main.<fn>.<fn>
+00:00 +1 -2: keys the same key after the app is killed and opened again
+WARNING (drift): It looks like you've created the database class AppDatabase multiple times. When these two databases use the same QueryExecutor, race conditions will occur and might corrupt the database. 
+Try to follow the advice at https://drift.simonbinder.eu/faq/#using-the-database or, if you know what you're doing, set driftRuntimeOptions.dontWarnAboutMultipleDatabases = true
+Here is the stacktrace from when the database was opened a second time:
+#0      GeneratedDatabase._handleInstantiated (package:drift/src/runtime/api/db_base.dart:96:30)
+#1      GeneratedDatabase._whenConstructed (package:drift/src/runtime/api/db_base.dart:73:12)
+#2      new GeneratedDatabase (package:drift/src/runtime/api/db_base.dart:64:5)
+#3      new _$AppDatabase (package:ronditrack_app/app/database.g.dart:1730:36)
+#4      new AppDatabase (package:ronditrack_app/app/database.dart)
+#5      main.<anonymous closure>.<anonymous closure>.open (file:///c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart:141:29)
+#6      main.<anonymous closure>.<anonymous closure> (file:///c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart:149:22)
+<asynchronous suspension>
+#7      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:253:15)
+<asynchronous suspension>
+#8      Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:250:11)
+<asynchronous suspension>
+#9      Invoker._waitForOutstandingCallbacks.<anonymous closure> (package:test_api/src/backend/invoker.dart:318:9)
+<asynchronous suspension>
+This warning will only appear on debug builds.
+WARNING (drift): It looks like you've created the database class AppDatabase multiple times. When these two databases use the same QueryExecutor, race conditions will occur and might corrupt the database. 
+Try to follow the advice at https://drift.simonbinder.eu/faq/#using-the-database or, if you know what you're doing, set driftRuntimeOptions.dontWarnAboutMultipleDatabases = true
+Here is the stacktrace from when the database was opened a second time:
+#0      GeneratedDatabase._handleInstantiated (package:drift/src/runtime/api/db_base.dart:96:30)
+#1      GeneratedDatabase._whenConstructed (package:drift/src/runtime/api/db_base.dart:73:12)
+#2      new GeneratedDatabase (package:drift/src/runtime/api/db_base.dart:64:5)
+#3      new _$AppDatabase (package:ronditrack_app/app/database.g.dart:1730:36)
+#4      new AppDatabase (package:ronditrack_app/app/database.dart)
+#5      main.<anonymous closure>.<anonymous closure>.open (file:///c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart:141:29)
+#6      main.<anonymous closure>.<anonymous closure> (file:///c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart:156:21)
+<asynchronous suspension>
+#7      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:253:15)
+<asynchronous suspension>
+#8      Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:250:11)
+<asynchronous suspension>
+#9      Invoker._waitForOutstandingCallbacks.<anonymous closure> (package:test_api/src/backend/invoker.dart:318:9)
+<asynchronous suspension>
+This warning will only appear on debug builds.
+00:00 +1 -3: keys the same key after the app is killed and opened again [E]
+  Expected: ['fef2bfa5-560b-4882-b068-fff63c7c534c']
+    Actual: ['b89efbed-db36-44a0-8bde-406881b5b604']
+     Which: at location [0] is 'b89efbed-db36-44a0-8bde-406881b5b604' instead of 'fef2bfa5-560b-4882-b068-fff63c7c534c'
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\features\payments\outbox_test.dart 162:7       main.<fn>.<fn>
+00:00 +1 -3: each answer has one outcome success: removed
+00:00 +2 -3: each answer has one outcome refused (PaymentRefusal.alreadyPaid): removed, and why
+00:00 +3 -3: each answer has one outcome refused (PaymentRefusal.cycleClosed): removed, and why
+00:00 +4 -3: each answer has one outcome 429: kept, with its key, and not sent again before Retry-After
+00:00 +4 -4: each answer has one outcome 429: kept, with its key, and not sent again before Retry-After [E]
+  Expected: ['f4a03ca0-2424-48d1-b46b-e4a69595983a', 'f4a03ca0-2424-48d1-b46b-e4a69595983a']
+    Actual: ['dea46cf9-3110-4a0a-86e9-641c7efd01cf', '496f3baf-95fd-4c4b-9cc6-bb8e85b04fe3']
+     Which: at location [0] is 'dea46cf9-3110-4a0a-86e9-641c7efd01cf' instead of 'f4a03ca0-2424-48d1-b46b-e4a69595983a'
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\features\payments\outbox_test.dart 232:9       main.<fn>.<fn>
+00:00 +4 -4: each answer has one outcome no answer: kept, with its key, pending
+00:00 +5 -4: the maximum age: shorter than the API keeps a key, and after it the payment is never sent again
+00:00 +6 -4: no total changes while a payment is pending
+00:00 +7 -4: Some tests failed.
+Failing tests:
+  c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart: each answer has one outcome 429: kept, with its key, and not sent again before Retry-After
+  c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart: keys a retry after a lost answer: the same key, and the server stores one contribution
+  c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart: keys every attempt sends the same key: a timeout, then Try again
+  c:/Users/gwiny/RondiTrackApp/test/features/payments/outbox_test.dart: keys the same key after the app is killed and opened again

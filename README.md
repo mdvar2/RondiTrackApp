@@ -83,6 +83,12 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
   - [Rules, accessibility and visual tests](#rules-accessibility-and-visual-tests)
   - [Contribution-list performance](#contribution-list-performance)
   - [Privacy and observability](#privacy-and-observability)
+  - [Test plan](#test-plan)
+  - [Privacy](#privacy)
+  - [Running the tests](#running-the-tests)
+  - [Performance](#performance)
+  - [Coverage](#coverage)
+  - [Decisions (12.1)](#decisions-121)
   - [Assignment 12.1: verification](#assignment-121-verification)
 
 ---
@@ -1460,6 +1466,8 @@ The existing API-failure and payment-outbox suites remain the source of truth fo
 
 CI measures hand-written `lib/` line coverage, excluding generated files, with [`check_coverage.dart`](tool/check_coverage.dart). The minimum is **66%**, slightly below the pre-assignment baseline of **68.71%**; the coverage run and check are part of the UTC test job. The Android journey has its own API 31 emulator job.
 
+**Updated in the 12.1 review:** 66% was far below today's number, so the floor is now **83%** (today 84.4%; see [Coverage](#coverage)). The journey now signs in, records a contribution and sees it on the cycle, and its CI job runs after the fast job, with KVM and the dev config ([Test plan](#test-plan), question 5).
+
 Run the checks locally:
 
 ```powershell
@@ -1485,6 +1493,173 @@ The regression measurement is deliberately deterministic: with a 20-row first pa
 
 No Sentry DSN/account was supplied, so this repository cannot demonstrate a real event arriving in a Sentry project. The scrubber and reporting policy are tested locally; production delivery remains an environment-configuration step, not a claimed test result.
 
+### Test plan
+
+*Written before the 12.1 review's fixes, and filled in as each test was written. The suite is built from the rules, not from the files.*
+
+#### 1. The rules that cost a member money or privacy, each beside its test
+
+| # | Rule (from) | If it breaks | The test that proves it |
+|---|---|---|---|
+| 1 | Many 401s at once make **one** refresh, then each request is sent again with the new token (11.2) | A rotating refresh token is reused, the API sees theft and signs the member out everywhere | [`session_test.dart`](test/core/session/session_test.dart): *three requests, one refresh* (group) |
+| 2 | **No signal never signs anyone out**, nor does a 429 or 500 from the refresh (11.2) | A member on a taxi loses their session, and any unsent payment with it | [`session_test.dart`](test/core/session/session_test.dart): *what never signs anyone out* (group) |
+| 3 | A refused refresh ends the session **once**; a **403 never refreshes** (11.2) | Endless refresh loops, or a "no access" treated as an expired session | [`session_test.dart`](test/core/session/session_test.dart): *a refused refresh ends the session once…*, *a 403 from a call: no refresh, and the session stays* |
+| 4 | **One key per tap**, made at the tap, and the **same key on every attempt** (11.3) | A retry after a lost answer records the payment twice: real money | [`outbox_test.dart`](test/features/payments/outbox_test.dart): *one key per tap…*, *every attempt sends the same key…*, *a retry after a lost answer: the same key, and the server stores one contribution* |
+| 5 | **Killed mid-request**, the same key is sent on restart (11.3) | The phone forgets the key and pays again | [`outbox_test.dart`](test/features/payments/outbox_test.dart): *the same key after the app is killed and opened again* (a temporary **file**, closed and reopened) |
+| 6 | A **429 waits** for Retry-After and keeps its key; a **409 leaves the outbox** and is never sent again (11.3) | Hammering the API, or re-sending a payment it refused | [`outbox_test.dart`](test/features/payments/outbox_test.dart): *429: kept, with its key, and not sent again before Retry-After*, *refused (alreadyPaid/cycleClosed): removed, and why* |
+| 7 | The outbox's **maximum age** is shorter than the API keeps a key (11.3) | A key the API has forgotten records a second payment | [`outbox_test.dart`](test/features/payments/outbox_test.dart): *the maximum age…* |
+| 8 | A **wipe at sign-out**: the next person on a shared phone sees nothing (11.3) | One member reads another's stokvels and payments | [`offline_app_test.dart`](test/app/offline_app_test.dart): *sign-out asks first while a payment is unsent; signing out anyway empties the database*; the journey ([`assignment_journey_test.dart`](integration_test/assignment_journey_test.dart)) reads the outbox at the end |
+| 9 | **Rands to cents**, exactly, with `en_ZA`'s no-break spaces (10.1, 11.3) | R 1 250,50 becomes R 125 050 or R 1,25 | [`rand_parser_test.dart`](test/core/money/rand_parser_test.dart), [`rand_format_test.dart`](test/core/money/rand_format_test.dart), and *the API receives rands as exact decimal text, never a double* in [`sast_test.dart`](test/core/time/sast_test.dart) |
+| 10 | **A South African day**, whatever the phone's zone (11.3) | A payment at 00:30 on 1 November is filed under October | [`sast_test.dart`](test/core/time/sast_test.dart), [`calendar_date_test.dart`](test/core/time/calendar_date_test.dart), run in CI under `TZ=UTC` and `TZ=Africa/Johannesburg` |
+| 11 | Every API answer maps to **one Failure, in words**; a server failure keeps its **reference** (11.1) | A raw exception on screen, or no way for support to find the failure | [`to_failure_test.dart`](test/core/data/to_failure_test.dart) (the table below); [`home_states_app_test.dart`](test/features/home/presentation/home_states_app_test.dart): *a failure: in words, with its reference…* |
+| 12 | **Cached data stays** when a fetch fails, with its age (11.3) | An offline member sees an empty Home and thinks their money is gone | [`home_controller_test.dart`](test/features/home/presentation/home_controller_test.dart): *keeps cached Home when refresh fails…*, *a refresh never drops the cached stokvels…*; [`home_states_app_test.dart`](test/features/home/presentation/home_states_app_test.dart): *offline: the cached stokvels, with how old they are…* |
+| 13 | **"Not found" is never retried** (10.3) | A spinner over a stokvel the member isn't in | [`retry_test.dart`](test/app/retry_test.dart) |
+| 14 | **Nothing personal leaves in an error report** (12.1) | A member's name, amount or proof photo's name in Sentry, outside South Africa | [`sentry_event_scrubber_test.dart`](test/core/observability/sentry_event_scrubber_test.dart) |
+| 15 | **Analytics carry ids only**, and only for a payment the server recorded (12.1) | Amounts or names with an analytics provider; events for payments that never happened | [`payments_analytics_test.dart`](test/features/payments/payments_analytics_test.dart) (three tests) |
+| 16 | **Only server failures are reported**, with their correlation id (12.1) | Support buried in "no signal" reports | [`sentry_provider_observer_test.dart`](test/core/observability/sentry_provider_observer_test.dart) |
+
+#### 2. Every answer the outbox can get, and what it does
+
+| The API answers | The outbox | Test in [`outbox_test.dart`](test/features/payments/outbox_test.dart) |
+|---|---|---|
+| 201 Created | Removes the payment; *Paid* | *success: removed* |
+| A repeat of a key it has seen (201, the stored answer) | Removes it; the server still holds **one** contribution | *a retry after a lost answer: the same key, and the server stores one contribution* |
+| 409 already paid | Removes it, tells the member why, never sends it again | *refused (PaymentRefusal.alreadyPaid): removed, and why* |
+| 409 cycle closed | The same | *refused (PaymentRefusal.cycleClosed): removed, and why* |
+| 400, 403, 404, 412 | Removes it, with the API's words (nothing a retry can fix) | the `ValidationFailure`/`NotFoundFailure`/`ForbiddenFailure`/`ConflictFailure` case, through [`to_failure_test.dart`](test/core/data/to_failure_test.dart) |
+| 429 Too Many Requests | Keeps it **with its key**, sends nothing before Retry-After, then the same key | *429: kept, with its key, and not sent again before Retry-After* |
+| No answer (timeout, no connection) | Keeps it with its key, pending | *no answer: kept, with its key, pending*; *every attempt sends the same key* |
+| 500, or a 401 the session can't fix | Keeps it with its key, to send later | the last case of `DriftPaymentOutbox.send` |
+| Older than the maximum age | Never sent; the member is told to check and pay again | *the maximum age…* |
+
+#### 3. Which layer proves what
+
+| Layer | Proves | Where it runs |
+|---|---|---|
+| **Unit** | Rules with no screen: money, days, the failure mapping, the session interceptor (a scripted `HttpClientAdapter`, no server), the outbox and its database, the scrubber, the analytics | CI, twice (UTC and Johannesburg) |
+| **Widget** (notifiers through a `ProviderContainer`, screens through the real app with fakes) | Every state a person can see, retries and resets, accessibility guidelines, 200% text, rebuild counts | CI |
+| **Golden** | How the stokvel card looks in each case, light and dark | CI (text as blocks); the readable Windows goldens only on Windows |
+| **Integration** | One journey on a real Android: the gate, the router, the pay form, the outbox and its database file, the cycle's refetch | CI's emulator job, and the phone (three runs, below) |
+| **Live** ([`test/live/`](test/live/)) | The real API: one payment sent twice with one key, one contribution | The laptop only, against the seeded API (tagged `live`, skipped in CI) |
+
+#### 4. Coverage
+
+See [Coverage](#coverage).
+
+#### 5. The one journey
+
+**Sign in as Sipho, pay his Mabena Family contribution, and see it on the cycle**; then read the outbox, which must be empty. It crosses the most that matters in one go: the gate and the router, the form's rand parsing, the outbox writing its key to a real database file on a phone, the sender, the refetch that shows the cycle, and the snack bar that says *Paid*. It runs against the app's fakes (never real data), with the dev flavour and its config file. It waits for words, with a timeout, never for `pumpAndSettle`.
+
+#### 9. What the tests can't see, and how each is checked instead
+
+| Can't see | Checked instead |
+|---|---|
+| A real TalkBack walk-through | By hand on the MAO-LX9 with TalkBack on (11.2 and 11.3 evidence); the widget tests check labels, tap targets and contrast |
+| The real API | The contract check in CI (the client is generated from the API's `openapi/v1.json`), and the `live` tests against the seeded API on the laptop |
+| iOS, or another Android maker's quirks | Not checked: the app is built and tried on Android only |
+| Timings on a cheap phone | Rebuild counts only (debug is fine for counts); a frame-time claim would need a profile build on a real low-end phone, and none is made |
+| A real Sentry event arriving | The scrubber's unit test shows exactly what would leave; a real event needs a DSN, passed only on the command line ([Privacy](#privacy)) |
+
+### Privacy
+
+*POPIA covers everything below. Sentry's servers and any analytics provider's are outside South Africa, so nothing that identifies a member may reach them.*
+
+#### 6. Everything that leaves the phone, apart from API calls
+
+| What | Where it goes | Every field it carries | Could it identify a member? |
+|---|---|---|---|
+| **Error report** (only with a `SENTRY_DSN`; only a `ServerFailure`) | Sentry (sentry.io, outside South Africa) | Exception type and a scrubbed message; the tag `correlationId`; `environment` (`dev`/`staging`/`prod`); release (app id, version, build number) and dist; device context (model, Android version, locale, time zone, screen); app context (app id, version); OS context; SDK name and version; scrubbed breadcrumbs (route names, scrubbed URLs). Before sending, `scrubSentryEvent` removes the user object, request headers, cookies, body, query and fragment, every field named like *member, user, email, phone, amount, token, password, proof, file, cookie, authorization, query, ip_address*, and every name, email, amount, token and proof file name inside any string | No: names, emails, amounts, tokens, proof file names and query strings are removed and ids in URLs become `:id` ([`sentry_event_scrubber_test.dart`](test/core/observability/sentry_event_scrubber_test.dart)). The device model and locale are not personal on their own. `sendDefaultPii` is `false`, so the SDK attaches no IP address or user |
+| **Session data** (Sentry's release health; only with a DSN) | Sentry | A random session id, an installation id (`did`, made by Sentry, not ours), start time, duration, status (ok, errored, crashed), error count, release, environment | The installation id is pseudonymous: it tells Sentry two sessions came from one install, not who. Sent on every launch, error or not |
+| **Analytics event** `contribution_recorded` | Nowhere yet: the interface ([`analytics.dart`](lib/core/observability/analytics.dart)) has only a no-op implementation | `stokvelId`, `memberId` (UUIDs) | A UUID is pseudonymous; never a name, email, phone number or amount (the interface can't take one) |
+| **Logs** | The phone's own log, **debug builds only** (`kDebugMode`) | The request line, status and `correlationId`; provider lifecycle lines with ids | Not in release builds: nothing is logged there |
+
+#### 7. What is worth an error report
+
+| Reported (from one place: [`SentryProviderObserver`](lib/core/observability/sentry_provider_observer.dart) → [`SentryFailureReporter`](lib/core/observability/sentry_failure_reporter.dart)) | Not reported: the app working as designed |
+|---|---|
+| `ServerFailure`: a 500, a status the contract lacks, an HTML page from a proxy, a body the models can't read | No signal (`NoAnswerFailure`); 400 validation; 401 (the session handles it); 403; 404; 409 and 410 rules; 412 stale edits; 429 |
+
+The API puts its correlation id in the ProblemDetails body as `correlationId`. The app also sends a W3C `traceparent` on every request, which the API adopts, so for a body with no ProblemDetails (a proxy's HTML page) the reference is the trace id the app sent. Either way it becomes the Sentry tag `correlationId`, and the same id is on screen as the failure's *Reference*, so support can find the failure in Sentry and in the API's logs and traces.
+
+No screen reports on its own. Tests see what would have been reported through the `FailureReporter` interface, with no Sentry account ([`sentry_provider_observer_test.dart`](test/core/observability/sentry_provider_observer_test.dart)). Without a DSN, `SentryFlutter.init` is never called and the observer isn't added: the app starts exactly as before, and tests never send.
+
+To send to your own Sentry project (never committed):
+
+```powershell
+flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define=SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project>
+```
+
+The `--dart-define` after the file wins over the file's empty value.
+
+### Running the tests
+
+```powershell
+# Unit, widget and golden tests, with coverage and the floor (as CI)
+flutter test --coverage
+dart run tool/check_coverage.dart
+
+# The same in both zones CI uses (Git Bash)
+TZ=UTC flutter test
+TZ=Africa/Johannesburg flutter test
+
+# Goldens only, and updating them (look at every changed picture before committing)
+flutter test --tags golden
+flutter test --tags golden --update-goldens
+
+# The journey, on a phone or emulator, with the app's own flags
+flutter test integration_test/assignment_journey_test.dart --flavor dev --dart-define-from-file=config/dev.json -d <device-id>
+
+# Live tests against the seeded API on this laptop (never in CI)
+$env:SEED_PASSWORD = '<the seed password>'; flutter test --tags live --run-skipped
+```
+
+The CI goldens draw text as blocks so every platform renders the same pixels; the Windows goldens have real text and are made and compared on Windows only ([`flutter_test_config.dart`](test/flutter_test_config.dart)). alchemist's `failures/` folders are git-ignored.
+
+### Performance
+
+**What the list did more often than it needed to.** When the next page of contributions started loading, the 11.3 list rebuilt the whole screen, and with it **every row on screen**, though no row had changed. The 12.1 list selects only what each part needs: the body its phase, rows, filter and first-page failure; the footer its own loading flag. Starting another page now changes only the footer.
+
+| | Rows rebuilt when the next page starts loading |
+|---|---|
+| Before (11.3's `contributions_screen.dart`) | **9** (every row on screen: `contribution-c11` … `c19`) |
+| After (12.1) | **0** |
+
+Measured with `debugOnRebuildDirtyWidget`, the hook DevTools' rebuild counts use, in a debug widget test on a 360×640 phone window with a 20-row first page. Flutter only passes `builtOnce` to that hook while `debugPrintRebuildDirtyWidgets` is on, so the test counts a second build of an element it has already seen. [`forms_and_list_test.dart`](test/features/forms_and_list_test.dart), *loading another page does not rebuild existing rows*, fails if any row is rebuilt again: with the old list put back it goes red naming all nine rows. No timing is claimed: timings need a profile build on a real phone, and none was measured.
+
+**At 200% text** nothing overlaps or is cut off: [`forms_and_list_test.dart`](test/features/forms_and_list_test.dart), *at 200% text the contributions list…*. That test found a real cut-off: the amount and status sat in `ListTile.trailing`, which the tile caps at 56 dp, and overflowed by 8 px. They now sit under the name in a `Wrap`. The list uses neither `itemExtent` nor `prototypeItem`, so a row is as tall as its text needs.
+
+**Enough data to measure.** [`tool/perf/perf_data.sh`](tool/perf/perf_data.sh) adds a *Perf Test Stokvel* with 300 test members and one contribution each to the **local** seed database (`ronditrack_mobile`), with Lerato as its Treasurer so she can open its list on the phone; `remove` deletes exactly those rows again. Every row it adds has an id starting `feedfeed-`, nothing else does, and the test members have no password. It only connects to `localhost`, and refuses to add twice. Checked: 4 contributions → 304 → 4, with users and memberships back to their counts.
+
+```bash
+export PGPASSWORD='<your local PostgreSQL password>'
+tool/perf/perf_data.sh add     # before a DevTools pass
+tool/perf/perf_data.sh remove  # after it
+```
+
+### Coverage
+
+| | |
+|---|---|
+| Before 12.1 | 68.71% of hand-written `lib/` lines |
+| Today | **84.4%** (`flutter test --coverage`, then [`tool/check_coverage.dart`](tool/check_coverage.dart)) |
+| The floor CI enforces | **83%**: a little under today. A drop below it fails the build. Raise it as coverage rises; never lower it to pass |
+| Left out | Generated code only: `*.g.dart`, `*.freezed.dart` and `lib/core/data/generated/` (the Retrofit client). No hand-written file is left out, the hard ones included |
+
+Coverage counts lines that ran, not lines that were checked: a test with no `expect` covers everything it touches. That is why each rule above names its test, and why five tests were broken on purpose (the 12.1 pull request).
+
+### Decisions (12.1)
+
+| Decision | Why |
+|---|---|
+| **Mocks** (mocktail) for `HomeRepository` and `PayoutRepository` in the notifier tests | `verify` proves how often the repository was asked (once, with no accidental retry) |
+| **Fakes** for the auth, stokvel, contributions and payment repositories in widget and whole-app tests, and a scripted `HttpClientAdapter` for the session | A fake behaves like the API (keys, one contribution per member and cycle); a mock would need every answer scripted by hand |
+| **Fakes for the journey**, not a seeded API | It must run on CI's emulator, where no API runs; the live tests cover the real API on the laptop |
+| **`minSdk` 26** (Android 8.0), was 24 (Android 7.0) | `sentry_flutter` 10 needs it. Members on Android 7.0 and 7.1 can no longer install or update the app; their installed copy keeps working, and the web app serves them. We have no analytics on Android versions, so how many members that is is unknown: it is a known cost, written down in [`build.gradle.kts`](android/app/build.gradle.kts) |
+| **Dependency overrides** | Unchanged by 12.1: `sentry_flutter` 10.3.0, `mocktail` 1.0.5 and `alchemist` 0.14.1 brought nothing under two weeks old. The overrides in `pubspec.yaml` each carry the date they go |
+| The stokvel card is already its own widget (`HomeStokvelCard`) | The goldens draw it with no screen, provider or router around it |
+
 ### Assignment 12.1: verification
 
 The connected device is the Huawei MAO-LX9 (Android 12 / API 31). The dev-flavour integration journey, using fake repositories, passed **three consecutive runs** on that phone (one journey test passed in each run). CI is configured to run the same journey on an Android 12 emulator. No Sentry delivery or frame-time benchmark is claimed; the measurable performance result is the zero-rebuild pagination regression test.
+
+**Updated in the 12.1 review.** The journey ([`assignment_journey_test.dart`](integration_test/assignment_journey_test.dart)) now records a contribution: it passed three runs in a row on the MAO-LX9 on 2026-11-25 ([log](docs/evidence/12.1/journey-three-runs-MAO-LX9.txt)). The twists and the three other tests seen failing are in [docs/evidence/12.1](docs/evidence/12.1) and the 12.1 pull request.

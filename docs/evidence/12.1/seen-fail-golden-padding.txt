@@ -1,0 +1,151 @@
+00:00 +0: loading c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/home_stokvel_card_golden_test.dart
+00:00 +0: the stokvel card every case that changes how it looks, light (variant: Windows)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "goldens/windows/home_stokvel_card_light.png": Pixel test failed, image sizes do not match.
+Master Image: 376 X 1456
+Test Image: 376 X 1496
+Failure feedback can be found at
+/c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/failures
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      FlutterGoldenTestAdapter.withForceUpdateGoldenFiles (package:alchemist/src/golden_test_adapter.dart:198:14)
+<asynchronous suspension>
+#7      FlutterGoldenTestRunner.run (package:alchemist/src/golden_test_runner.dart:137:9)
+<asynchronous suspension>
+#8      goldenTest.<anonymous closure> (package:alchemist/src/golden_test.dart:177:7)
+<asynchronous suspension>
+#9      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#10     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:01 +0 -1: the stokvel card every case that changes how it looks, light (variant: Windows) [E]
+  Test failed. See exception logs above.
+  The test description was: every case that changes how it looks, light (variant: Windows)
+00:01 +0 -1: the stokvel card every case that changes how it looks, light (variant: CI)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "goldens/ci/home_stokvel_card_light.png": Pixel test failed, image sizes do not match.
+Master Image: 639 X 1446
+Test Image: 639 X 1486
+Failure feedback can be found at
+/c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/failures
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      FlutterGoldenTestAdapter.withForceUpdateGoldenFiles (package:alchemist/src/golden_test_adapter.dart:198:14)
+<asynchronous suspension>
+#7      FlutterGoldenTestRunner.run (package:alchemist/src/golden_test_runner.dart:137:9)
+<asynchronous suspension>
+#8      goldenTest.<anonymous closure> (package:alchemist/src/golden_test.dart:177:7)
+<asynchronous suspension>
+#9      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#10     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +0 -2: the stokvel card every case that changes how it looks, light (variant: CI) [E]
+  Test failed. See exception logs above.
+  The test description was: every case that changes how it looks, light (variant: CI)
+00:02 +0 -2: the stokvel card every case that changes how it looks, dark (variant: Windows)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "goldens/windows/home_stokvel_card_dark.png": Pixel test failed, image sizes do not match.
+Master Image: 376 X 1456
+Test Image: 376 X 1496
+Failure feedback can be found at
+/c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/failures
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      FlutterGoldenTestAdapter.withForceUpdateGoldenFiles (package:alchemist/src/golden_test_adapter.dart:198:14)
+<asynchronous suspension>
+#7      FlutterGoldenTestRunner.run (package:alchemist/src/golden_test_runner.dart:137:9)
+<asynchronous suspension>
+#8      goldenTest.<anonymous closure> (package:alchemist/src/golden_test.dart:177:7)
+<asynchronous suspension>
+#9      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#10     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +0 -3: the stokvel card every case that changes how it looks, dark (variant: Windows) [E]
+  Test failed. See exception logs above.
+  The test description was: every case that changes how it looks, dark (variant: Windows)
+00:02 +0 -3: the stokvel card every case that changes how it looks, dark (variant: CI)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "goldens/ci/home_stokvel_card_dark.png": Pixel test failed, image sizes do not match.
+Master Image: 639 X 1446
+Test Image: 639 X 1486
+Failure feedback can be found at
+/c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/failures
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      FlutterGoldenTestAdapter.withForceUpdateGoldenFiles (package:alchemist/src/golden_test_adapter.dart:198:14)
+<asynchronous suspension>
+#7      FlutterGoldenTestRunner.run (package:alchemist/src/golden_test_runner.dart:137:9)
+<asynchronous suspension>
+#8      goldenTest.<anonymous closure> (package:alchemist/src/golden_test.dart:177:7)
+<asynchronous suspension>
+#9      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#10     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:03 +0 -4: the stokvel card every case that changes how it looks, dark (variant: CI) [E]
+  Test failed. See exception logs above.
+  The test description was: every case that changes how it looks, dark (variant: CI)
+00:03 +0 -4: Some tests failed.
+Failing tests:
+  c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/home_stokvel_card_golden_test.dart: the stokvel card every case that changes how it looks, dark (variant: CI)
+  c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/home_stokvel_card_golden_test.dart: the stokvel card every case that changes how it looks, dark (variant: Windows)
+  c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/home_stokvel_card_golden_test.dart: the stokvel card every case that changes how it looks, light (variant: CI)
+  c:/Users/gwiny/RondiTrackApp/test/features/home/presentation/home_stokvel_card_golden_test.dart: the stokvel card every case that changes how it looks, light (variant: Windows)
