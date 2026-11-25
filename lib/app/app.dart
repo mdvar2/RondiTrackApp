@@ -5,6 +5,7 @@ import 'package:ronditrack_app/app/settings.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/core/theme/app_theme.dart';
+import 'package:ronditrack_app/features/notifications/presentation/push_providers.dart';
 import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
 /// The root widget for the RondiTrack mobile application.
@@ -17,6 +18,8 @@ class RondiTrackApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Pushes while the app runs: refetch in front, open on a tap.
+    ref.watch(pushRoutingProvider);
     return AppConfigScope(
       config: config,
       child: MaterialApp.router(

@@ -7,6 +7,7 @@ import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_user.dart';
 import 'package:ronditrack_app/features/auth/presentation/sign_in_notice.dart';
+import 'package:ronditrack_app/features/notifications/presentation/push_providers.dart';
 
 part 'auth_controller.g.dart';
 
@@ -55,12 +56,15 @@ class AuthController extends _$AuthController {
         await _remember(user);
         if (!ref.mounted || generation != _generation) return;
         state = SignedIn(user);
+        _registerPhone();
       case Ok(value: null) || Err(failure: UnauthorisedFailure()):
         state = const SignedOut();
       case Err(:final failure):
         final last = await ref.read(lastUserProvider).read();
         if (!ref.mounted || generation != _generation) return;
         state = last == null ? Restoring(failure: failure) : SignedIn(last);
+        // An offline launch is a way into signed in too.
+        if (last != null) _registerPhone();
     }
   }
 
@@ -103,7 +107,14 @@ class AuthController extends _$AuthController {
     await _remember(user);
     if (!ref.mounted || generation != _generation) return;
     state = SignedIn(user);
+    _registerPhone();
   }
+
+  /// Every way into signed in registers this phone for push (README
+  /// "Notifications"). Never awaited: no network, or Firebase down, never
+  /// holds up signing in.
+  void _registerPhone() =>
+      unawaited(ref.read(pushRegistrationProvider).signedIn());
 
   /// Signs out: the session is wiped from the phone, then the database
   /// (every cached row, the outbox, who was signed in), and the state is
@@ -114,6 +125,9 @@ class AuthController extends _$AuthController {
   /// the screen's job, before it calls this.
   Future<void> signOut() async {
     _generation++;
+    // First, while the session can still prove who is asking: the API
+    // forgets this phone. A few seconds at most; never blocking.
+    await ref.read(pushRegistrationProvider).signingOut();
     // The repository wipes the access token before its first await.
     final told = ref.read(authRepositoryProvider).signOut();
     await ref.read(appDatabaseProvider).wipe();

@@ -1736,3 +1736,49 @@ final class PayoutRepositoryProvider
 }
 
 String _$payoutRepositoryHash() => r'd80e6a695b3c6970cfad11e81764275c04902dd7';
+
+/// The API's record of this member's phones.
+
+@ProviderFor(deviceRegistry)
+final deviceRegistryProvider = DeviceRegistryProvider._();
+
+/// The API's record of this member's phones.
+
+final class DeviceRegistryProvider
+    extends $FunctionalProvider<DeviceRegistry, DeviceRegistry, DeviceRegistry>
+    with $Provider<DeviceRegistry> {
+  /// The API's record of this member's phones.
+  DeviceRegistryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deviceRegistryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$deviceRegistryHash();
+
+  @$internal
+  @override
+  $ProviderElement<DeviceRegistry> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DeviceRegistry create(Ref ref) {
+    return deviceRegistry(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DeviceRegistry value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DeviceRegistry>(value),
+    );
+  }
+}
+
+String _$deviceRegistryHash() => r'9d83ad1a7e48d56723c593068f7fa8e670a998e4';
