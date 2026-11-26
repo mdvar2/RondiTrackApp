@@ -1573,6 +1573,13 @@ See [Coverage](#coverage).
 | **Analytics event** `contribution_recorded` | Nowhere yet: the interface ([`analytics.dart`](lib/core/observability/analytics.dart)) has only a no-op implementation | `stokvelId`, `memberId` (UUIDs) | A UUID is pseudonymous; never a name, email, phone number or amount (the interface can't take one) |
 | **Logs** | The phone's own log, **debug builds only** (`kDebugMode`) | The request line, status and `correlationId`; provider lifecycle lines with ids | Not in release builds: nothing is logged there |
 
+**Checked against the bytes that leave the phone** (2026-11-26, the dev build on the MAO-LX9, its DSN pointed at a local capture server). The event carried **no user, no IP address, no `{{auto}}` and no location**, and no name or email anywhere. It did carry the native Android SDK's `contexts.device.id` (a persistent install id, the same as the session's `did`) and `contexts.device.boot_time`; the scrubber now removes both, and `contexts.app.device_app_hash`, and keeps the model, OS and app version ([`sentry_event_scrubber_test.dart`](test/core/observability/sentry_event_scrubber_test.dart), [`sentry_end_to_end_test.dart`](test/core/observability/sentry_end_to_end_test.dart)).
+
+Two things leave that `beforeSend` can't reach, and are settled elsewhere:
+
+- **Location.** Sentry showed a *User Geography* (a suburb) on a real event that had no IP in it: Sentry's servers work it out from the **connection's** IP address. The project setting *Settings → Projects → flutter → Security & Privacy → Prevent Storing of IP Addresses* stops Sentry storing the IP and the location it derives. **It must be on** before this table holds.
+- **The session's `did`.** Release health (sessions) is sent by the native SDK, not through `beforeSend`, with an install id as `did`. It is pseudonymous: it links sessions from one install, never a name. It stays, written down here, because crash-free rates need it.
+
 #### 7. What is worth an error report
 
 | Reported (from one place: [`SentryProviderObserver`](lib/core/observability/sentry_provider_observer.dart) → [`SentryFailureReporter`](lib/core/observability/sentry_failure_reporter.dart)) | Not reported: the app working as designed |
