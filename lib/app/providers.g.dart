@@ -1736,3 +1736,194 @@ final class PayoutRepositoryProvider
 }
 
 String _$payoutRepositoryHash() => r'd80e6a695b3c6970cfad11e81764275c04902dd7';
+
+/// The API's record of this member's phones.
+
+@ProviderFor(deviceRegistry)
+final deviceRegistryProvider = DeviceRegistryProvider._();
+
+/// The API's record of this member's phones.
+
+final class DeviceRegistryProvider
+    extends $FunctionalProvider<DeviceRegistry, DeviceRegistry, DeviceRegistry>
+    with $Provider<DeviceRegistry> {
+  /// The API's record of this member's phones.
+  DeviceRegistryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deviceRegistryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$deviceRegistryHash();
+
+  @$internal
+  @override
+  $ProviderElement<DeviceRegistry> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DeviceRegistry create(Ref ref) {
+    return deviceRegistry(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DeviceRegistry value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DeviceRegistry>(value),
+    );
+  }
+}
+
+String _$deviceRegistryHash() => r'9d83ad1a7e48d56723c593068f7fa8e670a998e4';
+
+/// The camera or the photo picker (README "Notifications", Part 6).
+
+@ProviderFor(proofPicker)
+final proofPickerProvider = ProofPickerProvider._();
+
+/// The camera or the photo picker (README "Notifications", Part 6).
+
+final class ProofPickerProvider
+    extends $FunctionalProvider<ProofPicker, ProofPicker, ProofPicker>
+    with $Provider<ProofPicker> {
+  /// The camera or the photo picker (README "Notifications", Part 6).
+  ProofPickerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proofPickerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$proofPickerHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProofPicker> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProofPicker create(Ref ref) {
+    return proofPicker(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProofPicker value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProofPicker>(value),
+    );
+  }
+}
+
+String _$proofPickerHash() => r'c913e7fc1c217ed68f534dfa94a16705f12f96d6';
+
+/// Sends a proof photo, through the app's Dio.
+
+@ProviderFor(proofUploader)
+final proofUploaderProvider = ProofUploaderProvider._();
+
+/// Sends a proof photo, through the app's Dio.
+
+final class ProofUploaderProvider
+    extends $FunctionalProvider<ProofUploader, ProofUploader, ProofUploader>
+    with $Provider<ProofUploader> {
+  /// Sends a proof photo, through the app's Dio.
+  ProofUploaderProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proofUploaderProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$proofUploaderHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProofUploader> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProofUploader create(Ref ref) {
+    return proofUploader(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProofUploader value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProofUploader>(value),
+    );
+  }
+}
+
+String _$proofUploaderHash() => r'4b4f0b37df97a98016e4e12b62a34e4abf8504c1';
+
+/// A treasurer confirms a contribution.
+
+@ProviderFor(contributionConfirmer)
+final contributionConfirmerProvider = ContributionConfirmerProvider._();
+
+/// A treasurer confirms a contribution.
+
+final class ContributionConfirmerProvider
+    extends
+        $FunctionalProvider<
+          ContributionConfirmer,
+          ContributionConfirmer,
+          ContributionConfirmer
+        >
+    with $Provider<ContributionConfirmer> {
+  /// A treasurer confirms a contribution.
+  ContributionConfirmerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'contributionConfirmerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$contributionConfirmerHash();
+
+  @$internal
+  @override
+  $ProviderElement<ContributionConfirmer> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ContributionConfirmer create(Ref ref) {
+    return contributionConfirmer(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ContributionConfirmer value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ContributionConfirmer>(value),
+    );
+  }
+}
+
+String _$contributionConfirmerHash() =>
+    r'96649cc19bcd18f98ddbcae14c77529196e87477';

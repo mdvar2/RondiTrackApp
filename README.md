@@ -90,6 +90,12 @@ This is Week 10: Assignment 10.1 (foundations and state), Assignment 10.2 (every
   - [Coverage](#coverage)
   - [Decisions (12.1)](#decisions-121)
   - [Assignment 12.1: verification](#assignment-121-verification)
+- [Part 14: On the phone, and on someone else's (Assignment 12.2)](#part-14-on-the-phone-and-on-someone-elses-assignment-122)
+  - [Notifications](#notifications)
+  - [Releases](#releases)
+  - [What isn't tested](#what-isnt-tested)
+  - [The stores](#the-stores)
+  - [Decisions (12.2)](#decisions-122)
 
 ---
 
@@ -1672,3 +1678,160 @@ Coverage counts lines that ran, not lines that were checked: a test with no `exp
 The connected device is the Huawei MAO-LX9 (Android 12 / API 31). The dev-flavour integration journey, using fake repositories, passed **three consecutive runs** on that phone (one journey test passed in each run). CI is configured to run the same journey on an Android 12 emulator. No Sentry delivery or frame-time benchmark is claimed; the measurable performance result is the zero-rebuild pagination regression test.
 
 **Updated in the 12.1 review.** The journey ([`assignment_journey_test.dart`](integration_test/assignment_journey_test.dart)) now records a contribution: it passed three runs in a row on the MAO-LX9 on 2026-11-25 ([log](docs/evidence/12.1/journey-three-runs-MAO-LX9.txt)). The twists and the three other tests seen failing are in [docs/evidence/12.1](docs/evidence/12.1) and the 12.1 pull request.
+
+## Part 14: On the phone, and on someone else's (Assignment 12.2)
+
+*The API tells a member's phone when a contribution is confirmed, and a tap opens that cycle, even from a closed app. A proof photo is shrunk under the API's limit with its location cleared. And each release is versioned from a tag, signed with an upload key, and built by CI.*
+
+### Notifications
+
+#### 1. Which events send a push, to whom, and when
+
+| Event | Who is told | When |
+|---|---|---|
+| A treasurer (or chairperson) **confirms a contribution** | The member who paid, on every phone registered to them **now** | **After** the confirmation is saved. A push that fails never fails the confirmation ([API PR #19](https://github.com/mdvar2/RondiTrack/pull/19)) |
+| A cycle is closed | Nobody yet | Members see it on their next fetch. A push for it would carry the same fields as below |
+| A payout is recorded | Nobody yet | The same |
+
+The API decides who is told, from its own data (`DeviceInstallations`), never from anything the phone says.
+
+#### 2. Every field of each push, and who can read it
+
+| Field | Value | The lock screen | Google's servers | The phone's logs |
+|---|---|---|---|---|
+| Title | `RondiTrack` | Yes (hidden on a phone set to hide sensitive content: private visibility) | Yes | Yes |
+| Body | `There's an update on your stokvel.` | The same | Yes | Yes |
+| `data.type` | `contribution_update` | No | Yes | Yes |
+| `data.stokvelId` | a UUID | No | Yes | Yes |
+| `data.cycleId` | a UUID | No | Yes | Yes |
+
+No name, no email, no amount, no stokvel name, and no decision: "confirmed" is a decision. The channel is the app's own, `stokvel_updates`, with **private** lock-screen visibility, and the manifest makes it the default. The details are fetched after the tap, through the same rules as every other request. The API's payload test checks every field for the member's name, their email, the stokvel's name and the amount in cents and as the app shows it (`R 500,00`, with its no-break space).
+
+#### 3. What the app does with a push
+
+| The app is | It does | Test |
+|---|---|---|
+| In front | Android shows nothing, so the app shows it itself on the same channel, and fetches that cycle (and Home) again: a nudge to fetch, never the news | [`push_app_test.dart`](test/features/notifications/push_app_test.dart): *in front: that cycle is fetched again* |
+| In the background | A tap opens that cycle | *a tap from the background opens that cycle* |
+| Closed | The tap is read **before the first frame**; the router starts at that cycle, with no flash of Home | *signed in: the cycle, from the first frame, with no flash of Home* |
+| Signed out | The gate sends the member to sign in, then to that cycle | *signed out: sign in, then that cycle* |
+| Signed in as someone who isn't a member | *Not found*, never someone else's cycle | *signed in as someone who isn't a member: not found…* |
+| Any push whose data isn't a known type with plain ids | Goes nowhere | [`push_test.dart`](test/features/notifications/push_test.dart): the `pushToLocation` table |
+
+Registration ([`push.dart`](lib/features/notifications/domain/push.dart), `PushRegistration`): every way into *signed in* (sign-in, a restored session, an offline launch) registers this phone's Firebase installation id with `POST /me/devices`, and a new id from `onRegistered` is sent again. **Sign-out tells the API first** (`DELETE /me/devices/{id}`), while the session can still prove who is asking, waiting three seconds at most, then ends the session. No network, or a Firebase failure, never blocks signing in or out. The auth controller calls the registration; the registration never reads the auth state, so the providers don't depend on each other.
+
+#### 4. When the app asks
+
+Never at first launch and never on every launch. **Just after a member records a payment**, in the app's own words: *Know when it's confirmed?* Only **Yes, tell me** shows Android's dialog. Either answer is remembered on the phone (the settings store, which survives sign-out), so it is asked **once per phone**. *Not now* is not asked again; Android's *Don't allow* is an answer too. After two refusals Android stops showing its dialog altogether, which is why the first chance isn't spent at launch. Refused, everything still works, and Profile says *Off. To get them, allow notifications for RondiTrack in Android's settings.* With push off (no Firebase file), nothing is asked. Tests: [`notification_ask_test.dart`](test/features/notifications/notification_ask_test.dart).
+
+#### 5. The proof photo
+
+| | |
+|---|---|
+| The API's limit | **5 MB**; JPEG, PNG or PDF (checked by their first bytes); only the member who paid and their treasurer or chairperson can read it; locked once the cycle closes |
+| Longest side | **2 000 px** (plenty to read a bank slip) |
+| Qualities tried | JPEG **85, 75, 65, 55, 45**, until it is under 5 MB; if it never is, *That photo is too big to send* and nothing is sent |
+| Metadata removed | **All of it**, on purpose: the `image` package writes back the EXIF it read, GPS included. The photo is turned upright first (from its EXIF orientation), then the EXIF is cleared |
+| Where | On another isolate (`Isolate.run`), so the screen never freezes; the button says *Preparing photo…*, then *Sending proof…*, and can't be pressed twice |
+| How | One hand-written multipart call through the app's Dio (the session interceptor signs it), named `proof.jpg`, so the file name says nothing about anyone |
+
+Tests: [`prepare_proof_test.dart`](test/features/proofs/prepare_proof_test.dart), with a photo that really carries a location; [`proof_upload_test.dart`](test/features/proofs/proof_upload_test.dart).
+
+#### Running with your own Firebase file
+
+Push is off until you add your own project. In the [Firebase console](https://console.firebase.google.com) (free Spark plan), register three Android apps: `za.co.gwinya.ronditrack_app.dev`, `….staging` and `za.co.gwinya.ronditrack_app`. Copy [`config/firebase.example.json`](config/firebase.example.json) to `config/firebase.<flavour>.json` (git-ignored) and fill in the four values from each app's settings. Then pass it as a second file:
+
+```powershell
+flutter run --flavor dev --dart-define-from-file=config/dev.json --dart-define-from-file=config/firebase.dev.json
+```
+
+With no file, push is off and the app runs as before; with some values but not all, it refuses to start. For the API, put the service account key at `secrets/firebase-service-account.json` in the API repository (git-ignored, mounted read-only), or set `Push__ServiceAccountPath`.
+
+### Releases
+
+#### 6. Every value a release uses
+
+| Name | Secret or setting | Where it lives |
+|---|---|---|
+| `UPLOAD_KEYSTORE_BASE64` | Secret | Repository secret (the keystore, base64) |
+| `UPLOAD_KEYSTORE_PASSWORD` | Secret | Repository secret; also in the owner's password manager. PKCS12: one password for the store and the key |
+| `FIREBASE_STAGING_JSON`, `FIREBASE_PROD_JSON` | Secret (kept out because each is someone's own project) | Repository secrets (each flavour's `config/firebase.<flavour>.json`) |
+| `APP_DISTRIBUTION_SERVICE_ACCOUNT` | Secret | Repository secret (a service account with the *Firebase App Distribution Admin* role) |
+| `SENTRY_AUTH_TOKEN` | Secret | Repository secret |
+| `UPLOAD_CERT_SHA256` | Setting (a fingerprint is public) | Repository variable |
+| `STAGING_API_BASE_URL` | Setting | Repository variable (the HTTPS address the reviewer's phone reaches) |
+| `STAGING_SENTRY_DSN` | Setting | Repository variable |
+| `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_URL` | Setting | Repository variables (`nelisiwe-gwinya`, `flutter`, `https://de.sentry.io`: the EU region) |
+| `FIREBASE_STAGING_APP_ID` | Setting | Repository variable |
+| The keystore file itself | Secret | Nowhere near the repository: `C:\Users\gwiny\.ronditrack-release\` on the owner's laptop, and the CI secret |
+| `android/key.properties` | Secret (names the keystore and its password) | Git-ignored; on CI written into the runner and deleted at the end |
+| The API's Firebase service account key | Secret | Git-ignored `secrets/` in the API repository, mounted read-only |
+
+The workflow decodes every secret into the runner's temporary folder (`$RUNNER_TEMP`), never into a file git could pick up, and deletes it at the end. Checked like a reviewer checks, in both repositories:
+
+```bash
+git log --all -- '*.jks' '*.keystore' '*key.properties' '*service-account*'   # prints nothing
+```
+
+#### 7. Where the version comes from
+
+The **version name** is the git tag (`v1.4.0` → `1.4.0`); the **build number** is the CI run number (`github.run_number`). [`tool/release.sh`](tool/release.sh) passes both to `flutter build` (`--build-name`, `--build-number`): `pubspec.yaml`'s version line is never edited, and nobody types a version. The app shows what it was built as, read from the installed build with `package_info_plus`: *Version 1.4.0 (37) · staging*, at the bottom of Profile.
+
+A tester's phone refuses a lower build number (`INSTALL_FAILED_VERSION_DOWNGRADE`); numbers typed by hand end up repeated, and testers get stuck on an old build. A run number only goes up.
+
+#### Making a release
+
+```bash
+git tag v1.4.0 && git push origin v1.4.0
+```
+
+[`release.yml`](.github/workflows/release.yml), started by a `v*` tag and separate from the CI checks, with every action pinned to a commit: secrets in, then `tool/release.sh` (the same script as on a laptop) checks the tag is `vX.Y.Z` and builds a **staging APK** and a **prod app bundle**, both obfuscated, with the symbols and the obfuscation map kept outside the app. It compares each build's certificate with `UPLOAD_CERT_SHA256` and **refuses** any that doesn't match: without `key.properties`, Gradle quietly signs with the debug key. The builds and symbols are kept with the run; the symbols go to Sentry under the release name the app reports (`za.co.gwinya.ronditrack_app.staging@1.4.0+37`, dist `37`); the staging APK goes to App Distribution's `testers` group.
+
+On a laptop:
+
+```bash
+BUILD_NUMBER=37 UPLOAD_CERT_SHA256=<fingerprint> tool/release.sh v1.4.0
+```
+
+#### How the reviewer installs it
+
+Added to the `testers` group in App Distribution, the reviewer gets an email for each release, opens it on their phone, installs the *App Tester* app once, and installs RondiTrack Staging from there. It signs in against the staging API below.
+
+#### 8. How the reviewer's phone reaches the API
+
+`10.0.2.2` is only the emulator's name for this laptop. The reviewer's phone reaches the API over HTTPS through a **Cloudflare quick tunnel** (free, no account): `cloudflared tunnel --url http://localhost:8081` prints an address like `https://<words>.trycloudflare.com`, which becomes `STAGING_API_BASE_URL`. A quick tunnel's address changes every time it starts, and the staging build has it baked in, so a new address means a new tag. Behind the tunnel:
+
+- Every request comes from Cloudflare: the client's address is in `X-Forwarded-For` / `CF-Connecting-IP`, so the API's forwarded-headers settings must trust the tunnel, or the sign-in limit counts everyone as one client.
+- A classroom shares one public address too: raise the sign-in limit for the demo, from configuration (`RateLimiting__Login__PermitLimit`).
+
+### What isn't tested
+
+| Can't be proved in CI | Checked instead |
+|---|---|
+| A real push arriving | By hand: a real confirmation on the staging API, the notification on the MAO-LX9 (PR screenshot). The API's payload and the app's handling are tested with fakes |
+| The lock screen | By hand, with the phone set to hide sensitive content: only the app's name shows |
+| A second phone (a shared phone) | The API test *on a shared phone only the member signed in now is told*; by hand with two accounts on one phone |
+| A tap from a closed app on Android | Whole-app tests start the router at the address; by hand with `adb shell am kill <app id>` (force-stop also clears the notifications) |
+| The camera app and the photo picker | By hand on the phone (2026-11-26: a camera photo arrived on the server as 772 563 bytes, 1500 × 2000, no EXIF); `prepareProof` is tested with real JPEG bytes carrying GPS |
+| iOS | Not built: Android only (see The stores) |
+| The stores | Not used: App Distribution only (see The stores) |
+| The plugin files (`firebase_push_client.dart`, `ImagePickerProofPicker`) | Thin by design; everything they feed is behind an interface the tests fake |
+
+### The stores
+
+With a **Google Play Console** account, releases would go up as the **app bundle** (the release script already builds `prod` as one), and Play would build per-device APKs from it. **Play App Signing** would keep the real app signing key at Google: ours would be only an *upload* key, so a lost upload key could be reset through Play support instead of stranding every installed phone (today, losing the key means `INSTALL_FAILED_UPDATE_INCOMPATIBLE` for every tester). Testers would come through the **internal testing track** instead of App Distribution's email.
+
+With an **Apple Developer Program** membership, the iOS build would need a **distribution certificate** and a **provisioning profile** naming the app id, push would go through **APNs** (an APNs key uploaded to Firebase, and `register()` would also wait for the APNs token), and testers would install through **TestFlight**. Neither account is needed for this course: this is theory, and the programme uses free tools only.
+
+### Decisions (12.2)
+
+| Decision | Why |
+|---|---|
+| A channel of our own, `stokvel_updates`, high importance, **private** on the lock screen, and the manifest's default | A push that names no channel would land in *Miscellaneous*; private visibility hides even the generic text on a phone set to hide sensitive content |
+| Push by **installation id** (`register()` / `onRegistered`, `Message.Fid`) | `firebase_messaging` 17 deprecates tokens for installation ids. It keeps them off until the manifest opts in (`firebase_messaging_installation_id_enabled`); without it `register()` fails with "API disabled" |
+| A confirm endpoint in the API, and a *Confirm payment* button for treasurers | The API had no way to confirm a contribution, and a push needs something to follow |
+| Longest side 2 000 px; JPEG 85 down to 45 | Readable slips, a few hundred KB on mobile data, far under 5 MB |
+| A Cloudflare quick tunnel for the staging API | Free and needs no account; the cost is a new build for each new address |
+| Upload key: PKCS12, RSA 4096, 10 000 days, outside the repository | The Play defaults; the password lives in the owner's password manager |
+| Release builds still fall back to the debug key without `key.properties` | `flutter run --release` keeps working on a laptop; `tool/release.sh` is what refuses to ship one |
+| **Dependency overrides**, each the newest release by 2026-11-11 | Firebase brought newer picks under two weeks old: `_flutterfire_internals` 1.3.79, `firebase_core_platform_interface` 8.1.1, `firebase_core_web` 4.1.0, `firebase_messaging_platform_interface` 4.11.1, `firebase_messaging_web` 4.3.1 (remove on or after **2026-11-30**); `archive` 4.6.0 (**2026-11-27**); `dbus` 0.8.0 and `image_picker_ios` 0.8.13+15 (**2026-12-03**). The `shared_preferences_android` override was due on 2026-11-25 and is gone: pub's own pick is the same, two weeks old |

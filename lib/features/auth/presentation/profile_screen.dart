@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ronditrack_app/app/dev/session_tools.dart';
+import 'package:ronditrack_app/app/installed_build.dart';
 import 'package:ronditrack_app/app/settings.dart';
 import 'package:ronditrack_app/core/config/app_config_scope.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
+import 'package:ronditrack_app/features/notifications/presentation/notification_ask.dart';
 import 'package:ronditrack_app/features/payments/presentation/sign_out_guard.dart';
 import 'package:ronditrack_app/l10n/generated/app_localizations.dart';
 
@@ -54,6 +56,11 @@ class ProfileScreen extends ConsumerWidget {
           // Built only in the dev flavour: in staging and prod these
           // buttons don't exist (the 10.3 test proves it).
           if (AppConfigScope.of(context).hasDevTools) const SessionTools(),
+          const SizedBox(height: 24),
+          // Refused is an answer: the status is on the screen.
+          const NotificationStatusTile(),
+          const SizedBox(height: 8),
+          const VersionLabel(),
         ],
       ),
     );

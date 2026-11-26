@@ -29,6 +29,8 @@ import 'package:ronditrack_app/features/home/domain/home_repository.dart';
 import 'package:ronditrack_app/features/invites/data/api_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/data/fake_invite_repository.dart';
 import 'package:ronditrack_app/features/invites/domain/invite_repository.dart';
+import 'package:ronditrack_app/features/notifications/data/device_registries.dart';
+import 'package:ronditrack_app/features/notifications/domain/push.dart';
 import 'package:ronditrack_app/features/payments/data/drift_payment_outbox.dart';
 import 'package:ronditrack_app/features/payments/data/payment_senders.dart';
 import 'package:ronditrack_app/features/payments/domain/payment_outbox.dart';
@@ -36,6 +38,8 @@ import 'package:ronditrack_app/features/payouts/data/api_payout_repository.dart'
 import 'package:ronditrack_app/features/payouts/data/fake_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/data/flaky_payout_repository.dart';
 import 'package:ronditrack_app/features/payouts/domain/payout_repository.dart';
+import 'package:ronditrack_app/features/proofs/data/proof_services.dart';
+import 'package:ronditrack_app/features/proofs/domain/proofs.dart';
 import 'package:ronditrack_app/features/stokvels/data/api_stokvel_repository.dart';
 import 'package:ronditrack_app/features/stokvels/data/api_stokvel_writes.dart';
 import 'package:ronditrack_app/features/stokvels/data/fake_seed.dart';
@@ -410,3 +414,32 @@ PayoutRepository payoutRepository(Ref ref) {
       ? FlakyPayoutRepository(fake, failEvery: failEvery)
       : fake;
 }
+
+/// The API's record of this member's phones.
+@Riverpod(keepAlive: true)
+DeviceRegistry deviceRegistry(Ref ref) =>
+    switch (ref.watch(dataSourceProvider)) {
+      DataSource.api => ApiDeviceRegistry(ref.watch(apiProvider)),
+      DataSource.fakes => FakeDeviceRegistry(),
+    };
+
+/// The camera or the photo picker (README "Notifications", Part 6).
+@Riverpod(keepAlive: true)
+ProofPicker proofPicker(Ref ref) => const ImagePickerProofPicker();
+
+/// Sends a proof photo, through the app's Dio.
+@Riverpod(keepAlive: true)
+ProofUploader proofUploader(Ref ref) => switch (ref.watch(dataSourceProvider)) {
+  DataSource.api => ApiProofUploader(ref.watch(apiClientProvider)),
+  DataSource.fakes => FakeProofUploader(),
+};
+
+/// A treasurer confirms a contribution.
+@Riverpod(keepAlive: true)
+ContributionConfirmer contributionConfirmer(Ref ref) =>
+    switch (ref.watch(dataSourceProvider)) {
+      DataSource.api => ApiContributionConfirmer(ref.watch(apiProvider)),
+      DataSource.fakes => FakeContributionConfirmer(
+        stokvels: ref.watch(fakeStokvelsProvider),
+      ),
+    };

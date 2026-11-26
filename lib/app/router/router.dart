@@ -6,6 +6,7 @@ import 'package:ronditrack_app/app/router/redirect.dart';
 import 'package:ronditrack_app/app/router/routes.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
 import 'package:ronditrack_app/features/auth/presentation/auth_controller.dart';
+import 'package:ronditrack_app/features/notifications/presentation/push_providers.dart';
 
 part 'router.g.dart';
 
@@ -23,6 +24,9 @@ GoRouter router(Ref ref) {
   ref.listen(authControllerProvider, (_, next) => auth.value = next);
 
   final router = GoRouter(
+    // A tap from a closed app (README "Notifications"): the router starts at
+    // that cycle, and the gate below decides as for any deep link.
+    initialLocation: ref.read(pushStartLocationProvider),
     routes: $appRoutes,
     refreshListenable: auth,
     redirect: (_, state) => redirectFor(auth: auth.value, location: state.uri),

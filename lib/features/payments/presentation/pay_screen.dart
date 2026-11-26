@@ -8,6 +8,7 @@ import 'package:ronditrack_app/core/money/rand_format.dart';
 import 'package:ronditrack_app/core/money/rand_parser.dart';
 import 'package:ronditrack_app/core/state/view_state.dart';
 import 'package:ronditrack_app/core/widgets/message_panel.dart';
+import 'package:ronditrack_app/features/notifications/presentation/notification_ask.dart';
 import 'package:ronditrack_app/features/payments/domain/payment_outbox.dart';
 import 'package:ronditrack_app/features/payments/presentation/payment_words.dart';
 import 'package:ronditrack_app/features/payments/presentation/payments_controller.dart';
@@ -89,6 +90,12 @@ class _PayScreenState extends ConsumerState<PayScreen> {
       // shows: not up the address to the cycle, which may never have
       // been saved on the phone, and so is empty with no signal.
       default:
+        // Just recorded (or waiting to send): the moment to ask whether
+        // they want to know when it's confirmed. Once per phone.
+        if (outcome is PaymentAccepted || outcome is PaymentStillPending) {
+          await askAboutNotifications(context, ref);
+          if (!mounted) return;
+        }
         StokvelRoute(id: widget.stokvelId).go(context);
     }
   }

@@ -1,0 +1,9 @@
+# Run 2026-11-26T04:44:11+02:00, after every secret was configured
+
+$ git -C RondiTrackApp log --all -- '*.jks' '*.keystore' '*key.properties' '*service-account*'
+(prints nothing)
+
+$ git -C RondiTrack log --all -- '*.jks' '*.keystore' '*key.properties' '*service-account*'
+(prints nothing)
+
+Also checked: no config/firebase.<flavour>.json, google-services*.json, secrets/ file, DSN or key in any commit of either repository.

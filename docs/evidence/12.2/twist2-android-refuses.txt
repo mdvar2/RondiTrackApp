@@ -1,0 +1,19 @@
+=== Huawei MAO-LX9 (Android 12): the real staging build 0.12.2 (2), signed with the upload key
+$ adb install -r ronditrack-staging-0.12.2+2.apk
+Performing Streamed Install
+adb.exe: failed to install ../release-good/ronditrack-staging-0.12.2+2.apk: Failure [INSTALL_FAILED_ABORTED: User rejected permissions]
+
+
+=== then the build the release script refused, 0.12.3 (3), signed with the debug key, over it
+$ adb install -r ronditrack-staging-0.12.3+3.apk
+Performing Streamed Install
+adb.exe: failed to install ../release-bad/refused/ronditrack-staging-0.12.3+3.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package za.co.gwinya.ronditrack_app.staging signatures do not match previously installed version; ignoring!]
+
+Note: the first install's prompt was declined on the phone this time, because
+0.12.2 (2) was already installed from an approved attempt at 03:01. What is
+installed is that build, signed with the upload key:
+  versionName=0.12.2 versionCode=2
+  apksigner: Signer #1 certificate SHA-256 digest:
+    b98c03471f56f267669f1af7c534ba534991dbbcd3b118815512590bd88534ca
+So Android refused the debug-signed 0.12.3 (3) over the real build:
+INSTALL_FAILED_UPDATE_INCOMPATIBLE, though its build number is higher.

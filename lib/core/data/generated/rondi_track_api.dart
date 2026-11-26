@@ -5,8 +5,10 @@
 import 'package:dio/dio.dart';
 
 import 'clients/auth_client.dart';
+import 'clients/contribution_confirmation_client.dart';
 import 'clients/contribution_cycles_client.dart';
 import 'clients/cycle_close_client.dart';
+import 'clients/devices_client.dart';
 import 'clients/invites_client.dart';
 import 'clients/me_client.dart';
 import 'clients/payouts_client.dart';
@@ -26,8 +28,10 @@ class RondiTrackApi {
   static String get version => '1.0.0';
 
   AuthClient? _auth;
+  ContributionConfirmationClient? _contributionConfirmation;
   ContributionCyclesClient? _contributionCycles;
   CycleCloseClient? _cycleClose;
+  DevicesClient? _devices;
   InvitesClient? _invites;
   MeClient? _me;
   PayoutsClient? _payouts;
@@ -35,9 +39,13 @@ class RondiTrackApi {
 
   AuthClient get auth => _auth ??= AuthClient(_dio, baseUrl: _baseUrl);
 
+  ContributionConfirmationClient get contributionConfirmation => _contributionConfirmation ??= ContributionConfirmationClient(_dio, baseUrl: _baseUrl);
+
   ContributionCyclesClient get contributionCycles => _contributionCycles ??= ContributionCyclesClient(_dio, baseUrl: _baseUrl);
 
   CycleCloseClient get cycleClose => _cycleClose ??= CycleCloseClient(_dio, baseUrl: _baseUrl);
+
+  DevicesClient get devices => _devices ??= DevicesClient(_dio, baseUrl: _baseUrl);
 
   InvitesClient get invites => _invites ??= InvitesClient(_dio, baseUrl: _baseUrl);
 

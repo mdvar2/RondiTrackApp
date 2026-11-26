@@ -1,0 +1,7 @@
+=== with android/key.properties
+an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
+If you are a plugin author, please migrate your plugin to Built-in Kotlin using this guide: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-authors
+√ Built build\app\outputs\bundle\prodRelease\app-prod-release.aab (62.5MB)
+Signed with the upload key: staging APK (b98c03471f56f267669f1af7c534ba534991dbbcd3b118815512590bd88534ca)
+Signed with the upload key: prod bundle (b98c03471f56f267669f1af7c534ba534991dbbcd3b118815512590bd88534ca)
+Release 0.12.2 (2): ../release-good/ronditrack-staging-0.12.2+2.apk, ../release-good/ronditrack-prod-0.12.2+2.aab; symbols in ../release-good/symbols.

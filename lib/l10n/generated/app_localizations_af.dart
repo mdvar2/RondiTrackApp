@@ -349,4 +349,41 @@ class AppLocalizationsAf extends AppLocalizations {
 
   @override
   String get languageAfrikaans => 'Afrikaans';
+
+  @override
+  String get notifyAskTitle => 'Wil jy weet wanneer dit bevestig is?';
+
+  @override
+  String get notifyAskBody =>
+      'Ons kan jou laat weet wanneer jou tesourier \'n betaling bevestig. Die kennisgewing sê net daar is \'n opdatering oor jou stokvel; die besonderhede bly in die toep.';
+
+  @override
+  String get notifyAskYes => 'Ja, laat weet my';
+
+  @override
+  String get notifyAskNotNow => 'Nie nou nie';
+
+  @override
+  String get notifyStatusTitle => 'Kennisgewings';
+
+  @override
+  String get notifyStatusOn =>
+      'Aan: jy sal hoor wanneer \'n betaling bevestig is.';
+
+  @override
+  String get notifyStatusOff =>
+      'Af. Om dit te kry, laat kennisgewings vir RondiTrack toe in Android se instellings.';
+
+  @override
+  String get notifyStatusNotAsked =>
+      'Nog nie opgestel nie. Ons sal ná jou volgende betaling vra.';
+
+  @override
+  String get notifyStatusUnavailable =>
+      'Nie beskikbaar in hierdie weergawe nie.';
+
+  @override
+  String versionLabel(String version, String build, String flavour) {
+    return 'Weergawe $version ($build) · $flavour';
+  }
 }

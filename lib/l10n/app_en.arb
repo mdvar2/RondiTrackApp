@@ -1,62 +1,145 @@
 {
   "@@locale": "en",
-
   "tryAgain": "Try again",
-  "@tryAgain": {"description": "Button: ask the server again."},
+  "@tryAgain": {
+    "description": "Button: ask the server again."
+  },
   "cancel": "Cancel",
   "save": "Save",
-
   "ageJustNow": "just now",
-  "@ageJustNow": {"description": "How old cached data is, under a minute."},
+  "@ageJustNow": {
+    "description": "How old cached data is, under a minute."
+  },
   "ageMinutes": "{count, plural, one{1 minute ago} other{{count} minutes ago}}",
-  "@ageMinutes": {"placeholders": {"count": {"type": "int"}}},
+  "@ageMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "ageHours": "{count, plural, one{1 hour ago} other{{count} hours ago}}",
-  "@ageHours": {"placeholders": {"count": {"type": "int"}}},
+  "@ageHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "ageDays": "{count, plural, one{1 day ago} other{{count} days ago}}",
-  "@ageDays": {"placeholders": {"count": {"type": "int"}}},
+  "@ageDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bannerOffline": "You're offline. Showing what this phone saved {age}.",
-  "@bannerOffline": {"description": "The cache banner when no answer came. age is ageMinutes etc.", "placeholders": {"age": {"type": "String"}}},
+  "@bannerOffline": {
+    "description": "The cache banner when no answer came. age is ageMinutes etc.",
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
   "bannerCouldNotRefresh": "Couldn't refresh. Showing what this phone saved {age}.",
-  "@bannerCouldNotRefresh": {"placeholders": {"age": {"type": "String"}}},
-
+  "@bannerCouldNotRefresh": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
   "memberCount": "{count, plural, =0{No members} one{1 member} other{{count} members}}",
-  "@memberCount": {"placeholders": {"count": {"type": "int"}}},
+  "@memberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "contributionCount": "{count, plural, =0{No contributions} one{1 contribution} other{{count} contributions}}",
-  "@contributionCount": {"placeholders": {"count": {"type": "int"}}},
-
+  "@contributionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "statusPaid": "Paid",
   "statusPending": "Pending",
   "statusConfirmed": "Confirmed",
   "statusLate": "Late",
-  "@statusLate": {"description": "A contribution recorded after its cycle's due date."},
+  "@statusLate": {
+    "description": "A contribution recorded after its cycle's due date."
+  },
   "statusUnknown": "Status not recognised",
   "statusNotSent": "Not sent yet",
-  "@statusNotSent": {"description": "A payment in the phone's outbox."},
-
+  "@statusNotSent": {
+    "description": "A payment in the phone's outbox."
+  },
   "payTitle": "Pay {stokvel}",
-  "@payTitle": {"placeholders": {"stokvel": {"type": "String"}}},
+  "@payTitle": {
+    "placeholders": {
+      "stokvel": {
+        "type": "String"
+      }
+    }
+  },
   "payCycle": "Cycle {period}",
-  "@payCycle": {"placeholders": {"period": {"type": "String"}}},
+  "@payCycle": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
   "payAmountLabel": "Amount in rand",
   "payAmountHint": "For example 500 or 1 250,50",
   "payButton": "Pay",
   "payBusy": "Saving…",
   "payPendingButton": "Payment pending",
-  "@payPendingButton": {"description": "The Pay button while this cycle's payment waits in the outbox."},
+  "@payPendingButton": {
+    "description": "The Pay button while this cycle's payment waits in the outbox."
+  },
   "paySavedOffline": "Saved on this phone. We'll send it when we reach the server; it isn't paid yet.",
   "payPaid": "Paid. The cycle is up to date.",
   "payAlreadyPaid": "You've already paid for this cycle, so nothing more was sent.",
   "payCycleClosed": "This cycle is closed, so it can't take payments.",
   "payRefused": "The payment wasn't accepted: {reason}",
-  "@payRefused": {"placeholders": {"reason": {"type": "String"}}},
+  "@payRefused": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "payWaiting": "{seconds, plural, one{Too many payments at once. We'll try again in 1 second.} other{Too many payments at once. We'll try again in {seconds} seconds.}}",
-  "@payWaiting": {"placeholders": {"seconds": {"type": "int"}}},
+  "@payWaiting": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "payExpired": "A payment saved on {day} couldn't be confirmed in time and won't be sent. Check this cycle and pay again if you need to.",
-  "@payExpired": {"placeholders": {"day": {"type": "String"}}},
+  "@payExpired": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
   "pendingPayment": "Pending payment: {amount}. Not paid until the server confirms it.",
-  "@pendingPayment": {"placeholders": {"amount": {"type": "String"}}},
+  "@pendingPayment": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "sendNow": "Send now",
-
   "amountRequired": "Enter an amount.",
   "amountInvalid": "Use digits only, like 500 or 1 250,50.",
   "amountGroups": "Group the rand in threes, like 1 250.",
@@ -64,12 +147,16 @@
   "amountTooManyCents": "Cents have two digits at most.",
   "amountTooLarge": "That amount is too large.",
   "amountZero": "Enter more than R 0,00.",
-
   "signOutWithPendingTitle": "A payment hasn't been sent",
   "signOutWithPendingBody": "{count, plural, one{A payment on this phone hasn't reached the server. Signing out deletes it, and it won't be paid.} other{{count} payments on this phone haven't reached the server. Signing out deletes them, and they won't be paid.}}",
-  "@signOutWithPendingBody": {"placeholders": {"count": {"type": "int"}}},
+  "@signOutWithPendingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "signOutAnyway": "Sign out anyway",
-
   "createTitle": "New stokvel",
   "createName": "Stokvel name",
   "createAmount": "Monthly contribution, in rand",
@@ -80,15 +167,19 @@
   "createButton": "Create stokvel",
   "createBusy": "Creating…",
   "newStokvel": "New stokvel",
-
   "editCycleTitle": "Edit cycle {period}",
-  "@editCycleTitle": {"placeholders": {"period": {"type": "String"}}},
+  "@editCycleTitle": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
   "editCycleTarget": "Target, in rand",
   "editCycleDueDate": "Due date",
   "editCycleStale": "Someone else changed this cycle while you were editing. Here is the latest; check it and save again.",
   "editCycleSaved": "Saved.",
   "editCycle": "Edit cycle",
-
   "contributionsTitle": "Contributions",
   "filterCycle": "Cycle",
   "filterStatus": "Status",
@@ -99,22 +190,75 @@
   "filterAnyDay": "Any day",
   "filterClear": "Clear filters",
   "filterOneDay": "{day}",
-  "@filterOneDay": {"placeholders": {"day": {"type": "String"}}},
+  "@filterOneDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
   "filterDayRange": "{first} to {last}",
-  "@filterDayRange": {"placeholders": {"first": {"type": "String"}, "last": {"type": "String"}}},
+  "@filterDayRange": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
   "listLoading": "Loading contributions",
   "listEmpty": "Nobody has paid into this cycle yet.",
   "listEmptyFiltered": "No contributions match these filters.",
   "listFailed": "We couldn't load the contributions.",
   "listMoreFailed": "We couldn't load more.",
   "listEnd": "{count, plural, =0{That's everything.} one{That's all: 1 contribution.} other{That's all: {count} contributions.}}",
-  "@listEnd": {"placeholders": {"count": {"type": "int"}}},
+  "@listEnd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "recordedOn": "Paid on {day}",
-  "@recordedOn": {"placeholders": {"day": {"type": "String"}}},
+  "@recordedOn": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
   "viewContributions": "All contributions",
-
   "settingsLanguage": "Language",
   "languageSystem": "Follow the phone",
   "languageEnglish": "English",
-  "languageAfrikaans": "Afrikaans"
+  "languageAfrikaans": "Afrikaans",
+  "notifyAskTitle": "Know when it's confirmed?",
+  "notifyAskBody": "We can tell you when your treasurer confirms a payment. The notification only says there's an update on your stokvel; the details stay in the app.",
+  "notifyAskYes": "Yes, tell me",
+  "notifyAskNotNow": "Not now",
+  "notifyStatusTitle": "Notifications",
+  "notifyStatusOn": "On: you'll hear when a payment is confirmed.",
+  "notifyStatusOff": "Off. To get them, allow notifications for RondiTrack in Android's settings.",
+  "notifyStatusNotAsked": "Not set up yet. We'll ask after your next payment.",
+  "notifyStatusUnavailable": "Not available in this build.",
+  "versionLabel": "Version {version} ({build}) · {flavour}",
+  "@notifyAskTitle": {
+    "description": "The app's own question, after a payment, before Android's dialog."
+  },
+  "@versionLabel": {
+    "description": "The installed build, for a tester to quote.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      },
+      "flavour": {
+        "type": "String"
+      }
+    }
+  }
 }

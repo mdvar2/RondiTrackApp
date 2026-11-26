@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -6,10 +8,13 @@ plugins {
 
 android {
     namespace = "za.co.gwinya.ronditrack_app"
-    compileSdk = flutter.compileSdkVersion
+    // 37, and core library desugaring below: flutter_local_notifications 23
+    // needs both (README "Notifications").
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -58,11 +63,36 @@ android {
         }
     }
 
+    // The upload key (README "Releases"): android/key.properties names the
+    // keystore and its password, and is git-ignored, as is the keystore,
+    // which lives outside the repository. Without it, release builds fall
+    // back to the debug key so `flutter run --release` still works, and
+    // tool/release.sh refuses to ship them: it checks each build's
+    // certificate against the upload key's fingerprint.
+    val keyProperties = Properties().apply {
+        val file = rootProject.file("key.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
+    val hasUploadKey = keyProperties.getProperty("storeFile") != null
+
+    signingConfigs {
+        if (hasUploadKey) {
+            create("upload") {
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasUploadKey) {
+                signingConfigs.getByName("upload")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
@@ -75,4 +105,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

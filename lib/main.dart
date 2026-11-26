@@ -6,8 +6,12 @@ import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/retry.dart';
 import 'package:ronditrack_app/app/settings.dart';
 import 'package:ronditrack_app/core/config/app_config.dart';
+import 'package:ronditrack_app/core/config/firebase_config.dart';
 import 'package:ronditrack_app/core/observability/sentry_event_scrubber.dart';
 import 'package:ronditrack_app/core/observability/sentry_provider_observer.dart';
+import 'package:ronditrack_app/features/notifications/data/firebase_push_client.dart';
+import 'package:ronditrack_app/features/notifications/domain/push.dart';
+import 'package:ronditrack_app/features/notifications/presentation/push_providers.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 Future<void> main() async {
@@ -37,6 +41,17 @@ Future<void> main() async {
   // never draws in one language and then another.
   final settings = await PreferencesSettingsStore.open();
 
+  // Push (README "Notifications"): on only with all four values from
+  // config/firebase.<flavour>.json; with some but not all, this throws and
+  // the app refuses to start. A tap that started the app from closed is
+  // read before the first frame, so the router starts at that cycle.
+  final firebase = FirebaseConfig.fromEnvironment();
+  final push = firebase == null
+      ? null
+      : await FirebasePushClient.start(firebase);
+  final startTap = await push?.tappedToStart();
+  final startLocation = startTap == null ? null : pushToLocation(startTap);
+
   if (config.sentryDsn.isNotEmpty) {
     await SentryFlutter.init((options) {
       options
@@ -60,6 +75,9 @@ Future<void> main() async {
         if (dataSource == DataSource.fakes)
           dataSourceProvider.overrideWithValue(DataSource.fakes),
         if (failEvery > 0) fakeFailEveryProvider.overrideWithValue(failEvery),
+        if (push != null) pushClientProvider.overrideWithValue(push),
+        if (startLocation != null)
+          pushStartLocationProvider.overrideWithValue(startLocation),
       ],
       child: RondiTrackApp(config: config),
     ),

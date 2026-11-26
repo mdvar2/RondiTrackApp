@@ -31,6 +31,9 @@ swagger_parser:
     - /api/v1/auth/logout
     - /api/v1/me
     - /api/v1/me/home
+    # 12.2: this phone's push address, at sign-in and sign-out.
+    - /api/v1/me/devices
+    - /api/v1/me/devices/{installationId}
     - /api/v1/stokvels
     - /api/v1/stokvels/{id}
     - /api/v1/stokvels/{stokvelId}/cycles
@@ -38,6 +41,8 @@ swagger_parser:
     - /api/v1/stokvels/{stokvelId}/members/{userId}/contributions
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/contributions
+    # 12.2: a treasurer confirms a contribution (the API then pushes).
+    - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/contributions/{contributionId}/confirm
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/payouts
     - /api/v1/stokvels/{stokvelId}/cycles/{cycleId}/close/preview
     - /api/v1/invites/{code}

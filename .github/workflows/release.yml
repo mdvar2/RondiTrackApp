@@ -1,0 +1,129 @@
+name: Release
+
+# Started by a v* tag (README "Releases"), separate from the CI checks:
+#   git tag v1.4.0 && git push origin v1.4.0
+# The version name comes from the tag, the build number from this run.
+on:
+  push:
+    tags: ["v*"]
+
+# This job holds the upload key: every action is pinned to a commit.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Signed staging APK to App Distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Settings (repository variables), not secrets: README "Releases".
+      UPLOAD_CERT_SHA256: ${{ vars.UPLOAD_CERT_SHA256 }}
+      API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+      SENTRY_DSN: ${{ vars.STAGING_SENTRY_DSN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      # The organisation's data region: EU (de.sentry.io), not the default US.
+      SENTRY_URL: ${{ vars.SENTRY_URL }}
+      FIREBASE_STAGING_APP_ID: ${{ vars.FIREBASE_STAGING_APP_ID }}
+      BUILD_NUMBER: ${{ github.run_number }}
+      RELEASE_OUT: build/release
+    steps:
+      # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      # v2.23.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - name: Install the locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      # Secrets are decoded into the runner's temporary folder, where they
+      # are thrown away with the runner: never into a file git could pick
+      # up. key.properties itself only names that folder.
+      - name: Secrets in, outside the checkout
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          FIREBASE_STAGING_JSON: ${{ secrets.FIREBASE_STAGING_JSON }}
+          FIREBASE_PROD_JSON: ${{ secrets.FIREBASE_PROD_JSON }}
+        run: |
+          secrets_dir="$RUNNER_TEMP/release-secrets"
+          mkdir -p "$secrets_dir"
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$secrets_dir/upload-keystore.jks"
+          printf '%s\n' \
+            "storePassword=$UPLOAD_KEYSTORE_PASSWORD" \
+            "keyPassword=$UPLOAD_KEYSTORE_PASSWORD" \
+            "keyAlias=upload" \
+            "storeFile=$secrets_dir/upload-keystore.jks" > android/key.properties
+          if [ -n "$FIREBASE_STAGING_JSON" ]; then
+            printf '%s' "$FIREBASE_STAGING_JSON" > "$secrets_dir/firebase.staging.json"
+            echo "FIREBASE_STAGING_CONFIG=$secrets_dir/firebase.staging.json" >> "$GITHUB_ENV"
+          fi
+          if [ -n "$FIREBASE_PROD_JSON" ]; then
+            printf '%s' "$FIREBASE_PROD_JSON" > "$secrets_dir/firebase.prod.json"
+            echo "FIREBASE_PROD_CONFIG=$secrets_dir/firebase.prod.json" >> "$GITHUB_ENV"
+          fi
+          # Never committed: android/key.properties is git-ignored.
+          git check-ignore -q android/key.properties
+
+      # The same script as on a laptop: it checks the tag, builds, and
+      # refuses anything not signed with the upload key.
+      - name: Build, obfuscated, signed with the upload key
+        run: tool/release.sh "$GITHUB_REF_NAME"
+
+      # The builds and the symbols stay with the run.
+      # v7.0.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: release-${{ github.ref_name }}-${{ github.run_number }}
+          path: build/release
+          if-no-files-found: error
+
+      # Symbols to Sentry under the release name the app reports: its
+      # application id, then version+build (README "Releases").
+      - name: Symbols to Sentry
+        if: ${{ vars.SENTRY_ORG != '' }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          export SENTRY_RELEASE="za.co.gwinya.ronditrack_app.staging@$version+$BUILD_NUMBER"
+          export SENTRY_DIST="$BUILD_NUMBER"
+          dart run sentry_dart_plugin \
+            --sentry-define=url="$SENTRY_URL" \
+            --sentry-define=org="$SENTRY_ORG" \
+            --sentry-define=project="$SENTRY_PROJECT" \
+            --sentry-define=symbols_path=build/release/symbols/staging \
+            --sentry-define=upload_debug_symbols=true \
+            --sentry-define=upload_source_maps=false
+
+      # v7.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 22
+
+      # The staging APK to the testers group, with a service account.
+      - name: To App Distribution's testers
+        env:
+          APP_DISTRIBUTION_SERVICE_ACCOUNT: ${{ secrets.APP_DISTRIBUTION_SERVICE_ACCOUNT }}
+        run: |
+          key="$RUNNER_TEMP/release-secrets/app-distribution.json"
+          printf '%s' "$APP_DISTRIBUTION_SERVICE_ACCOUNT" > "$key"
+          GOOGLE_APPLICATION_CREDENTIALS="$key" npx --yes firebase-tools@15.35.0 \
+            appdistribution:distribute build/release/ronditrack-staging-*.apk \
+            --app "$FIREBASE_STAGING_APP_ID" \
+            --groups testers \
+            --release-notes "RondiTrack staging $GITHUB_REF_NAME (build $BUILD_NUMBER)"
+
+      - name: Throw the secrets away
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/release-secrets" android/key.properties

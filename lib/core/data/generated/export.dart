@@ -4,8 +4,10 @@
 
 // Clients
 export 'clients/auth_client.dart';
+export 'clients/contribution_confirmation_client.dart';
 export 'clients/contribution_cycles_client.dart';
 export 'clients/cycle_close_client.dart';
+export 'clients/devices_client.dart';
 export 'clients/invites_client.dart';
 export 'clients/me_client.dart';
 export 'clients/payouts_client.dart';
@@ -31,6 +33,7 @@ export 'models/payout_order_entry_response.dart';
 export 'models/payout_order_response.dart';
 export 'models/payout_response.dart';
 export 'models/record_contribution_request.dart';
+export 'models/register_device_request.dart';
 export 'models/register_request.dart';
 export 'models/stokvel_cycle_summary_response.dart';
 export 'models/stokvel_detail_response.dart';

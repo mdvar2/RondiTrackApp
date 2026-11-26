@@ -1,0 +1,8 @@
+# The staging flavour's launcher icon (README "Releases"): dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/branding/icon_staging.png
+  adaptive_icon_background: "#1F6B52"
+  adaptive_icon_foreground: assets/branding/icon_staging_foreground.png
+  min_sdk_android: 26

@@ -1,0 +1,7 @@
+=== key.properties moved aside
+Warning: The generated ELF library contains unobfuscated DWARF debugging information.
+         To avoid this, use --strip to remove it.
+√ Built build\app\outputs\bundle\prodRelease\app-prod-release.aab (62.5MB)
+REFUSED: the staging APK is signed with 865be61d61cff07e2facd299d00649523bdf41782aad4e77dcd4cccb7e080dbd, not the upload key (b98c03471f56f267669f1af7c534ba534991dbbcd3b118815512590bd88534ca).
+REFUSED: the prod bundle is signed with 865be61d61cff07e2facd299d00649523bdf41782aad4e77dcd4cccb7e080dbd, not the upload key (b98c03471f56f267669f1af7c534ba534991dbbcd3b118815512590bd88534ca).
+Nothing leaves: no release was made.
