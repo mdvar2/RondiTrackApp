@@ -40,5 +40,45 @@ server-side Advanced Data Scrubbing rule `[Remove] [Anything] from
 [$user.geo.**]` (Project Settings → Security & Privacy), which applies to new
 events only.
 
-**Status: not complete** until an event received after that rule shows no
-`user.geo`. Sentry screenshots: to be added to the pull request.
+## Event 3: correlationId synthetic-sentry-check-20261126T041012 (Sentry event a2d980a9)
+
+Sent after the `[Remove] [Anything] from [$user.geo.**]` rule was saved (Project
+Settings → Security & Privacy → Advanced Data Scrubbing), from the same fixed
+build. In Sentry: **no User Geography**, no device ID, no boot time; the
+`correlationId` tag, the device model (MAO-LX9) and the OS (Android 12) kept.
+
+## Before and after
+
+| | Event 1 (`…T025941`) | Event 2 (`…T032932`, `88630aec`) | Event 3 (`…T041012`, `a2d980a9`) |
+|---|---|---|---|
+| `correlationId` tag | yes | yes | yes |
+| Name, email, amount, token, proof file | none | none | none |
+| `user.ip_address` | none | none | none |
+| Device ID (`contexts.device.id`) | **present** | removed (app fix) | removed |
+| Boot time | **present** | removed (app fix) | removed |
+| `user.geo` (city, region) | **present** (Sentry-side) | **present** (Sentry-side) | removed (Sentry rule) |
+| Device model, OS | kept | kept | kept |
+
+## Screenshots (redacted where they showed what is being kept out)
+
+- `sentry-a-issue-received.png`: the issue in Sentry (browser bar cropped off)
+- `sentry-b-server-failure.png`: the ServerFailure, release `1.0.0 (2001)`, `dev`
+- `sentry-c-event1-before-redacted.png`: event 1; its geography, boot time and
+  device id values are **blacked out** here, so this repository doesn't carry them
+- `sentry-d-event2-after-device-fix-redacted.png`: event 2; no device id or boot
+  time; its geography value blacked out
+- `sentry-e-event2-breadcrumbs.png`: breadcrumbs: app lifecycle and a battery
+  event only
+- `sentry-f-event3-final-no-geo.png`: event 3: tags and contexts, no geography,
+  no device id, no boot time
+- Event 2's raw JSON was inspected by the owner (its `user.geo` is what led to
+  the Sentry rule). The screenshot isn't committed: it shows the DSN's public key.
+
+## Status
+
+- [x] The app sends no user, IP, location, name, email, amount, token, proof
+      file name, device id or boot time (captured bytes, tests, events 2 and 3)
+- [x] `correlationId` kept; model and OS kept
+- [x] Sentry-side location removed by the server rule (event 3, in the UI)
+- [ ] **Event 3's raw JSON checked for `user` / `geo`**: pending. The checklist
+      is complete only when that is ticked.

@@ -80,13 +80,13 @@ void main() {
     expect(outgoing, contains(_correlationId));
   });
 
-  // What the native Android SDK added to a real event (captured from the
+  // What the native Android SDK added to a real event (shape captured from the
   // MAO-LX9 on 2026-11-26): a persistent install id, the boot time and,
   // on some versions, a hash of the device id. Each links one phone's
   // events together, and none helps support.
   test('drops the device identifiers the native SDK adds, and keeps what '
       'support needs', () {
-    const installId = '9487fe089fb745a28862b5c646c4f53a';
+    const installId = '00000000feedbeef0000000000000001';
     const bootTime = '2026-11-25T21:04:13.000Z';
     final event = SentryEvent(
       tags: {'correlationId': _correlationId},

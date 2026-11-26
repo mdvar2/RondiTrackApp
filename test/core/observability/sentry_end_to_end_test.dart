@@ -24,7 +24,7 @@ class _KeepingTransport implements Transport {
 
 const _name = 'Thandi Nkosi';
 const _email = 'thandi.nkosi@example.test';
-const _installId = '9487fe089fb745a28862b5c646c4f53a';
+const _installId = '00000000feedbeef0000000000000001';
 
 /// The real Sentry SDK, with the app's own options, scrubber and reporter,
 /// and no account: README "Privacy".
