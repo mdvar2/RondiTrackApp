@@ -1577,7 +1577,7 @@ See [Coverage](#coverage).
 
 Two things leave that `beforeSend` can't reach, and are settled elsewhere:
 
-- **Location.** Sentry showed a *User Geography* (a suburb) on a real event that had no IP in it: Sentry's servers work it out from the **connection's** IP address. The project setting *Settings → Projects → flutter → Security & Privacy → Prevent Storing of IP Addresses* stops Sentry storing the IP and the location it derives. **It must be on** before this table holds.
+- **Location.** Sentry showed a *User Geography* (a suburb) on a real event that had no IP in it: Sentry's servers work it out from the **connection's** IP address when the event arrives. That is Sentry-side enrichment, not something the app sends, so `beforeSend` can't remove it. *Prevent Storing of IP Addresses* (Project Settings → Security & Privacy) is on and drops the IP, but [Sentry's documentation](https://docs.sentry.io/security-legal-pii/scrubbing/server-side-scrubbing/) says geographic information "is extracted from the user's IP address. This occurs even if the setting to stop storing IP addresses is turned on" (seen here: event `88630aec` still had a city). It also needs the **Advanced Data Scrubbing** rule `[Remove] [Anything] from [$user.geo.**]` (Project Settings → Security & Privacy → Advanced Data Scrubbing). Rules apply to new events only: events received before it keep their location until deleted. **Both settings must be on** before this table holds.
 - **The session's `did`.** Release health (sessions) is sent by the native SDK, not through `beforeSend`, with an install id as `did`. It is pseudonymous: it links sessions from one install, never a name. It stays, written down here, because crash-free rates need it.
 
 #### 7. What is worth an error report
