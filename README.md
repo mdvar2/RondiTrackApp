@@ -1812,7 +1812,7 @@ Added to the `testers` group in App Distribution, the reviewer gets an email for
 | The lock screen | By hand, with the phone set to hide sensitive content: only the app's name shows |
 | A second phone (a shared phone) | The API test *on a shared phone only the member signed in now is told*; by hand with two accounts on one phone |
 | A tap from a closed app on Android | Whole-app tests start the router at the address; by hand with `adb shell am kill <app id>` (force-stop also clears the notifications) |
-| The camera app and the photo picker | By hand on the phone; `prepareProof` is tested with real JPEG bytes carrying GPS |
+| The camera app and the photo picker | By hand on the phone (2026-11-26: a camera photo arrived on the server as 772 563 bytes, 1500 × 2000, no EXIF); `prepareProof` is tested with real JPEG bytes carrying GPS |
 | iOS | Not built: Android only (see The stores) |
 | The stores | Not used: App Distribution only (see The stores) |
 | The plugin files (`firebase_push_client.dart`, `ImagePickerProofPicker`) | Thin by design; everything they feed is behind an interface the tests fake |

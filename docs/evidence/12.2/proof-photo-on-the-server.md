@@ -18,3 +18,16 @@ Mabena Family contribution.
 
 Picking a photo with the phone's camera is checked by hand (README "What isn't
 tested").
+
+## From the phone's camera, through the app (05:36)
+
+On the MAO-LX9, signed in as Sipho: Mabena Family → Cycle 2026-11 → *Add proof
+of payment* → *Take a photo* (the phone's camera app) → accepted. The button
+went *Preparing photo…*, *Sending proof…*, then **Proof sent**
+(`proof-from-the-camera-sent.png`). The app's log:
+`API POST /api/v1/contributions/1a544e54-…/proof 200`.
+
+On the server (downloaded back as Sipho): `proof.jpg`, `image/jpeg`,
+**772 563 bytes**, **1500 × 2000** (turned upright, longest side 2000),
+**0 EXIF tags, no GPS, no EXIF segment at all**. The photo itself isn't
+committed: it shows the owner's surroundings.
