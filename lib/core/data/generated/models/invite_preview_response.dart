@@ -16,10 +16,9 @@ class InvitePreviewResponse {
     required this.rules,
     required this.memberCount,
   });
-
-  factory InvitePreviewResponse.fromJson(Map<String, Object?> json) =>
-      _$InvitePreviewResponseFromJson(json);
-
+  
+  factory InvitePreviewResponse.fromJson(Map<String, Object?> json) => _$InvitePreviewResponseFromJson(json);
+  
   final String stokvelId;
   final String name;
   final int contributionAmountCents;

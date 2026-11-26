@@ -14,10 +14,9 @@ class UserResponse {
     required this.email,
     required this.version,
   });
-
-  factory UserResponse.fromJson(Map<String, Object?> json) =>
-      _$UserResponseFromJson(json);
-
+  
+  factory UserResponse.fromJson(Map<String, Object?> json) => _$UserResponseFromJson(json);
+  
   final String id;
   final String name;
   final String email;

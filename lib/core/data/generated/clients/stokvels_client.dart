@@ -68,8 +68,7 @@ abstract class StokvelsClient {
   });
 
   @GET('/api/v1/stokvels/{stokvelId}/members')
-  Future<HttpResponse<PagedResultOfStokvelMemberResponse>>
-  getApiV1StokvelsStokvelIdMembers({
+  Future<HttpResponse<PagedResultOfStokvelMemberResponse>> getApiV1StokvelsStokvelIdMembers({
     @Path('stokvelId') required String stokvelId,
     @Query('pageToken') String? pageToken,
     @Query('role') String? role,
@@ -90,8 +89,7 @@ abstract class StokvelsClient {
   /// a member, the cycle belongs to another stokvel, a contribution already exists.
   /// for the member and cycle, or an idempotency key is reused with different data.
   @POST('/api/v1/stokvels/{stokvelId}/members/{userId}/contributions')
-  Future<HttpResponse<ContributionResponse>>
-  postApiV1StokvelsStokvelIdMembersUserIdContributions({
+  Future<HttpResponse<ContributionResponse>> postApiV1StokvelsStokvelIdMembersUserIdContributions({
     @Path('stokvelId') required String stokvelId,
     @Path('userId') required String userId,
     @Header('Idempotency-Key') required String idempotencyKey,

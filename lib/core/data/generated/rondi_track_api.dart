@@ -16,7 +16,11 @@ import 'clients/stokvels_client.dart';
 
 /// RondiTrack | v1 `v1.0.0`
 class RondiTrackApi {
-  RondiTrackApi(Dio dio, {String? baseUrl}) : _dio = dio, _baseUrl = baseUrl;
+  RondiTrackApi(
+    Dio dio, {
+    String? baseUrl,
+  })  : _dio = dio,
+        _baseUrl = baseUrl;
 
   final Dio _dio;
   final String? _baseUrl;
@@ -35,29 +39,19 @@ class RondiTrackApi {
 
   AuthClient get auth => _auth ??= AuthClient(_dio, baseUrl: _baseUrl);
 
-  ContributionConfirmationClient get contributionConfirmation =>
-      _contributionConfirmation ??= ContributionConfirmationClient(
-        _dio,
-        baseUrl: _baseUrl,
-      );
+  ContributionConfirmationClient get contributionConfirmation => _contributionConfirmation ??= ContributionConfirmationClient(_dio, baseUrl: _baseUrl);
 
-  ContributionCyclesClient get contributionCycles =>
-      _contributionCycles ??= ContributionCyclesClient(_dio, baseUrl: _baseUrl);
+  ContributionCyclesClient get contributionCycles => _contributionCycles ??= ContributionCyclesClient(_dio, baseUrl: _baseUrl);
 
-  CycleCloseClient get cycleClose =>
-      _cycleClose ??= CycleCloseClient(_dio, baseUrl: _baseUrl);
+  CycleCloseClient get cycleClose => _cycleClose ??= CycleCloseClient(_dio, baseUrl: _baseUrl);
 
-  DevicesClient get devices =>
-      _devices ??= DevicesClient(_dio, baseUrl: _baseUrl);
+  DevicesClient get devices => _devices ??= DevicesClient(_dio, baseUrl: _baseUrl);
 
-  InvitesClient get invites =>
-      _invites ??= InvitesClient(_dio, baseUrl: _baseUrl);
+  InvitesClient get invites => _invites ??= InvitesClient(_dio, baseUrl: _baseUrl);
 
   MeClient get me => _me ??= MeClient(_dio, baseUrl: _baseUrl);
 
-  PayoutsClient get payouts =>
-      _payouts ??= PayoutsClient(_dio, baseUrl: _baseUrl);
+  PayoutsClient get payouts => _payouts ??= PayoutsClient(_dio, baseUrl: _baseUrl);
 
-  StokvelsClient get stokvels =>
-      _stokvels ??= StokvelsClient(_dio, baseUrl: _baseUrl);
+  StokvelsClient get stokvels => _stokvels ??= StokvelsClient(_dio, baseUrl: _baseUrl);
 }

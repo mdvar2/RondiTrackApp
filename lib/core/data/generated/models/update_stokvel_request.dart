@@ -12,10 +12,9 @@ class UpdateStokvelRequest {
     required this.name,
     required this.contributionAmount,
   });
-
-  factory UpdateStokvelRequest.fromJson(Map<String, Object?> json) =>
-      _$UpdateStokvelRequestFromJson(json);
-
+  
+  factory UpdateStokvelRequest.fromJson(Map<String, Object?> json) => _$UpdateStokvelRequestFromJson(json);
+  
   final String name;
   final double contributionAmount;
 

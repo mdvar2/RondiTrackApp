@@ -9,11 +9,12 @@ part 'register_device_request.g.dart';
 /// The body of POST /me/devices.
 @JsonSerializable()
 class RegisterDeviceRequest {
-  const RegisterDeviceRequest({required this.installationId});
-
-  factory RegisterDeviceRequest.fromJson(Map<String, Object?> json) =>
-      _$RegisterDeviceRequestFromJson(json);
-
+  const RegisterDeviceRequest({
+    required this.installationId,
+  });
+  
+  factory RegisterDeviceRequest.fromJson(Map<String, Object?> json) => _$RegisterDeviceRequestFromJson(json);
+  
   final String? installationId;
 
   Map<String, Object?> toJson() => _$RegisterDeviceRequestToJson(this);
