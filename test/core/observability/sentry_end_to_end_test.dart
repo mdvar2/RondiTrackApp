@@ -24,6 +24,7 @@ class _KeepingTransport implements Transport {
 
 const _name = 'Thandi Nkosi';
 const _email = 'thandi.nkosi@example.test';
+const _installId = '9487fe089fb745a28862b5c646c4f53a';
 
 /// The real Sentry SDK, with the app's own options, scrubber and reporter,
 /// and no account: README "Privacy".
@@ -45,6 +46,20 @@ void main() {
     await Sentry.configureScope(
       (scope) =>
           scope.setUser(SentryUser(id: 'u-1', name: _name, email: _email)),
+    );
+    // As the native Android SDK's contexts are merged in: the phone's
+    // install id and boot time.
+    await Sentry.configureScope(
+      (scope) => scope.setContexts(
+        SentryDevice.type,
+        // From JSON, as the native merge builds it: `id` is not a field
+        // of the Dart class, and is kept as an unknown key.
+        SentryDevice.fromJson({
+          'id': _installId,
+          'model': 'MAO-LX9',
+          'boot_time': '2026-11-25T21:04:13.000Z',
+        }),
+      ),
     );
     await Sentry.addBreadcrumb(
       Breadcrumb(
@@ -69,7 +84,10 @@ void main() {
     expect(event.containsKey('user'), isFalse);
 
     final outgoing = jsonEncode(event);
-    for (final personal in [_name, 'Nkosi', _email, 'q=']) {
+    final device = (event['contexts'] as Map)['device'] as Map;
+    expect(device['model'], 'MAO-LX9', reason: 'what support needs stays');
+    expect(device.containsKey('boot_time'), isFalse);
+    for (final personal in [_name, 'Nkosi', _email, 'q=', _installId]) {
       expect(outgoing, isNot(contains(personal)), reason: personal);
     }
   });

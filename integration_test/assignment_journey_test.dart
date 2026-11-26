@@ -54,7 +54,9 @@ void main() {
     // Home, then his stokvel.
     await waitFor(tester, find.text('Mabena Family'));
     await tester.tap(find.text('Mabena Family'));
-    await waitFor(tester, find.text('Cycle 2026-11'));
+    // Words only the stokvel screen has: Home's card says "Cycle 2026-11"
+    // too, so waiting for that moved on before the screen opened.
+    await waitFor(tester, find.text('Your role: Member'));
 
     // Pay: the form is filled with the stokvel's contribution.
     final pay = find.widgetWithText(FilledButton, 'Pay');
@@ -65,9 +67,10 @@ void main() {
 
     await waitFor(tester, find.text('Paid. The cycle is up to date.'));
 
-    // The cycle, fetched again: his contribution is on it.
+    // Back on the stokvel; the cycle, fetched again: his contribution is on
+    // it.
+    await waitFor(tester, find.text('Your role: Member'));
     final cycle = find.text('Cycle 2026-11');
-    await waitFor(tester, cycle);
     await tester.scrollUntilVisible(cycle, -200);
     await tester.tap(cycle);
     await waitFor(tester, find.text('Contributions'));
