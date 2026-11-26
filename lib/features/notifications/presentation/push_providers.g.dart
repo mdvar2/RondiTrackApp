@@ -161,7 +161,7 @@ final class PushRegistrationProvider
   }
 }
 
-String _$pushRegistrationHash() => r'365831ded59c2d0902363b45143301ba0a93ccf0';
+String _$pushRegistrationHash() => r'7b88df262511233293089673ce1ee53b8aaae7d7';
 
 /// What the app does with a push while it runs (README "Notifications",
 /// question 3). Watched by the app.
