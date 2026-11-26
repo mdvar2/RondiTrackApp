@@ -80,5 +80,14 @@ build. In Sentry: **no User Geography**, no device ID, no boot time; the
       file name, device id or boot time (captured bytes, tests, events 2 and 3)
 - [x] `correlationId` kept; model and OS kept
 - [x] Sentry-side location removed by the server rule (event 3, in the UI)
-- [ ] **Event 3's raw JSON checked for `user` / `geo`**: pending. The checklist
-      is complete only when that is ticked.
+- [x] **Event 3's raw JSON checked** (2026-11-26 05:30, by the owner, in
+      Sentry's JSON view): `"user":{"geo":{"country_code":null,"city":null,"subdivision":null,"region":null}}`,
+      with `_meta` recording each as removed by the scrubbing rule
+      (`"rem":[["organization:0","x"]]`); no `ip_address`; `contexts.device`
+      has no `id` and no `boot_time` (model `MAO-LX9` kept); tag
+      `correlationId` = `synthetic-sentry-check-20261126T041012`; no name,
+      email or amount. The screenshot isn't committed: it shows the DSN's
+      public key.
+
+**Status: complete.** Nothing that identifies the member or the phone leaves in
+an error report; the correlation id does.
