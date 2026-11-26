@@ -36,3 +36,19 @@ opened straight on **Mabena Family, Cycle 2026-11**, fetched from the API
 (`GET /api/v1/stokvels/…/cycles/…`), with Sipho's R 500,00 **Confirmed**
 (`tap-from-closed-opens-the-cycle.png`). The details came from the API after
 the tap, never from the push.
+
+## The lock screen, the shade and the icons (04:28 to 04:35)
+
+- `lock-screen-sensitive-content-shown.png`: Android's own switch
+  `lock_screen_allow_private_notifications` was 1 (show sensitive content), so
+  the private notification showed in full. Even shown in full it says only
+  "RondiTrack / There's an update on your stokvel."
+- `lock-screen-sensitive-content-hidden.png`: the switch set to 0 over USB
+  (with the owner's agreement, and set back to 1 afterwards). The lock screen
+  shows **only "RondiTrack Dev, 2 notifications"**: no text.
+- `notification-in-the-shade.png`: the notifications in the shade, generic text
+  only. The first ones showed their time as "1/01/03": the Admin SDK sent .NET's
+  default date because the sender set no event time. Fixed in the API
+  (`EventTimestamp`, with a test); the next push showed "Just now".
+- `three-flavours-side-by-side.png`: RondiTrack Dev, RondiTrack and
+  RondiTrack Staging installed together, each with its own icon.
