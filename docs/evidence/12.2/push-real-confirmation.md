@@ -24,3 +24,15 @@ why.
 
 Still to add by hand: a screenshot of the notification in the shade, and on the
 lock screen with "hide sensitive content" on.
+
+## A tap from a closed app (04:23)
+
+Sipho signed in again (registered: `POST /api/v1/me/devices 204`). Home key,
+then `adb shell am kill za.co.gwinya.ronditrack_app.dev` (no process left; force
+stop would also clear notifications). Lerato confirmed his payment through the
+API (**204**). The notification arrived (`RondiTrack` / `There's an update on
+your stokvel.`) while the app was closed. Tapped by hand in the shade: the app
+opened straight on **Mabena Family, Cycle 2026-11**, fetched from the API
+(`GET /api/v1/stokvels/…/cycles/…`), with Sipho's R 500,00 **Confirmed**
+(`tap-from-closed-opens-the-cycle.png`). The details came from the API after
+the tap, never from the push.
