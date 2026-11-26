@@ -27,6 +27,8 @@ jobs:
       SENTRY_DSN: ${{ vars.STAGING_SENTRY_DSN }}
       SENTRY_ORG: ${{ vars.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      # The organisation's data region: EU (de.sentry.io), not the default US.
+      SENTRY_URL: ${{ vars.SENTRY_URL }}
       FIREBASE_STAGING_APP_ID: ${{ vars.FIREBASE_STAGING_APP_ID }}
       BUILD_NUMBER: ${{ github.run_number }}
       RELEASE_OUT: build/release
@@ -96,7 +98,13 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           export SENTRY_RELEASE="za.co.gwinya.ronditrack_app.staging@$version+$BUILD_NUMBER"
           export SENTRY_DIST="$BUILD_NUMBER"
-          dart run sentry_dart_plugin             --sentry-define=org="$SENTRY_ORG"             --sentry-define=project="$SENTRY_PROJECT"             --sentry-define=symbols_path=build/release/symbols/staging             --sentry-define=upload_debug_symbols=true             --sentry-define=upload_source_maps=false
+          dart run sentry_dart_plugin \
+            --sentry-define=url="$SENTRY_URL" \
+            --sentry-define=org="$SENTRY_ORG" \
+            --sentry-define=project="$SENTRY_PROJECT" \
+            --sentry-define=symbols_path=build/release/symbols/staging \
+            --sentry-define=upload_debug_symbols=true \
+            --sentry-define=upload_source_maps=false
 
       # v7.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1

@@ -1754,7 +1754,7 @@ With no file, push is off and the app runs as before; with some values but not a
 | `UPLOAD_CERT_SHA256` | Setting (a fingerprint is public) | Repository variable |
 | `STAGING_API_BASE_URL` | Setting | Repository variable (the HTTPS address the reviewer's phone reaches) |
 | `STAGING_SENTRY_DSN` | Setting | Repository variable |
-| `SENTRY_ORG`, `SENTRY_PROJECT` | Setting | Repository variables |
+| `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_URL` | Setting | Repository variables (`nelisiwe-gwinya`, `flutter`, `https://de.sentry.io`: the EU region) |
 | `FIREBASE_STAGING_APP_ID` | Setting | Repository variable |
 | The keystore file itself | Secret | Nowhere near the repository: `C:\Users\gwiny\.ronditrack-release\` on the owner's laptop, and the CI secret |
 | `android/key.properties` | Secret (names the keystore and its password) | Git-ignored; on CI written into the runner and deleted at the end |
