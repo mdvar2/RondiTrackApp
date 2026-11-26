@@ -12,6 +12,10 @@ on:
         description: API repository branch, tag or commit to compare the contract copy with
         required: false
         default: ""
+      update_goldens:
+        description: Make the CI goldens on Linux and upload them, to look at before committing
+        type: boolean
+        default: false
   # Nightly, so a contract change merged in the API turns this red within a
   # day, not at the next app pull request.
   schedule:
@@ -122,11 +126,15 @@ jobs:
           date +'Running in %Z (UTC%:z)'
           flutter test
 
-  integration:
-    name: Assignment journey on Android
-    if: github.event_name != 'schedule'
+  # The CI goldens are compared on Linux, so they are made on Linux: run by
+  # hand (Actions > CI > Run workflow, "update_goldens"), download the
+  # artifact, look at every picture, and commit them (README "Running the
+  # tests"). The Windows goldens are made and compared on Windows only.
+  goldens:
+    name: Make the CI goldens on Linux
+    if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -139,14 +147,52 @@ jobs:
       - name: Install the locked dependencies
         run: flutter pub get --enforce-lockfile
 
-      - name: Sign in, open contributions, then view the cycle
+      - name: Make the CI goldens
+        run: flutter test --tags golden --update-goldens
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-goldens
+          path: test/**/goldens/ci/*.png
+
+  # The one journey on a real Android (README "Test plan"): slow, so it
+  # runs only after the fast job passes.
+  integration:
+    name: Assignment journey on Android
+    if: github.event_name != 'schedule'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Without KVM the emulator never boots on a hosted runner.
+      - name: Switch KVM on
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - name: Install the locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      # The same flags the app runs with: the dev flavour and its config.
+      - name: Sign in, record a contribution, see it on the cycle
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 31
           target: google_apis
           arch: x86_64
-          profile: pixel_2
-          script: flutter test integration_test/assignment_journey_test.dart --flavor dev -d emulator-5554 --no-pub
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: flutter test integration_test/assignment_journey_test.dart --flavor dev --dart-define-from-file=config/dev.json -d emulator-5554 --no-pub
 
   contract:
     name: Contract copy matches the API

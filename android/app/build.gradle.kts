@@ -16,8 +16,11 @@ android {
 
     defaultConfig {
         applicationId = "za.co.gwinya.ronditrack_app"
-        // Sentry requires Android 8 (API 26); devices older than that cannot
-        // install builds with error reporting enabled.
+        // Android 8.0 (API 26), for sentry_flutter 10 (README "Decisions").
+        // Was flutter.minSdkVersion (24, Android 7.0). It applies to every
+        // build, DSN or not: members on Android 7.0 and 7.1 can't install or
+        // update the app from this release on. Their installed copy keeps
+        // working, and the web app still serves them.
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION

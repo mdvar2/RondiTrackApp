@@ -247,13 +247,19 @@ void main() {
         coldStart: _list,
         overrides: [contributionsRepositoryProvider.overrideWithValue(pages)],
       );
+      // DevTools' hook. Its `builtOnce` is only set while
+      // debugPrintRebuildDirtyWidgets is on, so a second build of an
+      // element this test has already seen is what counts as a rebuild.
       final rebuilds = <String, int>{};
+      final seen = <Element>{};
       final previousCallback = debugOnRebuildDirtyWidget;
-      debugOnRebuildDirtyWidget = (element, builtOnce) {
+      debugOnRebuildDirtyWidget = (element, _) {
         final key = element.widget.key;
-        if (builtOnce &&
-            key is ValueKey<String> &&
-            key.value.startsWith('contribution-')) {
+        if (key is! ValueKey<String> ||
+            !key.value.startsWith('contribution-')) {
+          return;
+        }
+        if (!seen.add(element)) {
           rebuilds.update(key.value, (count) => count + 1, ifAbsent: () => 1);
         }
       };
@@ -267,7 +273,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
 
       expect(pages.asked.map((answer) => answer.token), [null, 'p2']);
-      expect(rebuilds['contribution-c19'] ?? 0, 0);
+      expect(seen, isNotEmpty, reason: 'the hook saw no row at all');
+      // README "Performance": fails if any row is rebuilt again.
+      final total = rebuilds.values.fold(0, (sum, n) => sum + n);
+      expect(
+        total,
+        0,
+        reason: 'rows rebuilt while the next page loads: $rebuilds',
+      );
     });
 
     for (final (name, key, answers) in [
@@ -450,6 +463,53 @@ void main() {
         );
       });
     }
+
+    testWidgets('at 200% text the contributions list: no row overlaps the '
+        'next, and every word stays inside its row', (tester) async {
+      final pages = _Pages()
+        ..answers.add(
+          Ok(
+            ContributionPage([
+              for (var i = 0; i < 6; i++) _Pages.row(i),
+            ], nextPageToken: 'p2'),
+          ),
+        );
+      await pumpApp(
+        tester,
+        as: FakeSeed.lerato,
+        size: phone,
+        textScale: 2,
+        coldStart: _list,
+        overrides: [contributionsRepositoryProvider.overrideWithValue(pages)],
+      );
+
+      expect(tester.takeException(), isNull, reason: 'an overflow');
+      final rows = find.byType(ListTile).evaluate().toList();
+      expect(rows, isNotEmpty);
+      Rect? above;
+      for (final row in rows) {
+        final box = tester.getRect(find.byElementPredicate((e) => e == row));
+        if (above != null) {
+          expect(box.top, greaterThanOrEqualTo(above.bottom - 0.5));
+        }
+        above = box;
+        for (final text
+            in find
+                .descendant(
+                  of: find.byElementPredicate((e) => e == row),
+                  matching: find.byType(Text),
+                )
+                .evaluate()) {
+          final r = tester.getRect(find.byElementPredicate((e) => e == text));
+          expect(
+            box.inflate(0.5).contains(r.topLeft) &&
+                box.inflate(0.5).contains(r.bottomRight),
+            isTrue,
+            reason: '${(text.widget as Text).data} is cut off',
+          );
+        }
+      }
+    });
 
     testWidgets('at 200% text the pay form has every field labelled and '
         'nothing overflowing', (tester) async {

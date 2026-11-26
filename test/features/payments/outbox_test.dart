@@ -30,6 +30,32 @@ class _Sender implements PaymentSender {
   }
 }
 
+/// A server that keeps one contribution per idempotency key, as the API
+/// does, and can lose its answer after saving (the phone hears nothing).
+class _Server implements PaymentSender {
+  new({this.loseAnswers = 0});
+
+  /// How many answers are lost on the way back, after the save.
+  int loseAnswers;
+
+  /// The contributions it stored, by key.
+  final Map<String, PendingPayment> stored = {};
+
+  /// Every key it was sent.
+  final List<String> keys = [];
+
+  @override
+  Future<Result<void>> send(PendingPayment payment) async {
+    keys.add(payment.idempotencyKey);
+    stored.putIfAbsent(payment.idempotencyKey, () => payment);
+    if (loseAnswers > 0) {
+      loseAnswers--;
+      return const Err(NoAnswerFailure());
+    }
+    return const Ok(null);
+  }
+}
+
 const _amount = Cents(50000);
 
 Future<PendingPayment> _tap(PaymentOutbox outbox) => outbox.enqueue(
@@ -95,6 +121,20 @@ void main() {
       },
     );
 
+    test('a retry after a lost answer: the same key, and the server stores '
+        'one contribution', () async {
+      final server = _Server(loseAnswers: 1);
+      final outbox = outboxWith(server);
+      final payment = await _tap(outbox);
+
+      expect(await outbox.send(payment), isA<PaymentStillPending>());
+      await outbox.sendAll();
+
+      expect(server.keys, [payment.idempotencyKey, payment.idempotencyKey]);
+      expect(server.stored, hasLength(1));
+      expect(await outbox.waiting(), isEmpty);
+    });
+
     test('the same key after the app is killed and opened again', () async {
       final dir = await Directory.systemTemp.createTemp('outbox');
       final file = File('${dir.path}/ronditrack.sqlite');
@@ -144,7 +184,8 @@ void main() {
       ),
     ]) {
       test('refused ($reason): removed, and why', () async {
-        final outbox = outboxWith(_Sender([Err(RuleFailure(detail: detail))]));
+        final sender = _Sender([Err(RuleFailure(detail: detail))]);
+        final outbox = outboxWith(sender);
         final outcome = await outbox.send(await _tap(outbox));
 
         expect(
@@ -152,6 +193,11 @@ void main() {
           isA<PaymentRefused>().having((o) => o.reason, 'reason', reason),
         );
         expect(await outbox.waiting(), isEmpty);
+
+        // Nothing is sent again: not on the next sync, not on the one after.
+        await outbox.sendAll();
+        await outbox.sendAll();
+        expect(sender.keys, hasLength(1));
       });
     }
 

@@ -1,0 +1,15 @@
+00:00 +0: loading c:/Users/gwiny/RondiTrackApp/test/features/payments/payments_analytics_test.dart
+00:00 +0: a confirmed contribution emits only the stokvel and member ids
+00:00 +1: refused: already paid (409): no event, because nothing was recorded
+00:00 +1 -1: refused: already paid (409): no event, because nothing was recorded [E]
+  Expected: empty
+    Actual: [
+              ({String memberId, String stokvelId}):(memberId: member-123, stokvelId: stokvel-456)
+            ]
+  package:matcher                                            expect
+  package:flutter_test/src/widget_tester.dart 473:18         expect
+  test\features\payments\payments_analytics_test.dart 107:7  main.<fn>
+00:00 +1 -1: no answer: still in the outbox: no event, because nothing was recorded
+00:00 +2 -1: Some tests failed.
+Failing tests:
+  c:/Users/gwiny/RondiTrackApp/test/features/payments/payments_analytics_test.dart: refused: already paid (409): no event, because nothing was recorded

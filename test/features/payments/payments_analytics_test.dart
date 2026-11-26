@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/core/money/cents.dart';
 import 'package:ronditrack_app/core/observability/analytics.dart';
@@ -69,4 +70,41 @@ void main() {
       ]);
     },
   );
+
+  for (final (name, answer) in [
+    (
+      'refused: already paid (409)',
+      const Err<void>(
+        RuleFailure(
+          detail: 'A contribution already exists for this member and cycle.',
+        ),
+      ),
+    ),
+    ('no answer: still in the outbox', const Err<void>(NoAnswerFailure())),
+  ]) {
+    test('$name: no event, because nothing was recorded', () async {
+      final analytics = _RecordingAnalytics();
+      final container = ProviderContainer.test(
+        overrides: [
+          inMemoryDatabase(),
+          authControllerProvider.overrideWith(_SignedOutAuthController.new),
+          signedInUserIdProvider.overrideWithValue('member-123'),
+          paymentSenderProvider.overrideWithValue(_AnsweringSender(answer)),
+          idempotencyKeysProvider.overrideWithValue(() => 'payment-key'),
+          analyticsProvider.overrideWithValue(analytics),
+        ],
+        retry: (retryCount, error) => null,
+      );
+
+      await container
+          .read(paymentsProvider.notifier)
+          .pay(
+            stokvelId: 'stokvel-456',
+            cycleId: 'cycle-789',
+            amount: const Cents(125050),
+          );
+
+      expect(analytics.events, isEmpty);
+    });
+  }
 }

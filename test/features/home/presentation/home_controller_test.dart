@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronditrack_app/app/providers.dart';
+import 'package:ronditrack_app/app/sync_statuses.dart';
 import 'package:ronditrack_app/core/errors/failure.dart';
 import 'package:ronditrack_app/core/errors/result.dart';
 import 'package:ronditrack_app/features/auth/domain/auth_state.dart';
@@ -80,5 +81,50 @@ void main() {
     expect(container.read(homeControllerProvider).value, cached);
     verify(repository.fetchHome).called(1);
     verifyNoMoreInteractions(repository);
+  });
+
+  test('a refresh never drops the cached stokvels, not for one state, and '
+      'its failure is recorded for the banner', () async {
+    final repository = _MockHomeRepository();
+    when(repository.fetchHome).thenAnswer(
+      (_) => FakeHomeRepository(
+        userId: FakeSeed.lerato.id,
+        delay: Duration.zero,
+      ).fetchHome(),
+    );
+    final states = <AsyncValue<List<HomeEntry>>>[];
+    final container = ProviderContainer.test(
+      overrides: [
+        inMemoryDatabase(),
+        authControllerProvider.overrideWith(_SignedOutAuthController.new),
+        homeRepositoryProvider.overrideWithValue(repository),
+      ],
+      retry: (retryCount, error) => null,
+    )..listen(homeControllerProvider, (_, next) => states.add(next));
+    final cached = await container.read(homeControllerProvider.future);
+
+    final answer = Completer<Result<List<HomeEntry>>>();
+    when(repository.fetchHome).thenAnswer((_) => answer.future);
+    clearInteractions(repository);
+    states.clear();
+
+    final refreshing = container
+        .read(homeControllerProvider.notifier)
+        .refresh();
+    await untilCalled(repository.fetchHome);
+    answer.complete(const Err(NoAnswerFailure()));
+    await refreshing;
+
+    expect(
+      states.where((s) => !s.hasValue),
+      isEmpty,
+      reason: 'a state without the cached stokvels: $states',
+    );
+    expect(container.read(homeControllerProvider).value, cached);
+    expect(
+      container.read(syncStatusesProvider)[homeSyncKey]?.failure,
+      isA<NoAnswerFailure>(),
+    );
+    verify(repository.fetchHome).called(1);
   });
 }

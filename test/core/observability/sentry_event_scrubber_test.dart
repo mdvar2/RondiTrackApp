@@ -79,4 +79,50 @@ void main() {
     }
     expect(outgoing, contains(_correlationId));
   });
+
+  // What the native Android SDK added to a real event (shape captured from the
+  // MAO-LX9 on 2026-11-26): a persistent install id, the boot time and,
+  // on some versions, a hash of the device id. Each links one phone's
+  // events together, and none helps support.
+  test('drops the device identifiers the native SDK adds, and keeps what '
+      'support needs', () {
+    const installId = '00000000feedbeef0000000000000001';
+    const bootTime = '2026-11-25T21:04:13.000Z';
+    final event = SentryEvent(
+      tags: {'correlationId': _correlationId},
+      contexts: Contexts.fromJson({
+        'device': {
+          'id': installId,
+          'boot_time': bootTime,
+          'model': 'MAO-LX9',
+          'manufacturer': 'HUAWEI',
+          'timezone': 'Africa/Johannesburg',
+        },
+        'app': {
+          'device_app_hash': 'a1b2c3d4e5f6',
+          'app_identifier': 'za.co.gwinya.ronditrack_app.dev',
+          'app_version': '1.0.0',
+        },
+        'os': {'name': 'Android', 'version': '12'},
+      }),
+    );
+
+    final outgoing = scrubSentryEvent(event).toJson();
+    final text = jsonEncode(outgoing);
+    final contexts = outgoing['contexts'] as Map<String, dynamic>;
+    final device = contexts['device'] as Map<String, dynamic>;
+    final app = contexts['app'] as Map<String, dynamic>;
+
+    for (final identifier in [installId, bootTime, 'a1b2c3d4e5f6']) {
+      expect(text, isNot(contains(identifier)), reason: identifier);
+    }
+    expect(device.containsKey('id'), isFalse, reason: 'device.id');
+    expect(device.containsKey('boot_time'), isFalse, reason: 'boot_time');
+    expect(app.containsKey('device_app_hash'), isFalse, reason: 'app hash');
+    // Kept: what a developer needs to reproduce a failure.
+    expect(device['model'], 'MAO-LX9');
+    expect(app['app_version'], '1.0.0');
+    expect((contexts['os'] as Map)['version'], '12');
+    expect((outgoing['tags'] as Map)['correlationId'], _correlationId);
+  });
 }

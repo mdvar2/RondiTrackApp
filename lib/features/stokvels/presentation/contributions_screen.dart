@@ -298,12 +298,19 @@ class _Row extends StatelessWidget {
     return ListTile(
       key: Key('contribution-${contribution.id}'),
       title: Text(contribution.memberName),
-      subtitle: Text(l10n.recordedOn(day)),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      // The amount and status sit under the name, not in `trailing`:
+      // ListTile caps `trailing` at 56 dp, which cut them off at 200% text.
+      // A Wrap grows with the text (README "Performance").
+      subtitle: Wrap(
+        spacing: 12,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(formatRand(contribution.amount)),
+          Text(l10n.recordedOn(day)),
+          Text(
+            formatRand(contribution.amount),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           Text(status, style: Theme.of(context).textTheme.labelMedium),
         ],
       ),

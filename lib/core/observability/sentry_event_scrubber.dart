@@ -29,6 +29,23 @@ SentryEvent scrubSentryEvent(SentryEvent event, {String? memberName}) {
     );
   }
 
+  // The native Android SDK adds identifiers of the phone itself: a
+  // persistent install id, the exact boot time and a hash of the device
+  // id. Each links one phone's events together; none helps support, so
+  // they never leave. The model, OS and app version stay: they reproduce
+  // a failure without saying whose phone it was.
+  final contexts = payload['contexts'];
+  if (contexts is Map<String, dynamic>) {
+    if (contexts['device'] case final Map<String, dynamic> device) {
+      device
+        ..remove('id')
+        ..remove('boot_time');
+    }
+    if (contexts['app'] case final Map<String, dynamic> app) {
+      app.remove('device_app_hash');
+    }
+  }
+
   return SentryEvent.fromJson(payload);
 }
 
