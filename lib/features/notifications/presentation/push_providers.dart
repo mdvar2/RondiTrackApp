@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:ronditrack_app/app/providers.dart';
 import 'package:ronditrack_app/app/router/router.dart';
@@ -27,6 +29,9 @@ PushRegistration pushRegistration(Ref ref) {
   final registration = PushRegistration(
     client: ref.watch(pushClientProvider),
     devices: ref.watch(deviceRegistryProvider),
+    onSkipped: (error) {
+      if (kDebugMode) debugPrint('Push registration skipped: $error');
+    },
   );
   ref.onDispose(registration.dispose);
   return registration;

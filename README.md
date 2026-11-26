@@ -1828,7 +1828,7 @@ With an **Apple Developer Program** membership, the iOS build would need a **dis
 | Decision | Why |
 |---|---|
 | A channel of our own, `stokvel_updates`, high importance, **private** on the lock screen, and the manifest's default | A push that names no channel would land in *Miscellaneous*; private visibility hides even the generic text on a phone set to hide sensitive content |
-| Push by **installation id** (`register()` / `onRegistered`, `Message.Fid`) | `firebase_messaging` 17 deprecates tokens for installation ids |
+| Push by **installation id** (`register()` / `onRegistered`, `Message.Fid`) | `firebase_messaging` 17 deprecates tokens for installation ids. It keeps them off until the manifest opts in (`firebase_messaging_installation_id_enabled`); without it `register()` fails with "API disabled" |
 | A confirm endpoint in the API, and a *Confirm payment* button for treasurers | The API had no way to confirm a contribution, and a push needs something to follow |
 | Longest side 2 000 px; JPEG 85 down to 45 | Readable slips, a few hundred KB on mobile data, far under 5 MB |
 | A Cloudflare quick tunnel for the staging API | Free and needs no account; the cost is a new build for each new address |

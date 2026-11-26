@@ -175,6 +175,25 @@ void main() {
       },
     );
 
+    test('each skipped step is reported to the debug log, and still never '
+        'blocks', () async {
+      final skipped = <Object>[];
+      final client = FakePushClient()..failRegister = true;
+      final push = PushRegistration(
+        client: client,
+        devices: _Failing(),
+        onSkipped: skipped.add,
+      );
+
+      await push.signedIn();
+      client.rotate('fid-2');
+      await pumpEventQueue();
+
+      expect(skipped, hasLength(2));
+      expect(skipped.first, isA<StateError>(), reason: 'Firebase down');
+      expect(skipped.last, isA<NoAnswerFailure>(), reason: 'the API refused');
+    });
+
     test(
       'a Firebase failure, or an API that refuses, is skipped quietly',
       () async {

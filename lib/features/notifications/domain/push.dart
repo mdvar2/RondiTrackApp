@@ -88,7 +88,12 @@ class PushRegistration {
     required this.client,
     required this.devices,
     this.timeout = const Duration(seconds: 3),
+    this.onSkipped,
   });
+
+  /// Told about every step skipped quietly (the debug log; never the
+  /// member). Optional: skipping never depends on it.
+  final void Function(Object error)? onSkipped;
 
   /// The plugin, or `null` with push off.
   final PushClient? client;
@@ -147,9 +152,11 @@ class PushRegistration {
 
   Future<void> _quietly(Future<Result<void>> Function() step) async {
     try {
-      await step().timeout(timeout);
-    } on Object {
+      final result = await step().timeout(timeout);
+      if (result case Err(:final failure)) onSkipped?.call(failure);
+    } on Object catch (error) {
       // No network, Firebase down, a slow API: skipped, never blocking.
+      onSkipped?.call(error);
     }
   }
 }

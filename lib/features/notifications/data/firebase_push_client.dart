@@ -58,7 +58,11 @@ class FirebasePushClient implements PushClient {
   Future<void> register() => _messaging.register();
 
   @override
-  Stream<String> get onRegistered => _messaging.onRegistered;
+  Stream<String> get onRegistered => _messaging.onRegistered.map((id) {
+    // Debug builds only, and never the id itself.
+    if (kDebugMode) debugPrint('Push: Firebase gave this install an id.');
+    return id;
+  });
 
   /// In front, Android shows nothing: the app shows it itself, on the same
   /// channel, private on the lock screen, with the data as its payload.
